@@ -4,10 +4,6 @@ on:
   push:
     branches: [main]
     paths: [site/**, shared/**, core/**, package.json, package-lock.json, .github/workflows/pages.yml]
-  # Daily: rebuilds the blocking engine from the latest filter lists. Xiao
-  # fetches it from /xiao/engine/ once a day (core/Blocker.mjs).
-  schedule:
-    - cron: '17 4 * * *'
   workflow_dispatch:
 
 permissions:
@@ -27,9 +23,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
-        env:
-          XIAO_ENGINE_CACHE: '0'
       - run: npm run site:build
       - uses: actions/upload-pages-artifact@v3
         with:

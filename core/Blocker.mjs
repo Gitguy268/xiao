@@ -8,13 +8,14 @@
 // The engine ships prebuilt (engine.bin, made by scripts/build.mjs from
 // EasyList, EasyPrivacy and uBlock Origin's lists), so the browser never
 // downloads or parses raw lists. Once a day Xiao looks for a newer prebuilt
-// engine on its website, checks its SHA-256 and keeps it in the profile.
+// engine in the repository's "engine" release on GitHub (rebuilt daily by
+// .github/workflows/engine.yml), checks its SHA-256 and keeps it in the profile.
 import { ENGINE_VERSION, FiltersEngine, Request } from '@ghostery/adblocker';
 import { fromWeb, ghosteryDetails, hostOf, pageOf, typeNames } from './lib/request.mjs';
 
 const DAY = 24 * 60 * 60 * 1000;
 const BUILT_IN = 'resource://xiao/engine.bin';
-const UPDATE = `https://gitguy268.github.io/xiao/engine/engine-${ENGINE_VERSION}.bin`;
+const UPDATE = `https://github.com/Gitguy268/xiao/releases/download/engine/engine-${ENGINE_VERSION}.bin`;
 
 export class Blocker {
   constructor(store) {
@@ -42,7 +43,7 @@ export class Blocker {
     this.update();
   }
 
-  // A newer prebuilt engine, if the website has one for this engine version.
+  // A newer prebuilt engine, if the engine release has one for this engine version.
   async update() {
     if (Date.now() - (this.store.engineAt || this.store.checkedAt || 0) < DAY) return;
     this.store.checkedAt = Date.now();

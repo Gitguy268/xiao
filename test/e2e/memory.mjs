@@ -8,6 +8,7 @@
 // minimise. Writes test/e2e/out/memory.json (or MEMORY_OUT).
 //
 //   npm run build && node test/e2e/memory.mjs
+//   KIT=/path/to/another/dist/kit node test/e2e/memory.mjs   (to measure another version)
 import { execFileSync, spawn } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
@@ -23,7 +24,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const home = mkdtempSync(join(tmpdir(), 'xiao-mem-'));
 const env = { ...process.env, HOME: home, MOZ_HEADLESS_WIDTH: '1440', MOZ_HEADLESS_HEIGHT: '900' };
 delete env.XDG_DATA_HOME;
-execFileSync('sh', [join(root, 'dist/kit/install.sh'), ...(process.env.ZEN ? ['--zen', process.env.ZEN] : [])], { env, stdio: 'inherit' });
+execFileSync('sh', [join(process.env.KIT ?? join(root, 'dist/kit'), 'install.sh'), ...(process.env.ZEN ? ['--zen', process.env.ZEN] : [])], { env, stdio: 'inherit' });
 const data = process.platform === 'darwin' ? join(home, 'Library/Application Support/xiao-kit') : join(home, '.local/share/xiao-kit');
 
 const server = http.createServer((req, res) => {

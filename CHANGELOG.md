@@ -3,7 +3,10 @@
 ## 0.2.0 (unreleased)
 
 - **Blocking is built into the browser.** Xiao no longer uses an extension. Its code ships inside its own copy of Zen and is loaded by Firefox's AutoConfig. Ad and tracker blocking, cosmetic filtering, Tor routing, the start page and the toolbar button all run there. There is no add-on to disable, and add-on signing stays on.
-- **Less memory.** In the same test (six busy sites), Xiao used 2,080 MB against 2,715 MB for 0.1. The blocker's own 590 MB process is gone. The filter engine is now prebuilt by Xiao rather than built in the browser, and is refreshed daily from Xiao's website (hash checked).
+- **Less memory.** With six busy sites open (medians of three runs):
+  - The add-on process holds 39 MB instead of 290 MB after Firefox frees memory, and 40 MB instead of 1,135 MB before.
+  - The whole browser uses 2,179 MB instead of 3,193 MB after a minute, and 1,821 MB instead of 2,026 MB after freeing memory.
+  - The filter engine is now prebuilt by Xiao rather than built in the browser, and is refreshed daily from a GitHub release (hash checked).
 - **Tor is routed by the browser itself**, before session restore and for every request a Tor tab makes (service workers and favicons included). Each site's connections are isolated, so "New Tor circuit" takes effect at once.
 - **Xiao Search** (`--search`, macOS and Linux): Xiao's own SearXNG on 127.0.0.1:8890, in Xiao's style, running only while Xiao runs. It replaces the start page's hard-coded 127.0.0.1:8888.
 - **The start page is easier to reach:**

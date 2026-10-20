@@ -47,7 +47,7 @@ const show = (v: unknown) => (v === '' ? '""' : String(v))
 
     <h2>Connections Xiao itself makes</h2>
     <ul class="prose">
-      <li>Once a day, a newer blocking engine (made from EasyList, EasyPrivacy and uBlock Origin's lists) from this website, <code>gitguy268.github.io</code>, checked against its SHA-256. If there isn't one, Xiao keeps the engine it was installed with.</li>
+      <li>Once a day, a newer blocking engine (made from EasyList, EasyPrivacy and uBlock Origin's lists) from Xiao's <a href={`${REPO}/releases/tag/engine`}>engine release</a> on <code>github.com</code>, checked against its SHA-256. If there isn't one, Xiao keeps the engine it was installed with.</li>
       <li>When the start page or toolbar shows Tor status: <code>check.torproject.org</code>, always through Tor.</li>
       <li>With Xiao Search, your searches go from your own computer to the search engines SearXNG asks (by default Google, DuckDuckGo, Brave, Wikipedia and a few more), without cookies or an account.</li>
       <li>Nothing else. There is no Xiao server, account or telemetry.</li>
@@ -63,15 +63,18 @@ const show = (v: unknown) => (v === '' ? '""' : String(v))
       <table>
         <thead><tr><th scope="col"></th><th scope="col">Xiao {memory.before.version}</th><th scope="col">Xiao {memory.after.version}</th></tr></thead>
         <tbody>
-          <tr><th scope="row">All processes, settled</th><td>{memory.before.totalMB.toLocaleString('en')} MB</td><td>{memory.after.totalMB.toLocaleString('en')} MB</td></tr>
-          <tr><th scope="row">Extension process</th><td>{memory.before.extensionMB} MB (Xiao's blocker)</td><td>{memory.after.extensionMB} MB (Zen's own built-in add-ons)</td></tr>
-          <tr><th scope="row">After Firefox's "minimise memory"</th><td>{memory.before.minimisedMB.toLocaleString('en')} MB</td><td>{memory.after.minimisedMB.toLocaleString('en')} MB</td></tr>
+          <tr><th scope="row">Add-on process, after a minute</th><td>{memory.before.extensionMB.toLocaleString('en')} MB (Xiao's blocker and Zen's add-ons)</td><td>{memory.after.extensionMB} MB (Zen's own add-ons)</td></tr>
+          <tr><th scope="row">Add-on process, after freeing memory</th><td>{memory.before.extensionMinimisedMB} MB</td><td>{memory.after.extensionMinimisedMB} MB</td></tr>
+          <tr><th scope="row">Whole browser, after a minute</th><td>{memory.before.totalMB.toLocaleString('en')} MB</td><td>{memory.after.totalMB.toLocaleString('en')} MB</td></tr>
+          <tr><th scope="row">Whole browser, after freeing memory</th><td>{memory.before.minimisedMB.toLocaleString('en')} MB</td><td>{memory.after.minimisedMB.toLocaleString('en')} MB</td></tr>
+          <tr><th scope="row">Each run, whole browser after a minute</th><td>{memory.before.runs.map((r) => r.totalMB.toLocaleString('en')).join(', ')} MB</td><td>{memory.after.runs.map((r) => r.totalMB.toLocaleString('en')).join(', ')} MB</td></tr>
         </tbody>
       </table>
     </div>
     <p class="prose muted">
-      Most of the difference is memory 0.1 held while settled and could give back. Busy sites move these numbers a lot
-      from run to run, so read them as a direction, not a promise. Run <code>node test/e2e/memory.mjs</code> to measure on your own machine.
+      0.1's extension built its blocking engine from the raw lists and kept it in a process of its own; 0.2 loads a
+      prebuilt engine into the browser itself. 0.2 also keeps one spare web process instead of three. Busy sites move
+      the whole-browser numbers a lot from run to run, so read them as a direction, not a promise. Run <code>node test/e2e/memory.mjs</code> to measure on your own machine.
     </p>
   </section>
 </Layout>

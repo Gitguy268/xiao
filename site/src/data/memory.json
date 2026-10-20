@@ -1,5 +1,51 @@
 {
-  "about": "test/e2e/memory.mjs on 2026-10-20: Zen 1.23.3b on an Apple silicon Mac, a fresh profile, the start page plus six pages (Wikipedia, The Guardian, BBC News, CNN, Reddit and an ad test page), measured after 60 s with Firefox's own per-process figures. One run each.",
-  "before": { "version": "0.1", "totalMB": 2715, "extensionMB": 590, "minimisedMB": 1877 },
-  "after": { "version": "0.2", "totalMB": 2080, "extensionMB": 41, "minimisedMB": 1815 }
+  "about": "test/e2e/memory.mjs on 2026-10-20: Zen 1.23.3b on an Apple silicon Mac, a fresh profile each time, the start page plus six pages (Wikipedia, The Guardian, BBC News, CNN, Reddit and an ad test page), measured 60 s after opening them with Firefox's own per-process figures, then again after Firefox's \"minimise memory\". Three runs of each version, alternating; the figures are medians.",
+  "before": {
+    "version": "0.1",
+    "totalMB": 3193,
+    "minimisedMB": 2026,
+    "extensionMB": 1135,
+    "extensionMinimisedMB": 290,
+    "runs": [
+      {
+        "totalMB": 2692,
+        "minimisedMB": 2018,
+        "extensionMB": 605
+      },
+      {
+        "totalMB": 3273,
+        "minimisedMB": 2033,
+        "extensionMB": 1253
+      },
+      {
+        "totalMB": 3193,
+        "minimisedMB": 2026,
+        "extensionMB": 1135
+      }
+    ]
+  },
+  "after": {
+    "version": "0.2",
+    "totalMB": 2179,
+    "minimisedMB": 1821,
+    "extensionMB": 40,
+    "extensionMinimisedMB": 39,
+    "runs": [
+      {
+        "totalMB": 2179,
+        "minimisedMB": 1821,
+        "extensionMB": 40
+      },
+      {
+        "totalMB": 2119,
+        "minimisedMB": 1799,
+        "extensionMB": 39
+      },
+      {
+        "totalMB": 2272,
+        "minimisedMB": 1872,
+        "extensionMB": 44
+      }
+    ]
+  }
 }

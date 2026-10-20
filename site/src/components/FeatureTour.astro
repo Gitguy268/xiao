@@ -15,7 +15,6 @@ import memory from '../data/memory.json'
 import { readList, readSections } from '../lib/prefs'
 import { url } from '../lib/site'
 
-const saved = memory.before.totalMB - memory.after.totalMB
 const sections = readSections('balanced')
 const prefCount = readList('balanced').length
 const shot = { widths: [720, 1440], sizes: '(max-width: 900px) 100vw, 760px', loading: 'lazy' as const }
@@ -66,14 +65,13 @@ const features = [
 
     <div class="tour-stack">
       <figure class="tour-card stat-card" role="tabpanel" id="panel-blocking" aria-labelledby="tab-blocking" data-panel="blocking" data-active>
-        <p class="stat-label">Memory with six busy sites open</p>
-        <p class="stat-big">{saved.toLocaleString('en')} MB <em>less</em></p>
+        <p class="stat-label">The add-on process, with six busy sites open</p>
+        <p class="stat-big">{memory.before.extensionMinimisedMB} → {memory.after.extensionMinimisedMB} MB</p>
         <dl class="stat-rows">
-          <div><dt>Xiao {memory.before.version}, as an extension</dt><dd>{memory.before.totalMB.toLocaleString('en')} MB</dd></div>
-          <div><dt>Xiao {memory.after.version}, built in</dt><dd>{memory.after.totalMB.toLocaleString('en')} MB</dd></div>
-          <div><dt>The blocker's own process</dt><dd>{memory.before.extensionMB} MB → none</dd></div>
+          <div><dt>Whole browser, after a minute</dt><dd>{memory.before.totalMB.toLocaleString('en')} → {memory.after.totalMB.toLocaleString('en')} MB</dd></div>
+          <div><dt>Whole browser, after freeing memory</dt><dd>{memory.before.minimisedMB.toLocaleString('en')} → {memory.after.minimisedMB.toLocaleString('en')} MB</dd></div>
         </dl>
-        <figcaption>One run each. <a href={url('privacy/#memory')}>How it was measured</a></figcaption>
+        <figcaption>Xiao {memory.before.version} with its extension, then {memory.after.version} with blocking built in. Medians of three runs; what remains is Zen's own add-ons. <a href={url('privacy/#memory')}>How it was measured</a></figcaption>
       </figure>
 
       <figure class="tour-card" role="tabpanel" id="panel-tor" aria-labelledby="tab-tor" data-panel="tor">

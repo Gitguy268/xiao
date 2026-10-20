@@ -22,7 +22,7 @@ A calm, private browser built on Zen: ad and tracker blocking built into the bro
 | | |
 | --- | --- |
 | Blocks ads and trackers | Built into the browser, not an extension. Ghostery's open-source engine with EasyList, EasyPrivacy and uBlock Origin's lists, prebuilt and refreshed daily, including hiding empty ad slots. Switch it off per site from the Xiao button. |
-| Uses less memory | With six busy sites open, 2,080 MB against 2,715 MB for Xiao 0.1's extension (one run each; [how it was measured](https://gitguy268.github.io/xiao/privacy/#memory)). |
+| Uses less memory | With six busy sites open, the add-on process holds 39 MB instead of 0.1's 290 MB, even after Firefox frees what it can. The whole browser uses 2,179 MB instead of 3,193 MB after a minute, and 1,821 MB instead of 2,026 MB after freeing memory. These are medians of three runs; [how it was measured](https://gitguy268.github.io/xiao/privacy/#memory). |
 | Hardens 79 settings | No telemetry or studies, strict tracking protection, HTTPS only, DNS over HTTPS, no early connections, WebRTC without local addresses. Six more settings keep idle processes and tabs from holding memory. Strict mode adds 10, including Tor Browser's fingerprinting resistance. [Full list](https://gitguy268.github.io/xiao/privacy/). |
 | Tor tabs | A "Tor" container whose tabs go through Tor, with a circuit per site (and a new one from the Xiao button) and WebRTC removed. If Tor stops, they fail; they never fall back to a direct connection. |
 | Xiao Search | Optional: your own [SearXNG](https://github.com/searxng/searxng), in Xiao's style, on this computer only and running only while Xiao does. |
@@ -59,7 +59,7 @@ Full builds from Zen's source are set up in [`fork/`](fork/README.md).
 - **The kit is a copy of Zen.** Xiao's code lives in its own copy, so Zen's own updater doesn't touch it. When Zen has updated, the next start of Xiao rebuilds the copy first, which takes a few seconds (on Windows, a little longer). macOS may then ask again for camera or microphone access.
 - **Builds are early.** The overlay applies to Zen's source and its patches import, but no full build has been compiled yet, and builds don't include Tor.
 - **Windows** is tested only by CI, and has no Xiao Search (SearXNG doesn't support it). Its Start menu shortcut has Xiao's icon, but the taskbar shows Zen's while Xiao runs.
-- **Filter lists** come with the release and then from Xiao's website once a day. Until the website publishes an engine, Xiao keeps the one it was installed with.
+- **Filter lists** come with the release and then, once a day, from the repository's `engine` release on GitHub. Until that release exists, Xiao keeps the engine it was installed with.
 
 <details>
 <summary><strong>How it works</strong></summary>

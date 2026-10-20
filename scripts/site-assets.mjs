@@ -5,8 +5,7 @@
 // Before an Astro build, copies into site/public:
 //   tokens.css, fonts/, favicon.svg  the shared design tokens, typefaces and mark
 //   demo/                            the real start page (core/start) with a stand-in for Xiao (site/demo/shim.mjs)
-//   engine/                          the prebuilt blocking engine Xiao updates from, if `npm run build` made one
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 
 const at = (p) => new URL(`../${p}`, import.meta.url).pathname;
 mkdirSync(at('site/public/fonts'), { recursive: true });
@@ -29,6 +28,3 @@ const withShim = page.replace('<script src="start.js" type="module"></script>',
   '<script src="shim.mjs" type="module"></script>\n  <script src="start.js" type="module"></script>');
 if (withShim === page) throw new Error('site-assets: start page script tag not found');
 writeFileSync(`${demo}/start/index.html`, withShim);
-
-rmSync(at('site/public/engine'), { recursive: true, force: true });
-if (existsSync(at('dist/engine'))) cpSync(at('dist/engine'), at('site/public/engine'), { recursive: true });

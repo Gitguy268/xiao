@@ -34,7 +34,7 @@ test('pageOf finds the page a request belongs to', () => {
 test('only what web pages ask for is filtered, not the browser\'s own requests', () => {
   assert.equal(fromWeb({ type: 'script', topUrl: 'https://news.example/' }), true);
   assert.equal(fromWeb({ type: 'xmlhttprequest', frameUrl: 'https://news.example/sw.js' }), true, 'service worker');
-  assert.equal(fromWeb({ type: 'other', system: true, url: 'https://gitguy268.github.io/xiao/engine/x.bin' }), false);
+  assert.equal(fromWeb({ type: 'other', system: true, url: 'https://github.com/Gitguy268/xiao/releases/download/engine/x.bin' }), false);
   assert.equal(fromWeb({ type: 'main_frame', system: true, url: 'https://typed.example/' }), true, 'pages typed in the address bar');
   assert.equal(fromWeb({ type: 'image', topUrl: 'resource://xiao/start/index.html' }), false, 'Xiao\'s own start page');
 });

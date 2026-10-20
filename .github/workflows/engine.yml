@@ -1,0 +1,32 @@
+name: Blocking engine
+
+# Daily: builds Xiao's blocking engine from the latest filter lists and puts it
+# in the "engine" release, where every Xiao looks once a day (core/Blocker.mjs).
+on:
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          XIAO_ENGINE_CACHE: '0'
+      - name: Publish to the engine release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view engine >/dev/null 2>&1 || gh release create engine --prerelease --title "Blocking engine" \
+            --notes "Xiao's prebuilt blocking engine, rebuilt daily from EasyList, EasyPrivacy and uBlock Origin's lists. Xiao downloads it by itself; there is nothing to install here."
+          gh release upload engine dist/engine/* --clobber

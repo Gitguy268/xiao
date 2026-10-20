@@ -20,6 +20,19 @@ export function setDefaults() {
   if (Services.prefs.getStringPref('browser.startup.homepage', '').startsWith('moz-extension://')) {
     Services.prefs.clearUserPref('browser.startup.homepage');
   }
+  forgetExtensionPrefs();
+}
+
+// Xiao 0.1's user.js let the official Zen load its unsigned extension. user.js
+// no longer sets these, but Firefox keeps them in prefs.js, so put them back
+// to Firefox's own values (only if they are still exactly what 0.1 set).
+const OLD = [['xpinstall.signatures.required', false], ['extensions.autoDisableScopes', 0], ['extensions.enabledScopes', 15]];
+function forgetExtensionPrefs() {
+  for (const [name, value] of OLD) {
+    if (!Services.prefs.prefHasUserValue(name)) continue;
+    const now = typeof value === 'boolean' ? Services.prefs.getBoolPref(name) : Services.prefs.getIntPref(name);
+    if (now === value) Services.prefs.clearUserPref(name);
+  }
 }
 
 export function choicesFromPrefs() {
