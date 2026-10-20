@@ -68,7 +68,7 @@ pgrep -f -- "-profile $PROFILE" >/dev/null 2>&1 && die "xiao is running. Quit it
 
 if [ "$UNINSTALL" = 1 ]; then
   [ -f "$DATA/tor.pid" ] && kill "$(cat "$DATA/tor.pid")" 2>/dev/null || true
-  rm -rf "$DATA" "$HOME/Applications/xiao.app" "${XDG_DATA_HOME:-$HOME/.local/share}/applications/xiao.desktop"
+  rm -rf "$DATA" "$HOME/Applications/xiao.app" "$HOME/Applications/xiao.app.new" "$HOME/Applications/xiao.app.old" "${XDG_DATA_HOME:-$HOME/.local/share}/applications/xiao.desktop"
   echo "xiao removed (profile, Tor and launcher). Zen itself was not touched."
   exit 0
 fi
@@ -144,7 +144,7 @@ if [ "$OS" = Darwin ]; then
   cp "$HERE/xiao.icns" "$HERE/branding/brand.ftl" "$HERE/branding/brand.properties" "$DATA/app-assets/"
   cp -R "$HERE/branding/content" "$DATA/app-assets/content"
   cp "$HERE/make-app.sh" "$DATA/make-app.sh"
-  sh "$DATA/make-app.sh" "$zen_app" "$DATA" || die "--zen must point into Zen.app on macOS"
+  sh "$DATA/make-app.sh" "$zen_app" "$DATA" || die "could not build xiao.app (see above)"
   ZEN="$HOME/Applications/xiao.app/Contents/MacOS/zen"
   say "App: ~/Applications/xiao.app (a copy of $zen_app, rebuilt when Zen updates)"
 fi
