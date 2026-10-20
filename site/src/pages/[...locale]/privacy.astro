@@ -2,25 +2,27 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+import memory from '../../data/memory.json'
 import Layout from '../../layouts/Layout.astro'
 import { readList, readSections } from '../../lib/prefs'
 import { localePaths, REPO } from '../../lib/site'
 
 export const getStaticPaths = localePaths
 const sections = readSections('balanced')
+const speed = readSections('speed')
 const strict = readList('strict')
 const show = (v: unknown) => (v === '' ? '""' : String(v))
 ---
 
-<Layout title="What xiao changes" description="Every setting xiao changes, and the few connections xiao itself makes.">
+<Layout title="What Xiao changes" description="Every setting Xiao changes, the connections Xiao itself makes, and how its memory use was measured.">
   <section class="page">
-    <h1>What xiao changes</h1>
+    <h1>What Xiao <em>changes</em></h1>
     <p class="lead">
-      This page is generated from the same settings files the browser uses, so it can't drift from what xiao actually does.
+      This page is generated from the same settings files the browser uses, so it can't drift from what Xiao actually does.
     </p>
 
     <h2>Settings</h2>
-    {sections.map((s) => (
+    {[...sections, ...speed].map((s) => (
       <details>
         <summary>{s.title} <span class="muted">({s.prefs.length})</span></summary>
         <p class="prose muted">{s.about}</p>
@@ -43,15 +45,33 @@ const show = (v: unknown) => (v === '' ? '""' : String(v))
       </div>
     </details>
 
-    <h2>Connections xiao itself makes</h2>
+    <h2>Connections Xiao itself makes</h2>
     <ul class="prose">
-      <li>Filter lists for blocking, from Ghostery's list mirror on <code>raw.githubusercontent.com</code>, once a day.</li>
+      <li>Once a day, a newer blocking engine (made from EasyList, EasyPrivacy and uBlock Origin's lists) from this website, <code>gitguy268.github.io</code>, checked against its SHA-256. If there isn't one, Xiao keeps the engine it was installed with.</li>
       <li>When the start page or toolbar shows Tor status: <code>check.torproject.org</code>, always through Tor.</li>
-      <li>Nothing else. There is no xiao server, account or telemetry.</li>
+      <li>With Xiao Search, your searches go from your own computer to the search engines SearXNG asks (by default Google, DuckDuckGo, Brave, Wikipedia and a few more), without cookies or an account.</li>
+      <li>Nothing else. There is no Xiao server, account or telemetry.</li>
     </ul>
     <p class="prose muted">
-      Zen and Firefox make their own connections (updates, Safe Browsing lists, certificate revocation lists). The
-      settings above switch off the ones that aren't needed for security. <a href={`${REPO}/tree/main/shared/prefs`}>Read the files.</a>
+      Zen and Firefox make their own connections (Safe Browsing lists, certificate revocation lists). The settings above
+      switch off the ones that aren't needed for security. <a href={`${REPO}/tree/main/shared/prefs`}>Read the files.</a>
+    </p>
+
+    <h2 id="memory">How memory was measured</h2>
+    <p class="prose">{memory.about}</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th scope="col"></th><th scope="col">Xiao {memory.before.version}</th><th scope="col">Xiao {memory.after.version}</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">All processes, settled</th><td>{memory.before.totalMB.toLocaleString('en')} MB</td><td>{memory.after.totalMB.toLocaleString('en')} MB</td></tr>
+          <tr><th scope="row">Extension process</th><td>{memory.before.extensionMB} MB (Xiao's blocker)</td><td>{memory.after.extensionMB} MB (Zen's own built-in add-ons)</td></tr>
+          <tr><th scope="row">After Firefox's "minimise memory"</th><td>{memory.before.minimisedMB.toLocaleString('en')} MB</td><td>{memory.after.minimisedMB.toLocaleString('en')} MB</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="prose muted">
+      Most of the difference is memory 0.1 held while settled and could give back. Busy sites move these numbers a lot
+      from run to run, so read them as a direction, not a promise. Run <code>node test/e2e/memory.mjs</code> to measure on your own machine.
     </p>
   </section>
 </Layout>

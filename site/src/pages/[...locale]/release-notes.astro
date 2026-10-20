@@ -1,0 +1,29 @@
+---
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// Like zen-browser/www's release notes, built from CHANGELOG.md.
+import Layout from '../../layouts/Layout.astro'
+import { releases } from '../../lib/changelog'
+import { localePaths, RELEASES, url } from '../../lib/site'
+
+export const getStaticPaths = localePaths
+const all = releases()
+---
+
+<Layout title="Xiao release notes" description="What changed in each Xiao release.">
+  <section class="page">
+    <h1>Release <em>notes</em></h1>
+    <p class="lead">
+      What changed in each version, from the changelog in the source. Follow them with the <a href={url('feed.xml')}>RSS feed</a>, or
+      get the files from <a href={RELEASES}>GitHub releases</a>.
+    </p>
+    {all.map((r) => (
+      <article class="release" id={`v${r.version}`}>
+        <h2>Xiao {r.version}</h2>
+        <time>{r.date}</time>
+        <Fragment set:html={r.html} />
+      </article>
+    ))}
+  </section>
+</Layout>

@@ -8,6 +8,10 @@
 //
 //   npm run build && npm run e2e            (ZEN=/path/to/zen to pick a Zen)
 //   E2E_TOR=0 npm run e2e                    skip the Tor checks (no network to tor)
+//   E2E_SEARCH=1 npm run e2e                 also install and check Xiao Search (needs uv or Python 3.10+)
+//
+// The test install uses Tor port 9170 (XIAO_TOR_PORT), so it can run while
+// a real Xiao has 9160.
 import { execFileSync, spawn } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
@@ -21,6 +25,8 @@ const root = new URL('../..', import.meta.url).pathname;
 const out = process.env.E2E_OUT ?? join(root, 'test/e2e/out');
 const WIN = process.platform === 'win32';
 const WANT_TOR = process.env.E2E_TOR !== '0';
+const WANT_SEARCH = process.env.E2E_SEARCH === '1';
+const START = 'resource://xiao/start/index.html';
 const HOST = 'news.xiao-test.example';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -46,11 +52,14 @@ async function until(what, fn, timeoutMs) {
 
 // --- throwaway home + install ---
 const home = mkdtempSync(join(process.env.RUNNER_TEMP ?? tmpdir(), 'xiao-e2e-'));
-const env = { ...process.env, HOME: home, APPDATA: join(home, 'AppData'), MOZ_HEADLESS_WIDTH: '1440', MOZ_HEADLESS_HEIGHT: '900' };
+const env = {
+  ...process.env, HOME: home, APPDATA: join(home, 'AppData'), LOCALAPPDATA: join(home, 'LocalAppData'),
+  MOZ_HEADLESS_WIDTH: '1440', MOZ_HEADLESS_HEIGHT: '900', XIAO_TOR_PORT: process.env.XIAO_TOR_PORT ?? '9170',
+};
 delete env.XDG_DATA_HOME;
 mkdirSync(env.APPDATA, { recursive: true });
 const kit = join(root, 'dist/kit');
-const flags = WANT_TOR ? ['--tor'] : [];
+const flags = [...(WANT_TOR ? ['--tor'] : []), ...(WANT_SEARCH ? ['--search'] : [])];
 if (WIN) {
   execFileSync('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', join(kit, 'install.ps1'),
     ...(WANT_TOR ? ['-Tor'] : []), ...(process.env.ZEN ? ['-Zen', process.env.ZEN] : [])], { env, stdio: 'inherit' });
@@ -87,17 +96,18 @@ const launch = () => (WIN
 const exited = (child) => new Promise((r) => (child.exitCode !== null ? r() : child.once('exit', r)));
 // macOS: pretend Zen.app updated since the install, so the launcher has to rebuild xiao.app first.
 const MAC = process.platform === 'darwin';
-const zenBuild = () => readFileSync(join(data, 'zen-build'), 'utf8').trim();
-if (MAC) writeFileSync(join(data, 'zen-build'), 'older\n');
-let launcher = launch();
-const torAlive = () => {
+const pidAlive = (file) => {
   try {
-    process.kill(Number(readFileSync(join(data, 'tor.pid'), 'utf8')), 0);
+    process.kill(Number(readFileSync(join(data, file), 'utf8')), 0);
     return true;
   } catch {
     return false;
   }
 };
+const zenBuild = () => readFileSync(join(data, 'zen-build'), 'utf8').trim();
+if (MAC) writeFileSync(join(data, 'zen-build'), 'older\n');
+let launcher = launch();
+const torAlive = () => pidAlive('tor.pid');
 
 let m;
 try {
@@ -117,28 +127,35 @@ try {
   const loaded = (handle) => until('page load', () => m.content(handle, () =>
     document.readyState === 'complete' && document.documentURI !== 'about:blank' && document.documentURI), 60_000);
 
-  // 1. extension, new tab, container
-  const state = await until('xiao extension', () => m.chrome(async () => {
+  // 1. Xiao's built-in code, the start page at launch, the Tor container
+  const state = await until('Xiao core', () => m.chrome(async () => {
+    const { Xiao } = ChromeUtils.importESModule('resource://xiao/XiaoCore.sys.mjs');
     const { AddonManager } = mod('toolkit/mozapps/extensions/AddonManager.sys.mjs');
     const { AboutNewTab } = mod('browser/modules/AboutNewTab.sys.mjs');
     const { ContextualIdentityService } = mod('toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs');
-    const addon = await AddonManager.getAddonByID('xiao@gitguy268.github.io');
-    const tor = ContextualIdentityService.getPublicIdentities().some((i) => i.name === 'Tor');
-    return addon?.isActive && tor && { version: addon.version, newtab: AboutNewTab.newTabURL, zen: Services.appinfo.version };
+    await Xiao.ready;
+    const w = Services.wm.getMostRecentWindow('navigator:browser');
+    const tor = ContextualIdentityService.getPublicIdentities().some((i) => i.userContextId === Xiao.tor.torId);
+    const addons = (await AddonManager.getAddonsByTypes(['extension'])).filter((a) => !a.isBuiltin && !a.isSystem).map((a) => a.id);
+    return Xiao.started && !!Xiao.blocker.engine && tor && w?.gBrowser && {
+      newtab: AboutNewTab.newTabURL, zen: Services.appinfo.version, addons,
+      first: w.gBrowser.tabs.map((t) => t.linkedBrowser.currentURI.spec),
+    };
   }), 60_000);
-  check('xiao extension is active', true, `v${state.version} on Zen ${state.zen}`);
-  check('new tab is the xiao start page', state.newtab.endsWith('/newtab/index.html'), state.newtab);
+  check('Xiao\'s built-in code is running, with no extension', state.addons.length === 0, `Zen ${state.zen}${state.addons.length ? `, add-ons: ${state.addons}` : ''}`);
+  check('new tab is the Xiao start page', state.newtab === START, state.newtab);
+  check('Xiao starts on the start page', state.first.includes(START), state.first.join(' '));
   check('Tor container exists', true);
   if (MAC) {
     const ini = readFileSync(join(readFileSync(join(data, 'zen-app'), 'utf8').trim(), 'Contents/Resources/application.ini'), 'utf8');
     const want = ini.match(/^BuildID=(.*)$/m)[1];
-    const id = execFileSync('/usr/libexec/PlistBuddy', ['-c', 'Print :CFBundleIdentifier',
-      join(home, 'Applications/xiao.app/Contents/Info.plist')], { encoding: 'utf8' }).trim();
-    check('xiao.app is rebuilt after a Zen update', zenBuild() === want && id === 'io.github.gitguy268.xiao', `${zenBuild()} ${id}`);
+    const id = execFileSync('/usr/libexec/PlistBuddy', ['-c', 'Print :CFBundleIdentifier', '-c', 'Print :CFBundleName',
+      join(home, 'Applications/Xiao.app/Contents/Info.plist')], { encoding: 'utf8' }).trim().replace('\n', ' ');
+    check('Xiao.app is rebuilt after a Zen update', zenBuild() === want && id === 'io.github.gitguy268.xiao Xiao', `${zenBuild()} ${id}`);
   }
 
   // 2. prefs from user.js are in effect
-  const expected = [...merge(readPrefs('balanced'), readPrefs('kit'))];
+  const expected = [...merge(readPrefs('balanced'), readPrefs('speed'), readPrefs('look'), readPrefs('kit'))];
   const prefs = await m.chrome((list) => list.map(([name]) => {
     const t = Services.prefs.getPrefType(name);
     const value = t === 128 ? Services.prefs.getBoolPref(name) : t === 64 ? Services.prefs.getIntPref(name)
@@ -150,26 +167,45 @@ try {
   const unknown = prefs.filter(([, , known]) => !known).map(([n]) => n);
   if (unknown.length) console.log(`info: prefs Zen does not define by default (still set): ${unknown.join(', ')}`);
 
-  // 3. start page renders and lists download
-  const newtab = await openTab(state.newtab);
-  await loaded(newtab);
-  const status = await until('filter lists', () => m.content(newtab, () => {
+  // Xiao's defaults for new tabs and starting, kept as defaults so the start page's choices stick.
+  const defaults = await m.chrome(() => [Services.prefs.getBoolPref('zen.urlbar.replace-newtab'),
+    Services.prefs.getIntPref('browser.startup.page'), Services.prefs.getStringPref('browser.startup.homepage')]);
+  check('Ctrl+T opens the start page, not the floating bar', defaults[0] === false, `replace-newtab=${defaults[0]}`);
+
+  // 3. start page renders, and Ctrl+T opens it
+  const newtab = await m.chrome(async () => {
+    const w = Services.wm.getMostRecentWindow('navigator:browser');
+    w.BrowserCommands.openTab();
+    const { NavigableManager } = mod('remote/shared/NavigableManager.sys.mjs');
+    return NavigableManager.getIdForBrowser(w.gBrowser.selectedBrowser);
+  });
+  const opened = await loaded(newtab);
+  check('a new tab shows the start page', opened === START, opened);
+  const status = await until('start page status', () => m.content(newtab, () => {
     const t = document.getElementById('status').textContent;
-    return !/Downloading|Checking/.test(t) && t;
-  }), 120_000);
+    return !/Checking/.test(t) && t;
+  }), 30_000);
   check('start page reports protection', /ads and trackers blocked/.test(status), status);
-  // Screenshots for the website, taken once Tor is up so the status line is real.
-  const screenshots = async () => {
+  const font = await m.content(newtab, () => getComputedStyle(document.body).fontFamily);
+  check('start page uses Bricolage Grotesque', /Bricolage/.test(font), font);
+
+  // shoot(handle, name): <name>-light.png and <name>-dark.png, with every page following the theme.
+  const shoot = async (handle, name) => {
     mkdirSync(out, { recursive: true });
     await m.send('WebDriver:SetWindowRect', { width: 1440, height: 900 }).catch(() => {});
+    for (const [theme, override] of [['light', 1], ['dark', 0]]) {
+      await m.chrome((o) => Services.prefs.setIntPref('layout.css.prefers-color-scheme.content-override', o), override);
+      await sleep(600);
+      writeFileSync(join(out, `${name}-${theme}.png`), await m.screenshot(handle));
+    }
+    await m.chrome(() => Services.prefs.clearUserPref('layout.css.prefers-color-scheme.content-override'));
+  };
+  // Screenshots for the website, taken once Tor is up so the status line is real.
+  const screenshots = async () => {
     await m.content(newtab, () => location.reload());
     await loaded(newtab);
     await sleep(2500);
-    for (const theme of ['light', 'dark']) {
-      await m.content(newtab, (t) => { document.documentElement.dataset.theme = t; }, theme);
-      await sleep(400);
-      writeFileSync(join(out, `start-${theme}.png`), await m.screenshot(newtab));
-    }
+    await shoot(newtab, 'start');
   };
   if (!WANT_TOR) await screenshots();
 
@@ -221,6 +257,14 @@ try {
     }, 180_000);
     check('Tor tab goes through Tor', viaTor.IsTor === true, viaTor.IP);
     await screenshots();
+    const torStart = await openTab(START, { tor: true });
+    await loaded(torStart);
+    const torSays = await until('Tor start page', () => m.content(torStart, () => {
+      const t = document.getElementById('status').textContent;
+      return /Tor is connected/.test(t) && t;
+    }), 30_000).catch((e) => e.message);
+    check('Xiao sees Tor connected (start page in a Tor tab)', /Tor is connected/.test(torSays), torSays.slice(0, 90));
+    await shoot(torStart, 'tor-start');
     const plain = await openTab('https://check.torproject.org/api/ip');
     await loaded(plain);
     const direct = await ipOf(plain);
@@ -254,13 +298,10 @@ try {
     }, 180_000).catch((e) => e.message);
     check('Tor tab search reaches the onion service', /^https:\/\/[a-z2-7]{56}\.onion\//.test(onionUri), onionUri.slice(0, 80));
 
-    // "New Tor circuit for this site" (popup): the next load of the site uses another exit.
-    const ext = await openTab(state.newtab.replace('/newtab/index.html', '/popup/index.html'));
-    await loaded(ext);
+    // "New Tor circuit for this site" (toolbar panel): the next load of the site uses another exit.
     const exits = [viaTor.IP];
     for (let i = 0; i < 3 && exits.at(-1) === viaTor.IP; i++) {
-      await m.content(ext, () => (window.wrappedJSObject ?? window).browser.runtime
-        .sendMessage({ xiao: 'newCircuit', host: 'check.torproject.org' }).then(() => true));
+      await m.chrome(() => ChromeUtils.importESModule('resource://xiao/XiaoCore.sys.mjs').Xiao.tor.newCircuit('check.torproject.org'));
       await m.content(torTab, () => location.reload());
       await sleep(1000);
       const next = await until('new circuit', async () => (await loaded(torTab).catch(() => null)) && ipOf(torTab), 60_000).catch(() => null);
@@ -274,9 +315,13 @@ try {
     check('a second launch leaves Tor running', torAlive());
 
     // Restart with a Tor tab selected: the restored tab must never load directly,
-    // even though it starts loading before the extension knows the Tor container.
+    // Xiao's Tor routing is in place before session restore starts.
     // The tab first fails (tor stopped), so after the restart it has to load fresh, not from cache.
+    // The start page's "When Xiao starts: the tabs from last time" (it starts on the start page by default).
+    const saved = await m.content(newtab, () => window.xiao.call('get').then((s) =>
+      window.xiao.call('save', { ...s.settings, launch: 'restore' })).then((s) => s.launch));
     const restoreOn = await m.chrome(() => Services.prefs.getIntPref('browser.startup.page'));
+    check('the start page can switch to restoring tabs', saved === 'restore' && restoreOn === 3, `${saved}, browser.startup.page=${restoreOn}`);
     process.kill(Number(readFileSync(join(data, 'tor.pid'), 'utf8')));
     await sleep(1500);
     await openTab('https://check.torproject.org/api/ip?restored', { tor: true });
@@ -316,15 +361,56 @@ try {
     check('with tor stopped, Tor tabs fail closed', /e=proxyConnectFailure/.test(after), after.slice(0, 60));
   }
 
-  // 7. popup page renders
-  const popupUrl = state.newtab.replace('/newtab/index.html', '/popup/index.html');
-  const popup = await openTab(popupUrl);
-  await loaded(popup);
-  await sleep(1500);
-  const popupText = await m.content(popup, () => document.getElementById('count').textContent);
-  check('popup reports counts', /blocked/.test(popupText), popupText);
+  // 7. the toolbar panel, the browser's own look, and the start page's bridge
+  const ui = await m.chrome(async () => {
+    const { Xiao } = ChromeUtils.importESModule('resource://xiao/XiaoCore.sys.mjs');
+    const w = Services.wm.getMostRecentWindow('navigator:browser');
+    const doc = w.document;
+    const view = doc.getElementById('PanelUI-xiao');
+    await Xiao.toolbar.fill(view);
+    const ext = doc.getElementById('unified-extensions-button');
+    return {
+      button: !!doc.getElementById('xiao-button'),
+      count: view.querySelector('#xiao-count')?.textContent,
+      extensions: ext ? w.getComputedStyle(ext).display : 'none',
+      font: w.getComputedStyle(doc.getElementById('urlbar-input') ?? doc.documentElement).fontFamily,
+    };
+  });
+  check('toolbar panel reports counts', ui.button && /blocked/.test(ui.count), ui.count);
+  check('no extensions button without extensions', ui.extensions === 'none', ui.extensions);
+  check('browser UI uses Bricolage Grotesque', /Bricolage/.test(ui.font), ui.font);
+  const web = await openTab(`http://127.0.0.1:${port}/page.html`); // tabs from before a restart are gone
+  await loaded(web);
+  const bridge = await m.content(web, () => typeof window.xiao);
+  check('web pages have no bridge to Xiao', bridge === 'undefined', bridge);
 
-  await m.chrome(() => Services.startup.quit(Ci.nsIAppStartup.eForceQuit)).catch(() => {});
+  // The start page's "A new tab opens: Zen's floating address bar".
+  const startTab = await openTab(START);
+  await loaded(startTab);
+  const floating = await m.content(startTab, () => window.xiao.call('get').then((s) =>
+    window.xiao.call('save', { ...s.settings, newtab: 'floating' })).then((s) => s.newtab));
+  const replace = await m.chrome(() => Services.prefs.getBoolPref('zen.urlbar.replace-newtab'));
+  check('the start page can switch new tabs to the floating bar', floating === 'floating' && replace === true, `${floating}, replace-newtab=${replace}`);
+
+  if (WANT_SEARCH) {
+    const html = await until('Xiao Search', async () => {
+      const r = await fetch('http://127.0.0.1:8890/');
+      return r.ok && r.text();
+    }, 60_000).catch((e) => e.message);
+    check('Xiao Search answers on 8890 in Xiao\'s style', /<title>Xiao Search<\/title>/.test(html) && /xiao\.css/.test(html), html.slice(0, 80));
+    const local = await m.content(startTab, () => window.xiao.call('get').then((s) => s.local));
+    const results = await openTab('http://127.0.0.1:8890/search?q=zen+browser');
+    await loaded(results);
+    await sleep(1500);
+    await shoot(results, 'search');
+    check('the start page searches with Xiao Search', /127\.0\.0\.1:8890/.test(local), local);
+  }
+
+  await m.chrome(() => Services.startup.quit(Ci.nsIAppStartup.eAttemptQuit)).catch(() => {});
+  if (WANT_SEARCH) {
+    await Promise.race([exited(launcher), sleep(30_000)]);
+    check('Xiao Search stops when Xiao quits', !pidAlive('searxng.pid'));
+  }
 } catch (e) {
   check('e2e run', false, e.message);
 } finally {

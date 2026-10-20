@@ -10,10 +10,10 @@ export const getStaticPaths = localePaths
 const zip = `${RELEASES}/latest/download/xiao-kit.zip`
 ---
 
-<Layout title="Download xiao" description="Install xiao on macOS, Windows or Linux.">
+<Layout title="Download Xiao" description="Install Xiao on macOS, Windows or Linux.">
   <section class="page">
-    <h1>Download xiao</h1>
-    <p class="lead">The kit adds xiao to Zen in a few seconds. Your normal Zen profile isn't touched.</p>
+    <h1>Download <em>Xiao</em></h1>
+    <p class="lead">The kit makes Xiao from the Zen you already have, in about a minute. Your own Zen and its profile aren't touched.</p>
 
     <div class="tabs" role="tablist" aria-label="Operating system">
       <button role="tab" type="button" data-os="mac" aria-selected="true">macOS</button>
@@ -25,8 +25,8 @@ const zip = `${RELEASES}/latest/download/xiao-kit.zip`
       <ol class="steps">
         <li>Install <a href="https://zen-browser.app/download/">Zen Browser</a> if you don't have it.</li>
         <li>Download <a href={zip}><code>xiao-kit.zip</code></a> from the latest release and unzip it.</li>
-        <li>Open Terminal in the unzipped folder and run:<pre><code>sh install.sh --tor</code></pre></li>
-        <li>Open <strong>xiao</strong> from the Applications folder in your home folder.</li>
+        <li>Open Terminal in the unzipped folder and run:<pre><code>sh install.sh --tor --search</code></pre></li>
+        <li>Open <strong>Xiao</strong> from the Applications folder in your home folder.</li>
       </ol>
     </div>
     <div data-os-panel="windows" role="tabpanel" hidden>
@@ -34,15 +34,15 @@ const zip = `${RELEASES}/latest/download/xiao-kit.zip`
         <li>Install <a href="https://zen-browser.app/download/">Zen Browser</a> if you don't have it.</li>
         <li>Download <a href={zip}><code>xiao-kit.zip</code></a> from the latest release and unzip it.</li>
         <li>Open PowerShell in the unzipped folder and run:<pre><code>powershell -ExecutionPolicy Bypass -File install.ps1 -Tor</code></pre></li>
-        <li>Open <strong>xiao</strong> from the Start menu.</li>
+        <li>Open <strong>Xiao</strong> from the Start menu.</li>
       </ol>
     </div>
     <div data-os-panel="linux" role="tabpanel" hidden>
       <ol class="steps">
-        <li>Install <a href="https://zen-browser.app/download/">Zen Browser</a> (tarball, AppImage or Flatpak).</li>
+        <li>Install <a href="https://zen-browser.app/download/">Zen Browser</a> from its tarball. Xiao makes its own copy of Zen, and the Flatpak can't be copied.</li>
         <li>Download <a href={zip}><code>xiao-kit.zip</code></a> from the latest release and unzip it.</li>
-        <li>In a terminal in the unzipped folder, run:<pre><code>sh install.sh --tor</code></pre></li>
-        <li>Open <strong>xiao</strong> from your applications menu.</li>
+        <li>In a terminal in the unzipped folder, run:<pre><code>sh install.sh --tor --search</code></pre></li>
+        <li>Open <strong>Xiao</strong> from your applications menu.</li>
       </ol>
     </div>
 
@@ -51,18 +51,25 @@ const zip = `${RELEASES}/latest/download/xiao-kit.zip`
       <table>
         <thead><tr><th scope="col">macOS and Linux</th><th scope="col">Windows</th><th scope="col">What it does</th></tr></thead>
         <tbody>
-          <tr><td><code>--tor</code></td><td><code>-Tor</code></td><td>Downloads Tor (about 20 MB, checked against a pinned hash) for Tor tabs. Tor only runs while xiao is open.</td></tr>
+          <tr><td><code>--tor</code></td><td><code>-Tor</code></td><td>Downloads Tor (about 20 MB, checked against a pinned hash) for Tor tabs. Tor only runs while Xiao is open.</td></tr>
+          <tr><td><code>--search</code></td><td>Not available</td><td>Installs Xiao Search, a SearXNG of your own on this computer, and makes it the start page's search. It runs only while Xiao is open. Needs <a href="https://docs.astral.sh/uv/">uv</a> or Python 3.10 or newer.</td></tr>
           <tr><td><code>--strict</code></td><td><code>-Strict</code></td><td>Adds fingerprinting resistance, DNS over HTTPS only, and clears cookies when you quit. Some sites behave differently.</td></tr>
-          <tr><td><code>--ubo</code></td><td><code>-Ubo</code></td><td>Also installs uBlock Origin from addons.mozilla.org.</td></tr>
-          <tr><td><code>--uninstall</code></td><td><code>-Uninstall</code></td><td>Removes xiao's profile, Tor and launcher. Zen stays.</td></tr>
+          <tr><td><code>--uninstall</code></td><td><code>-Uninstall</code></td><td>Removes Xiao's copy of Zen, its profile, Tor, Xiao Search and the launcher. Zen stays.</td></tr>
         </tbody>
       </table>
     </div>
 
+    <h2>Coming from Xiao 0.1</h2>
+    <p class="prose">
+      Run the new installer with the options you want. It replaces 0.1's extension with Xiao's built-in code and
+      removes the uBlock Origin it may have added. On macOS the app becomes <code>Xiao.app</code>. Your profile, bookmarks
+      and Tor tabs stay. The start page's links and settings start fresh.
+    </p>
+
     <h2>Builds from source</h2>
     <p class="prose">
-      Full xiao builds are made from Zen's source by the <a href={`${REPO}/actions`}>build workflow</a> and attached
-      to <a href={RELEASES}>releases</a>. macOS builds aren't notarised: the first time, Control-click the app and choose Open.
+      Full Xiao builds from Zen's source are set up in <a href={`${REPO}/tree/main/fork`}>the repository's fork folder</a>
+      and its <a href={`${REPO}/actions`}>build workflow</a>; none has been compiled yet.
     </p>
   </section>
 </Layout>

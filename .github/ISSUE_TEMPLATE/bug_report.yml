@@ -44,7 +44,7 @@ body:
     id: versions
     attributes:
       label: Versions
-      description: xiao version, Zen version (Help > About), and installer options (--tor, --strict, --ubo).
+      description: Xiao version, Zen version (Help > About), and installer options (--tor, --strict, --search).
       placeholder: e.g. xiao 0.1.0, Zen 1.23.3b, --tor
     validations:
       required: true

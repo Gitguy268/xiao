@@ -5,7 +5,7 @@ import { buildUserJs, merge, readPrefs, toUserJs } from '../scripts/userjs.mjs';
 const prefsOf = (js) => new Map([...js.matchAll(/^user_pref\("([^"]+)", (.*)\);$/gm)].map(([, n, v]) => [n, JSON.parse(v)]));
 
 test('each YAML file names a pref once', () => {
-  for (const name of ['balanced', 'look', 'strict', 'kit']) {
+  for (const name of ['balanced', 'speed', 'look', 'strict', 'kit']) {
     const names = readPrefs(name).map((p) => p.name);
     assert.deepEqual(names.filter((n, i) => names.indexOf(n) !== i), [], name);
   }
@@ -26,8 +26,20 @@ test('balanced keeps Zen usable and Safe Browsing on', () => {
   assert.equal(p.get('browser.safebrowsing.malware.enabled'), true);
   assert.equal(p.get('browser.safebrowsing.downloads.remote.enabled'), false);
   assert.equal(p.get('network.trr.mode'), 2);
-  assert.equal(p.get('xpinstall.signatures.required'), false, 'kit prefs included');
+  assert.equal(p.get('browser.shell.checkDefaultBrowser'), false, 'kit prefs included');
+  assert.equal(p.get('xpinstall.signatures.required'), undefined, 'no add-on signing exceptions: Xiao has no extension');
+  assert.equal(p.get('dom.ipc.processPrelaunch.fission.number'), 1, 'speed prefs included');
   assert.equal(p.get('zen.theme.accent-color'), '#e70923', 'look prefs included');
+});
+
+test('speed prefs never raise memory limits or loosen site isolation', () => {
+  const names = readPrefs('speed').map((p) => p.name);
+  for (const n of names) assert.doesNotMatch(n, /fission\.autostart|webIsolated|cache\.memory|readahead|max-connections$/, n);
+});
+
+test('the start page choices are defaults, not user.js prefs, so they survive a restart', () => {
+  const p = prefsOf(buildUserJs('balanced'));
+  for (const n of ['zen.urlbar.replace-newtab', 'browser.startup.page', 'browser.startup.homepage']) assert.equal(p.get(n), undefined, n);
 });
 
 test('strict overrides balanced', () => {

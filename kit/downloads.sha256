@@ -1,9 +1,10 @@
 # Pinned downloads. Tor hashes are from sha256sums-signed-build.txt for Tor
 # Browser 15.0.25, checked against the Tor Browser Developers signing key
 # (EF6E 286D DA85 EA2A 4BA7 DE68 4E2C 6E87 9329 8290) on 2026-10-19.
-# uBlock Origin 1.75.0 (GPL-3.0, optional --ubo) hash is from addons.mozilla.org.
+# SearXNG (AGPL-3.0, optional --search) is GitHub's archive of the pinned commit,
+# hashed when it was pinned on 2026-10-20.
 a3febb6179152b0b4f56a0f5cc57bf5cc8ecef7db35e7c3e9d5a044c8158c26c  tor-expert-bundle-macos-aarch64-15.0.25.tar.gz
 e1ae4d4a734d28bb590839188511deb3cebc26fcbce9df66d01b2c452060fe95  tor-expert-bundle-macos-x86_64-15.0.25.tar.gz
 19cf18726eecb362e0f21d27afa9ea9efe5da928bfdfbb1ceb5fe54519e87f4a  tor-expert-bundle-linux-x86_64-15.0.25.tar.gz
 c1988c701de2f24f7d098d1d6d7f507b58f27740d097f29c246e0524d639b252  tor-expert-bundle-windows-x86_64-15.0.25.tar.gz
-5b74415860456370644bd80f16125e865b0e6c356bb5dfcfb84069967eaa5287  ublock_origin-1.75.0.xpi
+c8b2defd0c91401f25efc43d10a1d7ed88642705489da51c520ec60fd98eb559  searxng-81371861f67226091d1c4df2e3908a11d3b54eb9.tar.gz

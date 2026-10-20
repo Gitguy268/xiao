@@ -2,16 +2,57 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// Laid out like zen-browser.app's footer: a closing call to download, then
+// columns of links. The mark stays in the header only.
 import { getUI, REPO, url } from '../lib/site'
 const { footer } = getUI(Astro.currentLocale)
+const columns = [
+  {
+    title: 'Xiao',
+    links: [
+      [url('download/'), 'Download'],
+      [url('privacy/'), 'What Xiao changes'],
+      [url('release-notes/'), 'Release notes'],
+      [url('feed.xml'), 'Release notes feed (RSS)'],
+    ],
+  },
+  {
+    title: 'Project',
+    links: [
+      [REPO, 'Source on GitHub'],
+      [`${REPO}/issues`, 'Report a problem'],
+      [`${REPO}/blob/main/DESIGN.md`, 'Design rules'],
+      [url('about/'), 'Credits'],
+    ],
+  },
+  {
+    title: 'Built on',
+    links: [
+      ['https://zen-browser.app', 'Zen Browser'],
+      ['https://www.mozilla.org/firefox/', 'Firefox'],
+      ['https://github.com/ghostery/adblocker', "Ghostery's adblocker"],
+      ['https://www.torproject.org/', 'Tor'],
+      ['https://github.com/searxng/searxng', 'SearXNG'],
+    ],
+  },
+]
 ---
 
 <footer class="foot">
-  <p>{footer.licence}</p>
-  <p>{footer.affiliation}</p>
-  <p class="foot-links">
-    <a href={REPO}>Source on GitHub</a>
-    <a href={url('privacy/')}>What xiao changes</a>
-    <a href={url('about/')}>Credits</a>
-  </p>
+  <div class="foot-inner">
+    <section class="foot-cta" data-reveal>
+      <h2>Try <em>Xiao</em> today.</h2>
+      <p>Free, open source, and it leaves your Zen as it is.</p>
+      <a class="button primary" href={url('download/')}>Download Xiao</a>
+    </section>
+    <div class="foot-cols">
+      {columns.map((c) => (
+        <nav aria-label={c.title}>
+          <h3>{c.title}</h3>
+          <ul>{c.links.map(([href, label]) => <li><a href={href}>{label}</a></li>)}</ul>
+        </nav>
+      ))}
+    </div>
+    <p class="foot-legal">{footer.licence} {footer.affiliation}</p>
+  </div>
 </footer>

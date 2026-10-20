@@ -28,9 +28,9 @@ export function toUserJs(prefs, header = '') {
 }
 
 export function buildUserJs(level) {
-  const lists = [readPrefs('balanced'), readPrefs('look'), readPrefs('kit')];
+  const lists = [readPrefs('balanced'), readPrefs('speed'), readPrefs('look'), readPrefs('kit')];
   if (level === 'strict') lists.push(readPrefs('strict'));
-  const header = `// xiao ${level} prefs. Generated from shared/prefs/*.yaml; re-applied at every start.\n` +
+  const header = `// Xiao ${level} prefs. Generated from shared/prefs/*.yaml; re-applied at every start.\n` +
     '// Edit the YAML and reinstall rather than this file.\n\n';
   return toUserJs(merge(...lists), header);
 }

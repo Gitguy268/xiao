@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Minimal zip writer (deflate, no zip64) so building the .xpi needs no zip tool.
+// Minimal zip writer (deflate, no zip64) so building the kit's zip needs no zip tool.
 import { crc32, deflateRawSync } from 'node:zlib';
 
 export function zip(files) { // files: [[name, Buffer]]

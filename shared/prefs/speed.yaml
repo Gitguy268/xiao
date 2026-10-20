@@ -1,0 +1,24 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Xiao's speed and memory settings, for the kit and the fork (same schema as
+# balanced.yaml). Only settings that don't make the browser hold more memory:
+# most speed tweaks (longer media read-ahead, more connections, bigger
+# buffers) trade memory for speed. Site isolation keeps Firefox's defaults.
+# Ideas from Betterfox's Fastfox.js (MIT) and rapidfox (CC0). See NOTICE.
+
+# --- Speed and memory ---
+# Pages appear a little sooner, and fewer idle processes and tabs stay in memory. Tabs that were unloaded reload when you open them.
+- name: content.notify.interval
+  value: 100000
+- name: network.http.max-persistent-connections-per-server
+  value: 10
+- name: dom.ipc.processPrelaunch.fission.number
+  value: 1
+- name: browser.sessionstore.interval
+  value: 60000
+- name: browser.tabs.min_inactive_duration_before_unload
+  value: 300000
+- name: zen.tab-unloader.timeout-minutes
+  value: 15

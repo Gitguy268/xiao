@@ -1,0 +1,12 @@
+{
+  "name": "Xiao",
+  "short_name": "Xiao",
+  "start_url": "/xiao/",
+  "display": "browser",
+  "background_color": "#eeeee7",
+  "theme_color": "#e70923",
+  "icons": [
+    { "src": "/xiao/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/xiao/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

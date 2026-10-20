@@ -6,9 +6,10 @@
 // privacy page, keeping the "# --- Section ---" headings and their notes.
 import { parse } from 'yaml'
 import balanced from '../../../shared/prefs/balanced.yaml?raw'
+import speed from '../../../shared/prefs/speed.yaml?raw'
 import strict from '../../../shared/prefs/strict.yaml?raw'
 
-const FILES = { balanced, strict }
+const FILES = { balanced, speed, strict }
 type File = keyof typeof FILES
 
 export interface Pref { name: string; value: string | number | boolean }

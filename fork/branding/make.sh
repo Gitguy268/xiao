@@ -4,13 +4,15 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # Renders fork/branding/release/ (the file set Zen's configs/branding/release
-# has) from the SVGs in source/, plus the kit's app icons (kit/xiao.*). Needs rsvg-convert and ImageMagick; on macOS
-# iconutil makes the .icns, elsewhere png2icns (icnsutils).
+# has) from the SVGs in source/, plus the kit's app icons (kit/xiao.*) and the
+# website's favicons. Needs rsvg-convert, ImageMagick and uv (for the wordmark);
+# on macOS iconutil makes the .icns, elsewhere png2icns (icnsutils).
 set -eu
 cd "$(dirname "$0")"
 OUT=release
 rm -rf "$OUT" && mkdir -p "$OUT/content"
 png() { rsvg-convert -w "$2" -h "$2" "source/$1.svg" -o "$3"; }
+uvx --quiet --with brotli --from fonttools python wordmark.py ../../shared/fonts/junicode-italic-latin.woff2 Xiao > source/wordmark.svg
 
 for s in 16 22 24 32 48 64 128 256 512 1024; do png app-icon "$s" "$OUT/logo$s.png"; done
 cp "$OUT/logo1024.png" "$OUT/logo.png"
@@ -57,5 +59,14 @@ for s in 16 32 48 64 128; do cp "$OUT/logo$s.png" "$kit/branding/content/icon$s.
 cp source/app-icon.svg ../../kit/xiao.svg
 cp "$OUT/firefox.icns" ../../kit/xiao.icns
 cp "$OUT/firefox.ico" ../../kit/xiao.ico
+# The website: the bare mark for browsers that take SVG, the app icon for the rest
+# (an idea from rodneylab/open-source-favicon-generation, BSD-3-Clause).
+site=../../site/public
+rsvg-convert -w 32 -h 32 ../../core/icons/xiao.svg -o "$tmp/m32.png"
+rsvg-convert -w 16 -h 16 ../../core/icons/xiao.svg -o "$tmp/m16.png"
+magick "$tmp/m16.png" "$tmp/m32.png" "$site/favicon.ico"
+png app-icon 180 "$site/apple-touch-icon.png"
+png app-icon 192 "$site/icon-192.png"
+png app-icon 512 "$site/icon-512.png"
 rm -rf "$tmp"
-echo "branding written to $(pwd)/$OUT, kit/xiao.{svg,icns,ico} and kit/branding/content"
+echo "branding written to $(pwd)/$OUT, kit/xiao.{svg,icns,ico}, kit/branding/content and the site's icons"

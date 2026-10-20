@@ -1,0 +1,123 @@
+---
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// The feature tour, after zen-browser.app's: tabs in front of a stack of
+// pictures, where the chosen one comes forward and the rest sit tilted
+// behind. Plain CSS and a few lines of script; without script every
+// feature is listed in turn.
+import { Image } from 'astro:assets'
+import searchDark from '../assets/search-dark.png'
+import searchLight from '../assets/search-light.png'
+import torDark from '../assets/tor-start-dark.png'
+import torLight from '../assets/tor-start-light.png'
+import memory from '../data/memory.json'
+import { readList, readSections } from '../lib/prefs'
+import { url } from '../lib/site'
+
+const saved = memory.before.totalMB - memory.after.totalMB
+const sections = readSections('balanced')
+const prefCount = readList('balanced').length
+const shot = { widths: [720, 1440], sizes: '(max-width: 900px) 100vw, 760px', loading: 'lazy' as const }
+const features = [
+  {
+    id: 'blocking',
+    label: 'Built-in blocking',
+    title: 'Blocking that is part of the browser',
+    text: `Ads and trackers are stopped before they load, by the browser itself rather than an extension. There is nothing to install or switch off by mistake, and it uses far less memory.`,
+  },
+  {
+    id: 'tor',
+    label: 'Tor tabs',
+    title: 'Tor for the tabs that need it',
+    text: 'A Tor tab goes through the Tor network, with its own circuit for each site. If Tor stops, the tab stops. It never falls back to your normal connection.',
+  },
+  {
+    id: 'search',
+    label: 'Xiao Search',
+    title: 'Search that runs on your computer',
+    text: 'Xiao Search is SearXNG in Xiao\'s colours, on your own machine. It asks several search engines for you and runs only while Xiao is open.',
+  },
+  {
+    id: 'settings',
+    label: `${prefCount} settings`,
+    title: 'Privacy settings, set before you start',
+    text: 'No telemetry, strict tracking protection, HTTPS only, encrypted DNS. Every setting Xiao changes is listed, from the same files the browser uses.',
+  },
+]
+---
+
+<section class="tour" id="features" aria-labelledby="tour-title">
+  <header class="section-head" data-reveal>
+    <p class="eyebrow">What Xiao adds to Zen</p>
+    <h2 id="tour-title">Private by default, <em>calm</em> by design.</h2>
+  </header>
+
+  <div class="tour-body">
+    <div class="tour-tabs" role="tablist" aria-label="Features">
+      {features.map((f, i) => (
+        <button type="button" role="tab" id={`tab-${f.id}`} aria-controls={`panel-${f.id}`} aria-selected={i === 0 ? 'true' : 'false'} data-feature={f.id}>
+          <span class="tour-label">{f.label}</span>
+          <span class="tour-title">{f.title}</span>
+          <span class="tour-text">{f.text}</span>
+        </button>
+      ))}
+    </div>
+
+    <div class="tour-stack">
+      <figure class="tour-card stat-card" role="tabpanel" id="panel-blocking" aria-labelledby="tab-blocking" data-panel="blocking" data-active>
+        <p class="stat-label">Memory with six busy sites open</p>
+        <p class="stat-big">{saved.toLocaleString('en')} MB <em>less</em></p>
+        <dl class="stat-rows">
+          <div><dt>Xiao {memory.before.version}, as an extension</dt><dd>{memory.before.totalMB.toLocaleString('en')} MB</dd></div>
+          <div><dt>Xiao {memory.after.version}, built in</dt><dd>{memory.after.totalMB.toLocaleString('en')} MB</dd></div>
+          <div><dt>The blocker's own process</dt><dd>{memory.before.extensionMB} MB → none</dd></div>
+        </dl>
+        <figcaption>One run each. <a href={url('privacy/#memory')}>How it was measured</a></figcaption>
+      </figure>
+
+      <figure class="tour-card" role="tabpanel" id="panel-tor" aria-labelledby="tab-tor" data-panel="tor">
+        <Image class="only-light" src={torLight} alt="Xiao's start page in a Tor tab: the greeting reads 'This tab goes through Tor.' in violet." {...shot} />
+        <Image class="only-dark" src={torDark} alt="Xiao's start page in a Tor tab, dark theme." {...shot} />
+      </figure>
+
+      <figure class="tour-card" role="tabpanel" id="panel-search" aria-labelledby="tab-search" data-panel="search">
+        <Image class="only-light" src={searchLight} alt="Xiao Search results for 'zen browser', with Xiao's mark and red links." {...shot} />
+        <Image class="only-dark" src={searchDark} alt="Xiao Search results, dark theme." {...shot} />
+      </figure>
+
+      <figure class="tour-card prefs-card" role="tabpanel" id="panel-settings" aria-labelledby="tab-settings" data-panel="settings">
+        <ul>
+          {sections.slice(0, 7).map((s) => <li><span>{s.title}</span><strong>{s.prefs.length}</strong></li>)}
+        </ul>
+        <figcaption><a href={url('privacy/')}>See every setting</a></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<script>
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('.tour-tabs [role="tab"]')]
+  const panels = [...document.querySelectorAll<HTMLElement>('.tour-stack [data-panel]')]
+  const show = (id: string) => {
+    tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.feature === id)))
+    const order = [id, ...panels.map((p) => p.dataset.panel!).filter((p) => p !== id)]
+    panels.forEach((p) => {
+      p.toggleAttribute('data-active', p.dataset.panel === id)
+      p.style.setProperty('--depth', String(order.indexOf(p.dataset.panel!)))
+    })
+  }
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => show(t.dataset.feature!))
+    t.addEventListener('keydown', (e) => {
+      const next = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 0
+      if (!next) return
+      e.preventDefault()
+      const to = tabs[(i + next + tabs.length) % tabs.length]
+      to.focus()
+      show(to.dataset.feature!)
+    })
+  })
+  document.querySelector('.tour')?.classList.add('tour-js')
+  show(tabs[0].dataset.feature!)
+</script>

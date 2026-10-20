@@ -2,7 +2,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
-// Structure from zen-browser/www's Layout.astro (MPL-2.0).
+// Structure from zen-browser/www's Layout.astro (MPL-2.0); the reveal on
+// scroll is the same idea as zen-browser.app's, without a motion library.
 import Footer from '../components/Footer.astro'
 import NavBar from '../components/NavBar.astro'
 import { url } from '../lib/site'
@@ -16,7 +17,7 @@ interface Props {
 const { title, description, isHome } = Astro.props
 const summary =
   description ??
-  'xiao is Zen Browser with ad and tracker blocking built in, stricter privacy settings, and tabs that go through Tor when you ask.'
+  'Xiao is Zen Browser with ad and tracker blocking built in, stricter privacy settings, and tabs that go through Tor when you ask.'
 const og = new URL(url('og.png'), Astro.site).href
 ---
 
@@ -26,9 +27,15 @@ const og = new URL(url('og.png'), Astro.site).href
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={summary} />
-    <link rel="icon" type="image/svg+xml" href={url('favicon.svg')} />
-    <link rel="sitemap" href={url('sitemap-index.xml')} />
+    <link rel="preload" href={url('fonts/bricolage-grotesque-latin-wght-normal.woff2')} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={url('fonts/junicode-italic-latin.woff2')} as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href={url('tokens.css')} />
+    <link rel="icon" href={url('favicon.ico')} sizes="32x32" />
+    <link rel="icon" type="image/svg+xml" href={url('favicon.svg')} />
+    <link rel="apple-touch-icon" href={url('apple-touch-icon.png')} />
+    <link rel="manifest" href={url('manifest.webmanifest')} />
+    <link rel="sitemap" href={url('sitemap-index.xml')} />
+    <link rel="alternate" type="application/rss+xml" title="Xiao release notes" href={url('feed.xml')} />
     <meta name="theme-color" content="#eeeee7" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#1b1b1b" media="(prefers-color-scheme: dark)" />
     <meta property="og:title" content={title} />
@@ -40,10 +47,11 @@ const og = new URL(url('og.png'), Astro.site).href
       <script
         is:inline
         type="application/ld+json"
-        set:html={JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebSite', name: 'xiao', url: new URL(url(), Astro.site).href })}
+        set:html={JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebSite', name: 'Xiao', url: new URL(url(), Astro.site).href })}
       />
     )}
     <script is:inline>
+      document.documentElement.classList.add('js')
       try {
         const saved = localStorage.getItem('theme')
         if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved
@@ -55,5 +63,21 @@ const og = new URL(url('og.png'), Astro.site).href
     <NavBar />
     <main id="main"><slot /></main>
     <Footer />
+    <script>
+      // Sections fade in as they scroll into view; with reduced motion they are simply there.
+      const parts = document.querySelectorAll('[data-reveal]')
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+        parts.forEach((p) => p.classList.add('in'))
+      } else {
+        const io = new IntersectionObserver((entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue
+            e.target.classList.add('in')
+            io.unobserve(e.target)
+          }
+        }, { rootMargin: '0px 0px -8% 0px' })
+        parts.forEach((p) => io.observe(p))
+      }
+    </script>
   </body>
 </html>

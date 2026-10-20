@@ -10,3 +10,5 @@ site/public/favicon.svg
 site/public/fonts/
 site/dist/
 site/.astro/
+site/public/demo/
+site/public/engine/

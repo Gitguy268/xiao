@@ -2,76 +2,73 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
-import { Image } from 'astro:assets'
-import startDark from '../../assets/start-dark.png'
-import startLight from '../../assets/start-light.png'
+// Ordered like zen-browser.app's home page (hero, feature tour, values,
+// closing call in the footer), in Xiao's own look.
+import FeatureTour from '../../components/FeatureTour.astro'
 import Layout from '../../layouts/Layout.astro'
 import { localePaths, url } from '../../lib/site'
-import { readList } from '../../lib/prefs'
 
 export const getStaticPaths = localePaths
-const prefCount = readList('balanced').length
-const alt = 'The xiao start page: a greeting, a search field, a few site links, and a line saying how many ads and trackers were blocked and whether Tor is connected.'
+const values = [
+  ['Care', 'Every colour pair is readable, motion stops when you ask your system for less, and the limits are as easy to find as the features.'],
+  ['Simplify', 'One accent, one mark, two typefaces. Defaults that work without a settings page.'],
+  ['Unite', 'The start page, the browser, Xiao Search and this site share one set of design files.'],
+  ['Trust', 'Every setting Xiao changes is listed. Tor tabs are always violet, and Tor being on is written out, not just tinted.'],
+  ['Elevate', 'Zen\'s calm, with protection that otherwise takes an evening of add-ons and about:config.'],
+]
 ---
 
-<Layout title="xiao: a calm browser with the doors locked" isHome>
-  <section class="hero">
-    <h1>A calm browser,<br />doors locked.</h1>
+<Layout title="Xiao: a calm browser with the doors locked" isHome>
+  <section class="hero" data-reveal>
+    <p class="eyebrow">Built on Zen · Free and open source</p>
+    <h1>A <em>calm</em> browser,<br />doors <em>locked</em>.</h1>
     <p class="lead">
-      xiao is built on Zen Browser, with ad and tracker blocking built in, its privacy settings turned up, and tabs
-      that go through Tor when you ask for them. For macOS, Windows and Linux.
+      Xiao is Zen Browser with ad and tracker blocking built into the browser itself, its privacy settings turned up,
+      and tabs that go through Tor when you ask for them.
     </p>
     <div class="actions">
-      <a class="button primary" href={url('download/')}>Download xiao</a>
-      <a class="button" href={url('privacy/')}>See every setting it changes</a>
+      <a class="button primary" href={url('download/')}>Download Xiao</a>
+      <a class="button" href="#try">Try the start page</a>
     </div>
+    <p class="hero-note">For macOS, Windows and Linux. Your own Zen stays as it is.</p>
   </section>
 
-  <figure class="shot">
-    <Image class="only-light" src={startLight} alt={alt} widths={[720, 1440]} sizes="(max-width: 1180px) 100vw, 1180px" loading="eager" />
-    <Image class="only-dark" src={startDark} alt={alt} widths={[720, 1440]} sizes="(max-width: 1180px) 100vw, 1180px" />
-    <figcaption>The start page works offline and tells you what was blocked.</figcaption>
-  </figure>
-
-  <section class="changes" aria-labelledby="changes-title">
-    <h2 id="changes-title" class="visually-hidden">What xiao changes</h2>
-    <div class="change">
-      <h3>Ads and trackers are blocked before they load.</h3>
-      <div>
-        <p>
-          xiao uses Ghostery's open-source blocking engine with EasyList, EasyPrivacy and uBlock Origin's lists, refreshed
-          every day. It hides empty ad slots too. If a site breaks, switch blocking off for that site from the toolbar.
-        </p>
-        <p class="muted">Prefer uBlock Origin? The installer can add it alongside.</p>
-      </div>
+  <section class="try" id="try" aria-labelledby="try-title" data-reveal>
+    <h2 id="try-title" class="visually-hidden">Try the start page</h2>
+    <div class="window">
+      <div class="window-bar" aria-hidden="true"><span></span><span></span><span></span><p>New tab</p></div>
+      <iframe
+        src={url('demo/start/index.html')}
+        title="Xiao's start page, live: search, edit your sites, switch the theme"
+        loading="eager"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+      ></iframe>
     </div>
-    <div class="change">
-      <h3>Privacy settings start where most people would end.</h3>
-      <div>
-        <p>
-          {prefCount} settings change from the moment you open it: no telemetry or studies, strict tracking protection,
-          HTTPS only, encrypted DNS, no early connections to sites you haven't opened, and WebRTC that can't reveal your
-          local network.
-        </p>
-        <p class="muted">Strict mode adds Tor Browser's fingerprinting resistance, for sites that try to recognise you.</p>
-      </div>
-    </div>
-    <div class="change">
-      <h3>Tor when you want it, and only then.</h3>
-      <div>
-        <p>
-          Open a Tor tab and it goes through the Tor network, with a separate circuit for each site. If Tor stops, those
-          tabs stop too. They never fall back to a direct connection. Your other tabs stay on your normal connection.
-        </p>
-        <p class="muted">
-          This hides your IP address from sites. It doesn't make you look like every other Tor Browser user, so when that
-          matters, use Tor Browser.
-        </p>
-      </div>
-    </div>
+    <p class="try-note">
+      This is Xiao's real start page. Search, or press <strong>Edit start page</strong> to choose your sites and search
+      engine. In Xiao it opens with every new tab; the numbers here are made up.
+    </p>
   </section>
 
-  <section class="ways" aria-labelledby="ways-title">
+  <FeatureTour />
+
+  <section class="values" aria-labelledby="values-title">
+    <div class="values-intro" data-reveal>
+      <p class="eyebrow">How it is made</p>
+      <h2 id="values-title">Small on <em>purpose</em>.</h2>
+      <p class="lead">Xiao is a thin layer on other people's careful work. Five rules keep it that way.</p>
+    </div>
+    <ul class="checks" data-reveal>
+      {values.map(([title, text]) => (
+        <li>
+          <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          <div><strong>{title}.</strong> {text}</div>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="ways" aria-labelledby="ways-title" data-reveal>
     <h2 id="ways-title">Two ways to run it</h2>
     <div class="table-scroll">
       <table>
@@ -79,21 +76,29 @@ const alt = 'The xiao start page: a greeting, a search field, a few site links, 
           <tr><th scope="col"></th><th scope="col">The kit</th><th scope="col">The build</th></tr>
         </thead>
         <tbody>
-          <tr><th scope="row">What it is</th><td>Adds xiao to the Zen you already have, in a profile of its own. Your normal Zen is left alone.</td><td>Zen's source, renamed and rebuilt with everything inside.</td></tr>
-          <tr><th scope="row">Available</th><td>Now</td><td>Built by GitHub Actions from this repository; macOS builds are not notarised yet.</td></tr>
-          <tr><th scope="row">Updates</th><td>Run the installer again for a new xiao. On macOS xiao is its own copy of Zen and rebuilds itself when Zen updates.</td><td>Download each new release.</td></tr>
-          <tr><th scope="row">Tor</th><td>Tor tabs; the installer downloads Tor and the launcher runs it</td><td>Tor tabs if a tor is already running on port 9160; built-in Tor is planned</td></tr>
+          <tr><th scope="row">What it is</th><td>A copy of the Zen you already have, with Xiao's code inside and a profile of its own. Your normal Zen is left alone.</td><td>Zen's source, renamed and rebuilt with Xiao's code inside.</td></tr>
+          <tr><th scope="row">Available</th><td>Now</td><td>Set up in this repository, not yet compiled.</td></tr>
+          <tr><th scope="row">Updates</th><td>When Zen updates, Xiao rebuilds its copy at the next start. Run the installer again for a new Xiao.</td><td>Download each new release.</td></tr>
+          <tr><th scope="row">Tor and search</th><td>The installer can add Tor and Xiao Search; both run only while Xiao is open.</td><td>Tor tabs if a tor is already running on port 9160; built-in Tor is planned.</td></tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <section class="limits" aria-labelledby="limits-title">
+  <section class="limits" aria-labelledby="limits-title" data-reveal>
     <h2 id="limits-title">What it doesn't do</h2>
     <ul>
-      <li>It doesn't make you anonymous. Tor tabs hide your address, but the browser itself is still recognisable as xiao.</li>
+      <li>It doesn't make you anonymous. Tor tabs hide your address, but the browser itself is still recognisable as Xiao. When that matters, use Tor Browser.</li>
       <li>It doesn't block everything. Filter lists catch most ads and trackers, not all, and a few sites need blocking switched off to work.</li>
-      <li>It isn't audited. The settings come from well-known projects, but no one has reviewed xiao as a whole.</li>
+      <li>It isn't audited. The settings come from well-known projects, but no one has reviewed Xiao as a whole.</li>
     </ul>
   </section>
 </Layout>
+
+<script>
+  // The live start page follows the site's theme switch.
+  const frame = document.querySelector<HTMLIFrameElement>('.try iframe')
+  const send = () => frame?.contentWindow?.postMessage({ theme: document.documentElement.dataset.theme ?? 'auto' }, location.origin)
+  frame?.addEventListener('load', send)
+  new MutationObserver(send).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+</script>

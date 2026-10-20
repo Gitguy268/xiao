@@ -1,0 +1,5 @@
+{
+  "about": "test/e2e/memory.mjs on 2026-10-20: Zen 1.23.3b on an Apple silicon Mac, a fresh profile, the start page plus six pages (Wikipedia, The Guardian, BBC News, CNN, Reddit and an ad test page), measured after 60 s with Firefox's own per-process figures. One run each.",
+  "before": { "version": "0.1", "totalMB": 2715, "extensionMB": 590, "minimisedMB": 1877 },
+  "after": { "version": "0.2", "totalMB": 2080, "extensionMB": 41, "minimisedMB": 1815 }
+}

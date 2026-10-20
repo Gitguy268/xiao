@@ -1,0 +1,56 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Xiao's look on Zen's own UI, loaded into every browser window by
+ * Toolbar.mjs: Bricolage Grotesque for tabs, menus and the address bar, the
+ * one Xiao button, and no extensions button when there are no extensions. */
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-weight: 200 800;
+  src: url("resource://xiao/fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "Junicode";
+  font-style: italic;
+  font-weight: 400;
+  src: url("resource://xiao/fonts/junicode-italic-latin.woff2") format("woff2");
+}
+
+:root,
+menupopup, panel, tooltip, toolbarbutton, label, description, input, button,
+.tab-label, #urlbar-input, .urlbarView, .zen-workspace-name {
+  font-family: "Bricolage Grotesque", system-ui, sans-serif !important;
+}
+
+#xiao-button {
+  list-style-image: url("resource://xiao/icons/xiao.svg");
+}
+#xiao-button .toolbarbutton-badge {
+  background-color: #e70923;
+  color: #fff;
+}
+
+:root[xiao-no-addons] #unified-extensions-button {
+  display: none !important;
+}
+
+.xiao-panel {
+  padding: 12px 14px;
+  min-width: 300px;
+  gap: 6px;
+}
+.xiao-panel h2 {
+  margin: 0;
+  font: italic 400 1.35em/1.2 "Junicode", Georgia, serif;
+  overflow-wrap: anywhere;
+}
+.xiao-panel p {
+  margin: 0;
+  color: var(--panel-description-color, GrayText);
+}
+#xiao-tor.on {
+  color: light-dark(#7b4fd6, #b49af0);
+}

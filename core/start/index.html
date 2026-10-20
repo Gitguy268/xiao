@@ -7,14 +7,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>New tab</title>
-  <link rel="icon" href="../icons/xiao.svg">
   <link rel="stylesheet" href="../tokens.css">
-  <link rel="stylesheet" href="newtab.css">
-  <script src="newtab.js" type="module"></script>
+  <link rel="stylesheet" href="start.css">
+  <script src="start.js" type="module"></script>
 </head>
 <body>
   <header class="bar">
-    <span class="mark"><img src="../icons/xiao.svg" alt="" width="20" height="20">xiao</span>
+    <span class="mark">Xiao</span>
     <time id="clock"></time>
   </header>
 
@@ -30,7 +29,6 @@
   <footer>
     <p id="status" aria-live="polite">Checking protection…</p>
     <p class="actions">
-      <button id="tor-open" type="button" hidden>Open a Tor tab</button>
       <button id="edit" type="button">Edit start page</button>
     </p>
   </footer>
@@ -42,11 +40,11 @@
       <h2>Start page</h2>
       <label>Search with
         <select name="search">
+          <option value="xiao" id="xiao-search">Xiao Search, on this computer</option>
           <option value="ddg">DuckDuckGo</option>
           <option value="leta">Mullvad Leta</option>
           <option value="startpage">Startpage</option>
           <option value="brave">Brave Search</option>
-          <option value="searxng">SearXNG on this computer (127.0.0.1:8888)</option>
           <option value="custom">Other…</option>
         </select>
       </label>
@@ -55,6 +53,18 @@
       </label>
       <label>Your sites, one per line: name, then address
         <textarea name="links" rows="5" spellcheck="false"></textarea>
+      </label>
+      <label>A new tab opens
+        <select name="newtab">
+          <option value="start">this start page</option>
+          <option value="floating">Zen's floating address bar</option>
+        </select>
+      </label>
+      <label>When Xiao starts, show
+        <select name="launch">
+          <option value="start">this start page</option>
+          <option value="restore">the tabs from last time</option>
+        </select>
       </label>
       <label>Appearance
         <select name="theme">

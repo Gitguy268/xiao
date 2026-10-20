@@ -2,6 +2,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// Like zen-browser/www's NavBar and MobileMenu (MPL-2.0): the same links in a
+// row on wide screens and behind a Menu button on phones (no script needed).
 import { getUI, REPO, url } from '../lib/site'
 import ThemeSwitch from './ThemeSwitch.astro'
 const { nav } = getUI(Astro.currentLocale)
@@ -9,18 +11,30 @@ const here = Astro.url.pathname
 const links = [
   ['download/', nav.download],
   ['privacy/', nav.privacy],
+  ['release-notes/', nav.releaseNotes],
   ['about/', nav.about],
+]
+const items = [
+  ...links.map(([path, label]) => ({ href: url(path), label, current: here === url(path) })),
+  { href: REPO, label: nav.source, current: false },
 ]
 ---
 
 <header class="nav">
   <a class="brand" href={url()}>
-    <img src={url('favicon.svg')} alt="" width="22" height="22" />
-    <span>xiao</span>
+    <img src={url('favicon.svg')} alt="" width="24" height="24" />
+    <span>Xiao</span>
   </a>
-  <nav aria-label="Site">
-    {links.map(([path, label]) => <a href={url(path)} aria-current={here === url(path) ? 'page' : undefined}>{label}</a>)}
-    <a href={REPO}>{nav.source}</a>
-    <ThemeSwitch />
+  <nav aria-label="Site" class="nav-wide">
+    {items.map((i) => <a href={i.href} aria-current={i.current ? 'page' : undefined}>{i.label}</a>)}
   </nav>
+  <div class="nav-end">
+    <ThemeSwitch />
+    <details class="nav-menu">
+      <summary>{nav.menu}</summary>
+      <nav aria-label="Site">
+        {items.map((i) => <a href={i.href} aria-current={i.current ? 'page' : undefined}>{i.label}</a>)}
+      </nav>
+    </details>
+  </div>
 </header>

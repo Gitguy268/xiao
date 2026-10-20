@@ -1,0 +1,134 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Xiao Search: Xiao's look on SearXNG's "simple" theme. install.sh copies
+ * this file and Xiao's fonts into the installed theme and links it after
+ * SearXNG's own stylesheet; nothing of SearXNG is copied into Xiao. The
+ * colours are Xiao's tokens (shared/tokens.css). */
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("bricolage-grotesque-latin-wght-normal.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "Junicode";
+  font-style: italic;
+  font-display: swap;
+  src: url("junicode-italic-latin.woff2") format("woff2");
+}
+
+:root:root {
+  --xiao-paper: #eeeee7;
+  --xiao-raised: #f6f6f1;
+  --xiao-ink: #1d1d1b;
+  --xiao-soft: #5e5e58;
+  --xiao-rule: rgb(29 29 27 / 0.12);
+  --xiao-link: #9e0618;
+  --xiao-accent: #e70923;
+  --color-base-font: var(--xiao-ink);
+  --color-base-font-rgb: 29, 29, 27;
+  --color-base-background: var(--xiao-paper);
+  --color-base-background-mobile: var(--xiao-paper);
+  --color-header-background: var(--xiao-paper);
+  --color-footer-background: var(--xiao-paper);
+  --color-search-background: var(--xiao-raised);
+  --color-search-background-hover: var(--xiao-raised);
+  --color-search-font: var(--xiao-ink);
+  --color-result-background: transparent;
+  --color-result-border: var(--xiao-rule);
+  --color-result-link-font: var(--xiao-link);
+  --color-result-link-font-highlight: var(--xiao-link);
+  --color-result-detail-link: var(--xiao-link);
+  --color-result-link-visited-font: #6b0412;
+  --color-url-font: var(--xiao-soft);
+  --color-result-search-url-font: var(--xiao-soft);
+  --color-result-description-highlight-font: var(--xiao-ink);
+  --color-categories-item-selected-font: var(--xiao-ink);
+  --color-categories-item-border-selected: var(--xiao-accent);
+  --color-btn-background: var(--xiao-accent);
+  --color-btn-font: #fff;
+  --color-autocomplete-background: var(--xiao-raised);
+  --color-sidebar-border: var(--xiao-rule);
+}
+
+:root.theme-dark,
+:root.theme-dark:root {
+  --xiao-paper: #1b1b1b;
+  --xiao-raised: #242423;
+  --xiao-ink: #ececE4;
+  --xiao-soft: #9a9a92;
+  --xiao-rule: rgb(236 236 228 / 0.14);
+  --xiao-link: #ff8a8f;
+  --color-base-font-rgb: 236, 236, 228;
+  --color-result-link-visited-font: #e7a3a6;
+}
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto:root {
+    --xiao-paper: #1b1b1b;
+    --xiao-raised: #242423;
+    --xiao-ink: #ececE4;
+    --xiao-soft: #9a9a92;
+    --xiao-rule: rgb(236 236 228 / 0.14);
+    --xiao-link: #ff8a8f;
+    --color-base-font-rgb: 236, 236, 228;
+    --color-result-link-visited-font: #e7a3a6;
+  }
+}
+
+html, body, input, button, select, textarea {
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+}
+
+/* One name, one mark: Xiao's mark (installed over SearXNG's logo files) with
+ * "Xiao Search" under it in Xiao's heading face. */
+.index .title {
+  min-height: 0;
+  padding-top: 4.5rem;
+  background-position: top center;
+  background-size: 3.5rem;
+  text-align: center;
+}
+.index .title h1 {
+  margin: 1rem 0 0;
+  font-size: 0;
+  line-height: 0;
+}
+.index .title h1::after {
+  content: "Xiao Search";
+  display: block;
+  visibility: visible; /* the theme hides its own h1 */
+  font: italic 400 2.75rem/1.1 "Junicode", Georgia, serif;
+  letter-spacing: -0.02em;
+  color: var(--xiao-ink);
+}
+#search_logo svg {
+  display: none;
+}
+#search_logo::before {
+  content: "";
+  width: 30px;
+  height: 30px;
+  margin: 0.5rem 0 auto;
+  background: url("img/favicon.svg") center / contain no-repeat;
+}
+
+#search_view .search_box {
+  border-radius: 999px;
+  border: 1px solid var(--xiao-rule);
+  box-shadow: none;
+}
+#search_view .search_box:focus-within {
+  border-color: var(--xiao-accent);
+}
+
+.result h3 a {
+  font-weight: 550;
+}
+
+:focus-visible {
+  outline: 2px solid var(--xiao-accent);
+  outline-offset: 2px;
+}

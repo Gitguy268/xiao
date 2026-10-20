@@ -2,9 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Turns a zen-browser/desktop checkout into xiao.
+// Turns a zen-browser/desktop checkout into Xiao.
 //   node fork/overlay.mjs <desktop>            before `npm run import` (rename, branding, prefs, links)
-//   node fork/overlay.mjs <desktop> --engine   after it (built-in extension, branding prefs in engine/)
+//   node fork/overlay.mjs <desktop> --engine   after it (Xiao's browser code, branding prefs in engine/)
 import { cpSync, existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { parse, parseDocument } from 'yaml';
@@ -17,7 +17,6 @@ if (!desktop || !existsSync(join(desktop, 'surfer.json'))) {
 const here = new URL('.', import.meta.url).pathname;
 const root = join(here, '..');
 const SITE = 'https://gitguy268.github.io/xiao';
-const EXT_ID = 'xiao@gitguy268.github.io';
 const { version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 
 const edit = (file, fn) => {
@@ -31,26 +30,27 @@ const walk = (dir) => readdirSync(dir).flatMap((n) => {
   const p = join(dir, n);
   return statSync(p).isDirectory() ? walk(p) : [p];
 });
-// Links to Zen's site that a xiao user would follow: about, donate, privacy, uninstall feedback.
+// Links to Zen's site that a Xiao user would follow: about, donate, privacy, uninstall feedback.
 const relink = (text) => text
   .replace(/https:\/\/(www\.)?zen-browser\.app\/(donate|about\/?)/g, `${SITE}/about/`)
   .replace(/https:\/\/(www\.)?zen-browser\.app\/privacy-policy\/?/g, `${SITE}/privacy/`)
   .replace(/https:\/\/links\.zen-browser\.app\/uninstall-feedback/g, 'https://github.com/Gitguy268/xiao/issues/new');
 
 function source() {
-  // 1. Name and identity: xiao must not share Zen's app id, profile folder or bundle id.
+  // 1. Name and identity: Xiao must not share Zen's app id, profile folder or bundle id.
+  //    The ids stay lowercase "xiao"; the names people see are "Xiao".
   const surfer = JSON.parse(readFileSync(join(desktop, 'surfer.json'), 'utf8'));
-  surfer.name = 'xiao';
-  surfer.vendor = 'xiao';
+  surfer.name = 'Xiao';
+  surfer.vendor = 'Xiao';
   surfer.appId = 'xiao';
   surfer.binaryName = 'xiao';
   surfer.brands = {
     release: {
       ...surfer.brands.release,
       backgroundColor: '#1b1b1b',
-      brandShorterName: 'xiao',
-      brandShortName: 'xiao',
-      brandFullName: 'xiao',
+      brandShorterName: 'Xiao',
+      brandShortName: 'Xiao',
+      brandFullName: 'Xiao',
       release: { ...surfer.brands.release.release, displayVersion: version, github: { repo: 'Gitguy268/xiao' } },
     },
   };
@@ -62,7 +62,7 @@ function source() {
     .replace('MOZ_APP_BASENAME=Zen', 'MOZ_APP_BASENAME=xiao')
     .replace('--with-distribution-id=app.zen-browser', '--with-distribution-id=io.github.gitguy268')
     .replace('MOZ_SOURCE_REPO=https://github.com/zen-browser/desktop', 'MOZ_SOURCE_REPO=https://github.com/Gitguy268/xiao')}
-# xiao: no updater (Zen's update key and server are not ours)
+# Xiao: no updater (Zen's update key and server are not ours)
 ac_add_options --disable-updater
 `);
 
@@ -71,10 +71,11 @@ ac_add_options --disable-updater
   rmSync(join(desktop, 'configs/branding/release'), { recursive: true, force: true });
   cpSync(join(here, 'branding/release'), join(desktop, 'configs/branding/release'), { recursive: true });
 
-  // 3. Prefs: xiao's hardening, look and fork prefs. Zen's prefs tool sorts all YAML by
+  // 3. Prefs: Xiao's hardening, speed, look and fork prefs. Zen's prefs tool sorts all YAML by
   //    name and reads folders in no fixed order, so a pref defined twice would
-  //    end up with either value. Remove Zen's copy of every pref xiao sets.
-  const ours = [join(root, 'shared/prefs/balanced.yaml'), join(root, 'shared/prefs/look.yaml'), join(here, 'prefs/fork.yaml')];
+  //    end up with either value. Remove Zen's copy of every pref Xiao sets.
+  const ours = [join(root, 'shared/prefs/balanced.yaml'), join(root, 'shared/prefs/look.yaml'), join(here, 'prefs/fork.yaml'),
+    join(root, 'shared/prefs/speed.yaml')];
   const names = new Set(ours.flatMap((f) => parse(readFileSync(f, 'utf8')).map((p) => p.name)));
   let removed = 0;
   for (const file of walk(join(desktop, 'prefs')).filter((f) => f.endsWith('.yaml'))) {
@@ -89,6 +90,7 @@ ac_add_options --disable-updater
   cpSync(ours[0], join(desktop, 'prefs/xiao/hardening.yaml'));
   cpSync(ours[1], join(desktop, 'prefs/xiao/look.yaml'));
   cpSync(ours[2], join(desktop, 'prefs/xiao/fork.yaml'));
+  cpSync(ours[3], join(desktop, 'prefs/xiao/speed.yaml'));
 
   // 4. Links
   for (const file of walk(join(desktop, 'src'))) {
@@ -97,36 +99,44 @@ ac_add_options --disable-updater
     const next = relink(text);
     if (next !== text) writeFileSync(file, next);
   }
-  console.log(`overlay: renamed to xiao ${version}, branding replaced, ${names.size} prefs added (${removed} Zen duplicates removed)`);
+  console.log(`overlay: renamed to Xiao ${version}, branding replaced, ${names.size} prefs added (${removed} Zen duplicates removed)`);
 }
 
 function engine() {
   const eng = join(desktop, 'engine');
   if (!existsSync(join(eng, 'mach'))) throw new Error('engine/ missing: run `npm run download && npm run import` first');
 
-  // 5. xiao's extension as a built-in add-on (surfer's own addon layout).
-  const ext = join(root, 'dist/ext');
-  if (!existsSync(join(ext, 'manifest.json'))) throw new Error('dist/ext missing: run `npm run build` in xiao first');
-  const target = join(eng, 'browser/extensions/xiao');
+  // 5. Xiao's browser code (dist/core) and the AutoConfig files that load it,
+  //    installed next to the app the same way the kit puts them in its copy of Zen.
+  const core = join(root, 'dist/core');
+  if (!existsSync(join(core, 'XiaoCore.sys.mjs'))) throw new Error('dist/core missing: run `npm run build` in xiao first');
+  const target = join(eng, 'browser/xiao');
   rmSync(target, { recursive: true, force: true });
-  cpSync(ext, target, { recursive: true });
+  cpSync(core, join(target, 'xiao'), { recursive: true });
+  cpSync(join(root, 'dist/loader'), join(target, 'loader'), { recursive: true });
   const byDir = new Map();
-  for (const f of walk(target)) {
+  for (const f of walk(join(target, 'xiao'))) {
     const rel = relative(target, f);
-    const dir = rel.includes('/') ? rel.slice(0, rel.lastIndexOf('/')) : '';
+    const dir = rel.slice(0, rel.lastIndexOf('/'));
     byDir.set(dir, [...(byDir.get(dir) ?? []), rel]);
   }
   const lines = [...byDir].sort().map(([dir, files]) => {
-    const path = dir ? dir.split('/').map((d) => `["${d}"]`).join('') : '';
-    return `FINAL_TARGET_FILES.features["${EXT_ID}"]${path} += [\n${files.sort().map((f) => `    "${f}",`).join('\n')}\n]`;
+    const path = dir.split('/').map((d) => `["${d}"]`).join('');
+    return `FINAL_TARGET_FILES${path} += [\n${files.sort().map((f) => `    "${f}",`).join('\n')}\n]`;
   });
-  writeFileSync(join(target, 'moz.build'), `# Generated by xiao fork/overlay.mjs\n\n${lines.join('\n\n')}\n`);
-  const list = join(eng, 'browser/extensions/moz.build');
+  lines.push('FINAL_TARGET_FILES += ["loader/xiao.cfg"]', 'FINAL_TARGET_FILES.defaults.pref += ["loader/autoconfig.js"]');
+  writeFileSync(join(target, 'moz.build'), `# Generated by Xiao's fork/overlay.mjs\n\n${lines.join('\n\n')}\n`);
+  const list = join(eng, 'browser/moz.build');
   const mozBuild = readFileSync(list, 'utf8');
   if (!mozBuild.includes('"xiao"')) {
     const next = mozBuild.replace(/DIRS \+= \[/, 'DIRS += [\n    "xiao",');
-    if (next === mozBuild) throw new Error('overlay: could not find DIRS in browser/extensions/moz.build');
+    if (next === mozBuild) throw new Error('overlay: could not find DIRS in browser/moz.build');
     writeFileSync(list, next);
+  }
+  const manifest = join(eng, 'browser/installer/package-manifest.in');
+  const pkg = readFileSync(manifest, 'utf8');
+  if (!pkg.includes('@RESPATH@/xiao.cfg')) {
+    writeFileSync(manifest, `${pkg}\n; Xiao's browser code and its loader (fork/overlay.mjs)\n@RESPATH@/xiao.cfg\n@RESPATH@/defaults/pref/autoconfig.js\n@RESPATH@/xiao/*\n`);
   }
 
   // 6. surfer's generated branding prefs and installer strings point at zen-browser.app.
@@ -138,7 +148,7 @@ function engine() {
       .replace(/https:\/\/(www\.)?zen-browser\.app[^"\s]*/g, `${SITE}/`);
     if (next !== t) writeFileSync(f, next);
   }
-  console.log('overlay: extension added as a built-in add-on, branding links replaced');
+  console.log('overlay: Xiao\'s browser code and loader added, branding links replaced');
 }
 
 if (mode === '--engine') engine();

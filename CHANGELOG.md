@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.0 (unreleased)
+
+- **Blocking is built into the browser.** Xiao no longer uses an extension. Its code ships inside its own copy of Zen and is loaded by Firefox's AutoConfig. Ad and tracker blocking, cosmetic filtering, Tor routing, the start page and the toolbar button all run there. There is no add-on to disable, and add-on signing stays on.
+- **Less memory.** In the same test (six busy sites), Xiao used 2,080 MB against 2,715 MB for 0.1. The blocker's own 590 MB process is gone. The filter engine is now prebuilt by Xiao rather than built in the browser, and is refreshed daily from Xiao's website (hash checked).
+- **Tor is routed by the browser itself**, before session restore and for every request a Tor tab makes (service workers and favicons included). Each site's connections are isolated, so "New Tor circuit" takes effect at once.
+- **Xiao Search** (`--search`, macOS and Linux): Xiao's own SearXNG on 127.0.0.1:8890, in Xiao's style, running only while Xiao runs. It replaces the start page's hard-coded 127.0.0.1:8888.
+- **The start page is easier to reach:**
+  - Ctrl+T and the + button open it, instead of Zen's floating address bar.
+  - Xiao starts on it.
+  - Its settings can switch either back: "A new tab opens" and "When Xiao starts".
+- **A cleaner look:**
+  - Bricolage Grotesque and Junicode italic, as on zen-browser.app, on the start page, the website and Zen's own UI.
+  - The name is now written "Xiao", and the app is ~/Applications/Xiao.app.
+  - The mark appears once: on the toolbar button. It's gone from the start page and the tab.
+  - The extensions button is hidden while no extensions are installed.
+- Speed and memory settings (`shared/prefs/speed.yaml`): one spare web process instead of three, idle tabs unloaded sooner, pages drawn a little sooner.
+- **Removed:** the `--ubo` option. The installer removes 0.1's extension and the uBlock Origin it added. Start-page links and settings reset once.
+- **Linux and Windows kits** now keep their own copy of Zen too, rebuilt when Zen updates. Zen's Flatpak can't be copied; use Zen's tarball.
+- **Website** laid out like zen-browser.app: a live start page, a feature tour, release notes with an RSS feed, and favicons.
+
 ## 0.1.0 (unreleased)
 
 - Kit for Zen on macOS, Windows and Linux: own profile, 79 hardening settings (plus 10 in strict mode), launcher.

@@ -2,15 +2,33 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Copies the shared design tokens, fonts and the mark into site/public before an Astro build.
-import { cpSync, mkdirSync } from 'node:fs';
+// Before an Astro build, copies into site/public:
+//   tokens.css, fonts/, favicon.svg  the shared design tokens, typefaces and mark
+//   demo/                            the real start page (core/start) with a stand-in for Xiao (site/demo/shim.mjs)
+//   engine/                          the prebuilt blocking engine Xiao updates from, if `npm run build` made one
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 
 const at = (p) => new URL(`../${p}`, import.meta.url).pathname;
 mkdirSync(at('site/public/fonts'), { recursive: true });
 cpSync(at('shared/tokens.css'), at('site/public/tokens.css'));
-cpSync(at('extension/icons/xiao.svg'), at('site/public/favicon.svg'));
-for (const [pkg, file] of [
-  ['@fontsource/eb-garamond', 'eb-garamond-latin-400-normal.woff2'],
-  ['@fontsource/eb-garamond', 'eb-garamond-latin-400-italic.woff2'],
-  ['@fontsource-variable/inter', 'inter-latin-wght-normal.woff2'],
-]) cpSync(at(`node_modules/${pkg}/files/${file}`), at(`site/public/fonts/${file}`));
+cpSync(at('core/icons/xiao.svg'), at('site/public/favicon.svg'));
+cpSync(at('node_modules/@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2'),
+  at('site/public/fonts/bricolage-grotesque-latin-wght-normal.woff2'));
+cpSync(at('shared/fonts/junicode-italic-latin.woff2'), at('site/public/fonts/junicode-italic-latin.woff2'));
+
+const demo = at('site/public/demo');
+rmSync(demo, { recursive: true, force: true });
+mkdirSync(at('site/public/demo/start'), { recursive: true });
+for (const f of ['start.css', 'start.js', 'links.mjs']) cpSync(at(`core/start/${f}`), `${demo}/start/${f}`);
+cpSync(at('site/demo/shim.mjs'), `${demo}/start/shim.mjs`);
+cpSync(at('shared/tokens.css'), `${demo}/tokens.css`);
+cpSync(at('site/public/fonts'), `${demo}/fonts`, { recursive: true });
+// The same page, with the stand-in loaded first.
+const page = readFileSync(at('core/start/index.html'), 'utf8');
+const withShim = page.replace('<script src="start.js" type="module"></script>',
+  '<script src="shim.mjs" type="module"></script>\n  <script src="start.js" type="module"></script>');
+if (withShim === page) throw new Error('site-assets: start page script tag not found');
+writeFileSync(`${demo}/start/index.html`, withShim);
+
+rmSync(at('site/public/engine'), { recursive: true, force: true });
+if (existsSync(at('dist/engine'))) cpSync(at('dist/engine'), at('site/public/engine'), { recursive: true });
