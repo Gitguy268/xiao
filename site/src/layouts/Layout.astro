@@ -1,0 +1,59 @@
+---
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// Structure from zen-browser/www's Layout.astro (MPL-2.0).
+import Footer from '../components/Footer.astro'
+import NavBar from '../components/NavBar.astro'
+import { url } from '../lib/site'
+import '../styles/site.css'
+
+interface Props {
+  title: string
+  description?: string
+  isHome?: boolean
+}
+const { title, description, isHome } = Astro.props
+const summary =
+  description ??
+  'xiao is Zen Browser with ad and tracker blocking built in, stricter privacy settings, and tabs that go through Tor when you ask.'
+const og = new URL(url('og.png'), Astro.site).href
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={summary} />
+    <link rel="icon" type="image/svg+xml" href={url('favicon.svg')} />
+    <link rel="sitemap" href={url('sitemap-index.xml')} />
+    <link rel="stylesheet" href={url('tokens.css')} />
+    <meta name="theme-color" content="#eeeee7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1b1b1b" media="(prefers-color-scheme: dark)" />
+    <meta property="og:title" content={title} />
+    <meta property="og:type" content="website" />
+    <meta property="og:description" content={summary} />
+    <meta property="og:image" content={og} />
+    <meta name="twitter:card" content="summary_large_image" />
+    {isHome && (
+      <script
+        is:inline
+        type="application/ld+json"
+        set:html={JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebSite', name: 'xiao', url: new URL(url(), Astro.site).href })}
+      />
+    )}
+    <script is:inline>
+      try {
+        const saved = localStorage.getItem('theme')
+        if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <NavBar />
+    <main id="main"><slot /></main>
+    <Footer />
+  </body>
+</html>

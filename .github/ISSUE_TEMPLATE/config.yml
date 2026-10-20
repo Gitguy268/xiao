@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security problem
+    url: https://github.com/Gitguy268/xiao/blob/HEAD/SECURITY.md
+    about: Please report security problems privately. SECURITY.md says how.
+  - name: A problem in Zen itself
+    url: https://github.com/zen-browser/desktop/issues
+    about: If it also happens in plain Zen, report it to Zen.

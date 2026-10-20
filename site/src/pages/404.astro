@@ -1,0 +1,14 @@
+---
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+import Layout from '../layouts/Layout.astro'
+import { url } from '../lib/site'
+---
+
+<Layout title="Page not found">
+  <section class="page">
+    <h1>Nothing here.</h1>
+    <p class="lead">This address doesn't match a page. Try the <a href={url()}>home page</a> or <a href={url('download/')}>downloads</a>.</p>
+  </section>
+</Layout>

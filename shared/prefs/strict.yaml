@@ -1,0 +1,32 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Applied on top of balanced.yaml with `install --strict`. Some sites and
+# parts of Zen's UI behave differently under these.
+
+# Resist fingerprinting (Tor Browser's approach): spoofed timezone, fonts,
+# screen size in steps (letterboxing), English locale requests
+- name: privacy.resistFingerprinting
+  value: true
+- name: privacy.resistFingerprinting.letterboxing
+  value: true
+- name: privacy.spoof_english
+  value: 2
+- name: webgl.disabled
+  value: true
+- name: geo.enabled
+  value: false
+# DNS over HTTPS only, never plain DNS
+- name: network.trr.mode
+  value: 3
+# WebRTC only through TURN relays
+- name: media.peerconnection.ice.relay_only
+  value: true
+# Forget cookies and site data when the browser closes
+- name: privacy.sanitize.sanitizeOnShutdown
+  value: true
+- name: privacy.clearOnShutdown_v2.cookiesAndStorage
+  value: true
+- name: signon.rememberSignons
+  value: false

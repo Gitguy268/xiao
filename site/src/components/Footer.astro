@@ -1,0 +1,17 @@
+---
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+import { getUI, REPO, url } from '../lib/site'
+const { footer } = getUI(Astro.currentLocale)
+---
+
+<footer class="foot">
+  <p>{footer.licence}</p>
+  <p>{footer.affiliation}</p>
+  <p class="foot-links">
+    <a href={REPO}>Source on GitHub</a>
+    <a href={url('privacy/')}>What xiao changes</a>
+    <a href={url('about/')}>Credits</a>
+  </p>
+</footer>

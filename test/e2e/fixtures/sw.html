@@ -1,0 +1,18 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>xiao service worker fixture</title>
+<script>
+  // Requests a service worker makes have no tab (tabId -1); the ad one must still be blocked.
+  window.sw = (async () => {
+    const reg = await navigator.serviceWorker.register('sw.js');
+    await navigator.serviceWorker.ready;
+    const ask = (url) => new Promise((resolve) => {
+      navigator.serviceWorker.addEventListener('message', (e) => resolve(e.data), { once: true });
+      (reg.active ?? reg.waiting ?? reg.installing).postMessage(url);
+    });
+    return {
+      ad: await ask('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'),
+      control: await ask('https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js'),
+    };
+  })().catch((e) => ({ error: String(e) }));
+</script>

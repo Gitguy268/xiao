@@ -1,0 +1,80 @@
+---
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// Platform tabs work like zen-browser/www's download page: pick the visitor's OS, let them switch.
+import Layout from '../../layouts/Layout.astro'
+import { localePaths, RELEASES, REPO } from '../../lib/site'
+
+export const getStaticPaths = localePaths
+const zip = `${RELEASES}/latest/download/xiao-kit.zip`
+---
+
+<Layout title="Download xiao" description="Install xiao on macOS, Windows or Linux.">
+  <section class="page">
+    <h1>Download xiao</h1>
+    <p class="lead">The kit adds xiao to Zen in a few seconds. Your normal Zen profile isn't touched.</p>
+
+    <div class="tabs" role="tablist" aria-label="Operating system">
+      <button role="tab" type="button" data-os="mac" aria-selected="true">macOS</button>
+      <button role="tab" type="button" data-os="windows" aria-selected="false">Windows</button>
+      <button role="tab" type="button" data-os="linux" aria-selected="false">Linux</button>
+    </div>
+
+    <div data-os-panel="mac" role="tabpanel">
+      <ol class="steps">
+        <li>Install <a href="https://zen-browser.app/download/">Zen Browser</a> if you don't have it.</li>
+        <li>Download <a href={zip}><code>xiao-kit.zip</code></a> from the latest release and unzip it.</li>
+        <li>Open Terminal in the unzipped folder and run:<pre><code>sh install.sh --tor</code></pre></li>
+        <li>Open <strong>xiao</strong> from the Applications folder in your home folder.</li>
+      </ol>
+    </div>
+    <div data-os-panel="windows" role="tabpanel" hidden>
+      <ol class="steps">
+        <li>Install <a href="https://zen-browser.app/download/">Zen Browser</a> if you don't have it.</li>
+        <li>Download <a href={zip}><code>xiao-kit.zip</code></a> from the latest release and unzip it.</li>
+        <li>Open PowerShell in the unzipped folder and run:<pre><code>powershell -ExecutionPolicy Bypass -File install.ps1 -Tor</code></pre></li>
+        <li>Open <strong>xiao</strong> from the Start menu.</li>
+      </ol>
+    </div>
+    <div data-os-panel="linux" role="tabpanel" hidden>
+      <ol class="steps">
+        <li>Install <a href="https://zen-browser.app/download/">Zen Browser</a> (tarball, AppImage or Flatpak).</li>
+        <li>Download <a href={zip}><code>xiao-kit.zip</code></a> from the latest release and unzip it.</li>
+        <li>In a terminal in the unzipped folder, run:<pre><code>sh install.sh --tor</code></pre></li>
+        <li>Open <strong>xiao</strong> from your applications menu.</li>
+      </ol>
+    </div>
+
+    <h2>Installer options</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th scope="col">macOS and Linux</th><th scope="col">Windows</th><th scope="col">What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>--tor</code></td><td><code>-Tor</code></td><td>Downloads Tor (about 20 MB, checked against a pinned hash) for Tor tabs. Tor only runs while xiao is open.</td></tr>
+          <tr><td><code>--strict</code></td><td><code>-Strict</code></td><td>Adds fingerprinting resistance, DNS over HTTPS only, and clears cookies when you quit. Some sites behave differently.</td></tr>
+          <tr><td><code>--ubo</code></td><td><code>-Ubo</code></td><td>Also installs uBlock Origin from addons.mozilla.org.</td></tr>
+          <tr><td><code>--uninstall</code></td><td><code>-Uninstall</code></td><td>Removes xiao's profile, Tor and launcher. Zen stays.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Builds from source</h2>
+    <p class="prose">
+      Full xiao builds are made from Zen's source by the <a href={`${REPO}/actions`}>build workflow</a> and attached
+      to <a href={RELEASES}>releases</a>. macOS builds aren't notarised: the first time, Control-click the app and choose Open.
+    </p>
+  </section>
+</Layout>
+
+<script>
+  import { detectOS } from '../../components/download/detect-platform'
+
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-os]')]
+  const show = (os: string) => {
+    for (const b of buttons) b.setAttribute('aria-selected', String(b.dataset.os === os))
+    for (const p of document.querySelectorAll<HTMLElement>('[data-os-panel]')) p.hidden = p.dataset.osPanel !== os
+  }
+  for (const b of buttons) b.addEventListener('click', () => show(b.dataset.os!))
+  show(detectOS(navigator.userAgent, navigator.platform))
+</script>

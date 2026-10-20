@@ -1,0 +1,26 @@
+---
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+import { getUI, REPO, url } from '../lib/site'
+import ThemeSwitch from './ThemeSwitch.astro'
+const { nav } = getUI(Astro.currentLocale)
+const here = Astro.url.pathname
+const links = [
+  ['download/', nav.download],
+  ['privacy/', nav.privacy],
+  ['about/', nav.about],
+]
+---
+
+<header class="nav">
+  <a class="brand" href={url()}>
+    <img src={url('favicon.svg')} alt="" width="22" height="22" />
+    <span>xiao</span>
+  </a>
+  <nav aria-label="Site">
+    {links.map(([path, label]) => <a href={url(path)} aria-current={here === url(path) ? 'page' : undefined}>{label}</a>)}
+    <a href={REPO}>{nav.source}</a>
+    <ThemeSwitch />
+  </nav>
+</header>

@@ -1,0 +1,194 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# xiao's default hardening. Same schema as zen-browser/desktop prefs/*.yaml,
+# so the fork copies this file to prefs/xiao/ unchanged and the kit turns it
+# into user.js (scripts/userjs.mjs). Ideas from Mullvad Browser's
+# 001-base-profile.js and Waterfox's 02-privacy.js (MPL-2.0), arkenfox and
+# Betterfox (MIT). See NOTICE.
+
+# --- Telemetry, studies and remote experiments ---
+# Nothing about how you use the browser is sent anywhere, and no one can switch on experiments remotely.
+- name: datareporting.policy.dataSubmissionEnabled
+  value: false
+- name: datareporting.healthreport.uploadEnabled
+  value: false
+- name: toolkit.telemetry.enabled
+  value: false
+- name: toolkit.telemetry.unified
+  value: false
+- name: toolkit.telemetry.server
+  value: "data:,"
+- name: toolkit.telemetry.archive.enabled
+  value: false
+- name: toolkit.telemetry.newProfilePing.enabled
+  value: false
+- name: toolkit.telemetry.shutdownPingSender.enabled
+  value: false
+- name: toolkit.telemetry.updatePing.enabled
+  value: false
+- name: toolkit.telemetry.bhrPing.enabled
+  value: false
+- name: toolkit.telemetry.firstShutdownPing.enabled
+  value: false
+- name: app.shield.optoutstudies.enabled
+  value: false
+- name: app.normandy.enabled
+  value: false
+- name: app.normandy.api_url
+  value: ""
+- name: messaging-system.rsexperimentloader.enabled
+  value: false
+- name: browser.discovery.enabled
+  value: false
+- name: breakpad.reportURL
+  value: ""
+- name: browser.tabs.crashReporting.sendReport
+  value: false
+
+# --- Sponsored content and recommendations ---
+# No sponsored shortcuts, suggestions or add-on recommendations.
+- name: browser.newtabpage.activity-stream.showSponsored
+  value: false
+- name: browser.newtabpage.activity-stream.showSponsoredTopSites
+  value: false
+- name: browser.newtabpage.activity-stream.feeds.telemetry
+  value: false
+- name: browser.newtabpage.activity-stream.telemetry
+  value: false
+- name: browser.urlbar.suggest.quicksuggest.sponsored
+  value: false
+- name: browser.urlbar.suggest.quicksuggest.nonsponsored
+  value: false
+- name: extensions.getAddons.showPane
+  value: false
+- name: extensions.htmlaboutaddons.recommendations.enabled
+  value: false
+
+# --- Tracking protection ---
+# Strict tracking protection, cookies kept per site, tracking parameters removed from links, and a Global Privacy Control signal.
+- name: browser.contentblocking.category
+  value: "strict"
+- name: privacy.trackingprotection.enabled
+  value: true
+- name: privacy.trackingprotection.socialtracking.enabled
+  value: true
+# 5 = Total Cookie Protection (dynamic first-party isolation)
+- name: network.cookie.cookieBehavior
+  value: 5
+- name: privacy.query_stripping.enabled
+  value: true
+- name: privacy.query_stripping.enabled.pbmode
+  value: true
+- name: privacy.globalprivacycontrol.enabled
+  value: true
+# Fingerprinting protection without RFP, so Zen's UI keeps working (strict adds RFP)
+- name: privacy.fingerprintingProtection
+  value: true
+- name: privacy.fingerprintingProtection.pbmode
+  value: true
+- name: privacy.partition.network_state.ocsp_cache
+  value: true
+- name: network.http.referer.XOriginTrimmingPolicy
+  value: 2
+- name: browser.send_pings
+  value: false
+- name: dom.battery.enabled
+  value: false
+
+# --- Connections ---
+# Pages load over HTTPS only, certificate checks are strict, and DNS lookups are encrypted (Quad9).
+- name: dom.security.https_only_mode
+  value: true
+- name: dom.security.https_only_mode_send_http_background_request
+  value: false
+- name: security.tls.enable_0rtt_data
+  value: false
+- name: security.ssl.require_safe_negotiation
+  value: true
+- name: security.ssl.treat_unsafe_negotiation_as_broken
+  value: true
+- name: security.cert_pinning.enforcement_level
+  value: 2
+- name: security.remote_settings.crlite_filters.enabled
+  value: true
+- name: security.pki.crlite_mode
+  value: 2
+- name: browser.xul.error_pages.expert_bad_cert
+  value: true
+- name: network.IDN_show_punycode
+  value: true
+# DNS over HTTPS (Quad9), falls back to system DNS if it fails (strict: never)
+- name: network.trr.mode
+  value: 2
+- name: network.trr.uri
+  value: "https://dns.quad9.net/dns-query"
+- name: network.trr.custom_uri
+  value: "https://dns.quad9.net/dns-query"
+- name: doh-rollout.disable-heuristics
+  value: true
+
+# --- Requests made before you ask (also keeps the Tor container clean) ---
+# The browser doesn't connect to sites you haven't opened: no prefetching, no early connections, no search suggestions while you type.
+- name: network.prefetch-next
+  value: false
+- name: network.dns.disablePrefetch
+  value: true
+- name: network.dns.disablePrefetchFromHTTPS
+  value: true
+- name: network.predictor.enabled
+  value: false
+- name: network.predictor.enable-prefetch
+  value: false
+- name: network.http.speculative-parallel-limit
+  value: 0
+- name: browser.places.speculativeConnect.enabled
+  value: false
+- name: browser.urlbar.speculativeConnect.enabled
+  value: false
+- name: browser.search.suggest.enabled
+  value: false
+- name: browser.urlbar.suggest.searches
+  value: false
+- name: network.proxy.socks_remote_dns
+  value: true
+- name: network.file.disable_unc_paths
+  value: true
+- name: network.gio.supported-protocols
+  value: ""
+
+# --- WebRTC: never reveal local addresses ---
+# Video calls still work, but sites can't read your local network addresses.
+- name: media.peerconnection.ice.default_address_only
+  value: true
+- name: media.peerconnection.ice.no_host
+  value: true
+- name: media.peerconnection.ice.proxy_only_if_behind_proxy
+  value: true
+
+# --- Safe Browsing stays on; downloads are not sent to Google ---
+# Known phishing and malware sites are still blocked, using lists checked on your computer. Files you download are not sent off for checking.
+- name: browser.safebrowsing.malware.enabled
+  value: true
+- name: browser.safebrowsing.phishing.enabled
+  value: true
+- name: browser.safebrowsing.downloads.remote.enabled
+  value: false
+
+# --- Smaller things ---
+# PDFs can't run scripts, saved passwords aren't filled in automatically, and containers are turned on.
+- name: pdfjs.enableScripting
+  value: false
+- name: network.auth.subresource-http-auth-allow
+  value: 1
+- name: browser.download.always_ask_before_handling_new_types
+  value: true
+- name: signon.formlessCapture.enabled
+  value: false
+- name: signon.autofillForms
+  value: false
+- name: privacy.userContext.enabled
+  value: true
+- name: privacy.userContext.ui.enabled
+  value: true

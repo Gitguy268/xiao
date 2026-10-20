@@ -1,0 +1,17 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>xiao WebRTC fixture</title>
+<script>
+  // Gathers ICE candidates without any STUN server and reports what addresses appear.
+  window.webrtc = (async () => {
+    if (typeof RTCPeerConnection === 'undefined') return { available: false, candidates: [] };
+    const pc = new RTCPeerConnection({ iceServers: [] });
+    const candidates = [];
+    pc.onicecandidate = (e) => e.candidate && candidates.push(e.candidate.candidate);
+    pc.createDataChannel('x');
+    await pc.setLocalDescription(await pc.createOffer());
+    await new Promise((r) => { pc.onicegatheringstatechange = () => pc.iceGatheringState === 'complete' && r(); setTimeout(r, 4000); });
+    pc.close();
+    return { available: true, candidates };
+  })();
+</script>

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+test/e2e/out/
+.DS_Store
+.env
+*.log
+fork/build/
+site/public/tokens.css
+site/public/favicon.svg
+site/public/fonts/
+site/dist/
+site/.astro/

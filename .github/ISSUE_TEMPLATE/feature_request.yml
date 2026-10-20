@@ -1,0 +1,21 @@
+name: Feature request
+description: Something xiao could do.
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do?
+      description: The problem, not the solution yet.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How could xiao help?
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Privacy cost
+      description: Would it make xiao contact a new server, or store or reveal something it doesn't today?

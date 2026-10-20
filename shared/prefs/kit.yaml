@@ -1,0 +1,18 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Kit only: lets the official Zen load xiao's unsigned extension from the
+# profile folder. The fork ships the extension as a built-in add-on instead.
+
+- name: xpinstall.signatures.required
+  value: false
+- name: extensions.autoDisableScopes
+  value: 0
+- name: extensions.enabledScopes
+  value: 15
+- name: browser.shell.checkDefaultBrowser
+  value: false
+# Zen's onboarding is Zen-branded; the fork shows its own.
+- name: zen.welcome-screen.seen
+  value: true

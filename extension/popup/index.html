@@ -1,0 +1,26 @@
+<!doctype html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>xiao</title>
+  <link rel="stylesheet" href="../tokens.css">
+  <link rel="stylesheet" href="popup.css">
+  <script src="popup.js" type="module"></script>
+</head>
+<body>
+  <h1 id="host">This page</h1>
+  <p id="count">Counting…</p>
+  <label class="switch">
+    <input id="block" type="checkbox" checked>
+    <span>Block ads and trackers on this site</span>
+  </label>
+  <hr>
+  <p id="tor">Checking Tor…</p>
+  <button id="tor-open" type="button" hidden>Open a Tor tab</button>
+  <button id="tor-circuit" type="button" hidden>New Tor circuit for this site</button>
+  <p class="hint" id="lists"></p>
+</body>
+</html>

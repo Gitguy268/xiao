@@ -1,0 +1,73 @@
+xiao
+Copyright (C) 2026 Lucas Van De Weerd
+
+xiao is free software under the Mozilla Public License 2.0. See LICENSE.
+
+The fork overlay (fork/) changes Zen Browser, Copyright the Zen OSS Team and
+contributors (https://github.com/zen-browser/desktop), MPL-2.0. Files derived
+from Zen keep Zen's notices; xiao's changes are under the same licence.
+
+xiao is not affiliated with or endorsed by Zen, Mozilla, Mullvad, the Tor
+Project, Ghostery, Raymond Hill or The Browser Company. Their names are
+trademarks of their owners. xiao uses none of their logos.
+
+Code used in xiao
+-----------------
+
+Zen Browser desktop (https://github.com/zen-browser/desktop), MPL-2.0
+  The fork overlay builds on Zen 1.23.3b with surfer
+  (https://github.com/zen-browser/surfer, MPL-2.0). shared/prefs/*.yaml uses
+  Zen's prefs schema.
+
+Zen Browser website (https://github.com/zen-browser/www), MPL-2.0
+  site/ starts from its structure: the Astro config and i18n routing, the
+  layout and theme switch, and the download page's platform tabs. Its text,
+  images, videos and fonts are not used.
+
+Ghostery adblocker (https://github.com/ghostery/adblocker), MPL-2.0
+  @ghostery/adblocker-webextension and -cosmetics are bundled in the
+  extension. Their dependencies tldts-experimental (MIT) and
+  webextension-polyfill (MPL-2.0) are bundled too; esbuild writes the
+  licence comments to background.js.LEGAL.txt and cosmetics.js.LEGAL.txt.
+
+EB Garamond (https://github.com/octaviopardo/EBGaramond12) and Inter
+(https://rsms.me/inter/), SIL Open Font License 1.1
+  Bundled in the extension and the website; the licence texts ship next to
+  the font files (fonts/OFL-*.txt).
+
+Downloaded at install time, not included in this repository
+------------------------------------------------------------
+
+Tor (https://www.torproject.org), BSD-3-Clause, with bundled components under
+their own licences: the Tor Expert Bundle, only with --tor.
+
+uBlock Origin (https://github.com/gorhill/uBlock), GPL-3.0: only with --ubo,
+from addons.mozilla.org, unmodified.
+
+Filter lists (EasyList, EasyPrivacy, uBlock Origin's lists and others, under
+their own licences) and uBlock Origin's scriptlet resources (GPL-3.0):
+downloaded by the browser at run time from Ghostery's list mirror.
+
+Ideas, no code
+--------------
+
+Mullvad Browser / Tor Browser (https://github.com/mullvad/mullvad-browser),
+MPL-2.0: hardening prefs in 001-base-profile.js; per-site Tor circuits
+(TorDomainIsolator); bundling an ad blocker in distribution/extensions.
+
+Waterfox (https://github.com/BrowserWorks/waterfox), MPL-2.0: privacy and
+promotion defaults in browser/app/profile/*.js.
+
+arkenfox user.js (https://github.com/arkenfox/user.js) and Betterfox
+(https://github.com/yokoffing/Betterfox), MIT: hardening prefs.
+
+The Browser Company (https://thebrowser.company): the website's and start
+page's editorial look (serif italic headings, off-white paper colour, soft
+gradients). No code, text, images or fonts from their site are used.
+
+Build tools
+-----------
+
+Astro, esbuild and yaml are MIT/ISC-licensed build tools. Astro's optional
+image dependency sharp bundles libvips (LGPL-3.0-or-later); it runs only at
+build time and is not part of the website or the browser.

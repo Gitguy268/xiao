@@ -1,0 +1,54 @@
+name: Bug report
+description: Something in xiao does not work.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: What happened, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: To reproduce
+      description: Steps, including the site address if a page breaks.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kit or build
+      options:
+        - Kit on Zen
+        - Full xiao build
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: xiao version, Zen version (Help > About), and installer options (--tor, --strict, --ubo).
+      placeholder: e.g. xiao 0.1.0, Zen 1.23.3b, --tor
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Screenshots or other context

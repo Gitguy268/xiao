@@ -1,0 +1,8 @@
+{
+  "nav": { "download": "Download", "privacy": "Privacy", "about": "About", "source": "Source" },
+  "footer": {
+    "licence": "xiao is free software under the Mozilla Public License 2.0, built on Zen Browser and Firefox.",
+    "affiliation": "Not affiliated with Zen, Mozilla, the Tor Project or The Browser Company."
+  },
+  "theme": { "toLight": "Switch to light theme", "toDark": "Switch to dark theme" }
+}

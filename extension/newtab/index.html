@@ -1,0 +1,73 @@
+<!doctype html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New tab</title>
+  <link rel="icon" href="../icons/xiao.svg">
+  <link rel="stylesheet" href="../tokens.css">
+  <link rel="stylesheet" href="newtab.css">
+  <script src="newtab.js" type="module"></script>
+</head>
+<body>
+  <header class="bar">
+    <span class="mark"><img src="../icons/xiao.svg" alt="" width="20" height="20">xiao</span>
+    <time id="clock"></time>
+  </header>
+
+  <main>
+    <h1 id="greeting">Hello.</h1>
+    <form id="search" role="search">
+      <label class="visually-hidden" for="q">Search or enter an address</label>
+      <input id="q" name="q" type="text" autocomplete="off" spellcheck="false" autofocus placeholder="Search or enter an address">
+    </form>
+    <nav id="links" aria-label="Your sites"></nav>
+  </main>
+
+  <footer>
+    <p id="status" aria-live="polite">Checking protection…</p>
+    <p class="actions">
+      <button id="tor-open" type="button" hidden>Open a Tor tab</button>
+      <button id="edit" type="button">Edit start page</button>
+    </p>
+  </footer>
+
+  <div class="pool" aria-hidden="true"></div>
+
+  <dialog id="settings">
+    <form method="dialog" id="settings-form">
+      <h2>Start page</h2>
+      <label>Search with
+        <select name="search">
+          <option value="ddg">DuckDuckGo</option>
+          <option value="leta">Mullvad Leta</option>
+          <option value="startpage">Startpage</option>
+          <option value="brave">Brave Search</option>
+          <option value="searxng">SearXNG on this computer (127.0.0.1:8888)</option>
+          <option value="custom">Other…</option>
+        </select>
+      </label>
+      <label id="custom-row">Search address, with %s where the words go
+        <input name="custom" type="url" placeholder="https://example.org/search?q=%s">
+      </label>
+      <label>Your sites, one per line: name, then address
+        <textarea name="links" rows="5" spellcheck="false"></textarea>
+      </label>
+      <label>Appearance
+        <select name="theme">
+          <option value="auto">Match the system</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </label>
+      <p class="dialog-actions">
+        <button value="cancel" formnovalidate>Cancel</button>
+        <button value="save" class="primary">Save</button>
+      </p>
+    </form>
+  </dialog>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# xiao
+
+> xiao is Zen Browser (a Firefox-based browser) with ad and tracker blocking built in, about 90 hardened privacy settings, and optional Tor tabs. It runs on macOS, Windows and Linux. Free software under the Mozilla Public License 2.0.
+
+xiao comes two ways: a kit that installs into an existing Zen Browser in a separate profile (shell or PowerShell installer), and full builds compiled from Zen's source with a rename and overlay. Ad blocking uses Ghostery's open-source engine with EasyList, EasyPrivacy and uBlock Origin lists. Tor tabs run through a bundled Tor client and fail closed when Tor is not running. Tor tabs hide the user's IP address but do not give Tor Browser's anonymity.
+
+## Pages
+
+- [Home](https://gitguy268.github.io/xiao/): what xiao is and what it changes
+- [Download](https://gitguy268.github.io/xiao/download/): install steps for each platform and installer options
+- [What xiao changes](https://gitguy268.github.io/xiao/privacy/): every browser setting xiao sets, and the connections xiao makes
+- [About](https://gitguy268.github.io/xiao/about/): credits and licence
+- [Source code](https://github.com/Gitguy268/xiao)

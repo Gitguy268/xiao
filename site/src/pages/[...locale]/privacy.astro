@@ -1,0 +1,57 @@
+---
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+import Layout from '../../layouts/Layout.astro'
+import { readList, readSections } from '../../lib/prefs'
+import { localePaths, REPO } from '../../lib/site'
+
+export const getStaticPaths = localePaths
+const sections = readSections('balanced')
+const strict = readList('strict')
+const show = (v: unknown) => (v === '' ? '""' : String(v))
+---
+
+<Layout title="What xiao changes" description="Every setting xiao changes, and the few connections xiao itself makes.">
+  <section class="page">
+    <h1>What xiao changes</h1>
+    <p class="lead">
+      This page is generated from the same settings files the browser uses, so it can't drift from what xiao actually does.
+    </p>
+
+    <h2>Settings</h2>
+    {sections.map((s) => (
+      <details>
+        <summary>{s.title} <span class="muted">({s.prefs.length})</span></summary>
+        <p class="prose muted">{s.about}</p>
+        <div class="table-scroll">
+          <table>
+            <tbody>
+              {s.prefs.map((p) => <tr><td><code>{p.name}</code></td><td><code>{show(p.value)}</code></td></tr>)}
+            </tbody>
+          </table>
+        </div>
+      </details>
+    ))}
+
+    <h2>Strict mode adds</h2>
+    <details>
+      <summary>Fingerprinting resistance and more <span class="muted">({strict.length})</span></summary>
+      <p class="prose muted">Installed with <code>--strict</code>. Some sites look or behave differently.</p>
+      <div class="table-scroll">
+        <table><tbody>{strict.map((p) => <tr><td><code>{p.name}</code></td><td><code>{show(p.value)}</code></td></tr>)}</tbody></table>
+      </div>
+    </details>
+
+    <h2>Connections xiao itself makes</h2>
+    <ul class="prose">
+      <li>Filter lists for blocking, from Ghostery's list mirror on <code>raw.githubusercontent.com</code>, once a day.</li>
+      <li>When the start page or toolbar shows Tor status: <code>check.torproject.org</code>, always through Tor.</li>
+      <li>Nothing else. There is no xiao server, account or telemetry.</li>
+    </ul>
+    <p class="prose muted">
+      Zen and Firefox make their own connections (updates, Safe Browsing lists, certificate revocation lists). The
+      settings above switch off the ones that aren't needed for security. <a href={`${REPO}/tree/main/shared/prefs`}>Read the files.</a>
+    </p>
+  </section>
+</Layout>

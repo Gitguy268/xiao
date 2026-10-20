@@ -1,0 +1,92 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* xiao design tokens, shared by the start page, the popup and the website.
+ * Fonts (SIL OFL 1.1) sit next to this file in fonts/. */
+
+@font-face {
+  font-family: "EB Garamond";
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("fonts/eb-garamond-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "EB Garamond";
+  font-style: italic;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("fonts/eb-garamond-latin-400-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+}
+
+:root {
+  color-scheme: light;
+  --paper: #eeeee7;
+  --paper-raised: #f6f6f1;
+  --ink: #1d1d1b;
+  --ink-soft: #5e5e58;
+  --rule: rgb(29 29 27 / 0.12);
+  --fill: rgb(29 29 27 / 0.05);
+  --accent: #e70923; /* fills, borders and focus rings only: 4.0:1 on paper, too low for text */
+  --accent-ink: #ffffff;
+  --tor: #7b4fd6;
+  --pool-a: #f3c7c8;
+  --pool-b: #f5cdc1;
+
+  --serif: "EB Garamond", "Iowan Old Style", Georgia, serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.75rem;
+  --step-3: 2.5rem;
+  --step-4: clamp(2.75rem, 7vw, 4.5rem);
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --quick: 160ms;
+  --calm: 280ms;
+  --radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #1b1b1b;
+    --paper-raised: #242423;
+    --ink: #ececE4;
+    --ink-soft: #9a9a92;
+    --rule: rgb(236 236 228 / 0.14);
+    --fill: rgb(236 236 228 / 0.06);
+    --tor: #b49af0;
+    --pool-a: #44020a;
+    --pool-b: #410e06;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #1b1b1b;
+  --paper-raised: #242423;
+  --ink: #ececE4;
+  --ink-soft: #9a9a92;
+  --rule: rgb(236 236 228 / 0.14);
+  --fill: rgb(236 236 228 / 0.06);
+  --tor: #b49af0;
+  --pool-a: #44020a;
+  --pool-b: #410e06;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --quick: 0ms;
+    --calm: 0ms;
+  }
+}

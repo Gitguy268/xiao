@@ -1,0 +1,68 @@
+name: Fork build
+
+# Builds xiao from Zen's source (fork/ overlay) on a free GitHub runner.
+# Linux x86_64 only for now, without LTO or PGO, to show a build fits in the
+# 6-hour limit. Windows and macOS cross-builds follow once this one passes.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      SURFER_COMPAT: x86_64
+      SURFER_PLATFORM: linux
+      SCCACHE_GHA_ENABLED: 'true'
+      CARGO_INCREMENTAL: 0
+    steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: mozilla-actions/sccache-action@v0.0.9
+      - name: System packages (as Zen's Linux build)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip dos2unix yasm nasm build-essential libgtk2.0-dev libpython3-dev m4 uuid libasound2-dev libcurl4-openssl-dev libdbus-1-dev libdrm-dev libdbus-glib-1-dev libgtk-3-dev libpulse-dev libx11-xcb-dev libxt-dev xvfb lld llvm
+      - name: Build the xiao extension
+        run: npm ci && npm run build
+      - name: Check out Zen and apply the xiao overlay
+        run: sh fork/apply.sh "$GITHUB_WORKSPACE/build/desktop"
+      - name: Download Firefox and import Zen's patches
+        working-directory: build/desktop
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          npm ci
+          npm run surfer -- ci --brand release --display-version "$(node -p "require('$GITHUB_WORKSPACE/package.json').version")"
+          npm run download
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          . "$HOME/.cargo/env"
+          npm run import
+          node "$GITHUB_WORKSPACE/fork/overlay.mjs" . --engine
+      - name: Bootstrap toolchains
+        working-directory: build/desktop/engine
+        run: ./mach --no-interactive bootstrap --application-choice browser
+      - name: Build
+        working-directory: build/desktop
+        run: |
+          . "$HOME/.cargo/env"
+          npm run build
+      - name: Package
+        working-directory: build/desktop/engine
+        run: |
+          ./mach package
+          mv obj-*/dist/xiao-*.tar.* "$GITHUB_WORKSPACE/xiao.linux-x86_64.tar.xz"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xiao.linux-x86_64
+          path: xiao.linux-x86_64.tar.xz
+          retention-days: 14

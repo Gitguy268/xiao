@@ -1,0 +1,45 @@
+---
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+import Layout from '../../layouts/Layout.astro'
+import { localePaths, REPO } from '../../lib/site'
+
+export const getStaticPaths = localePaths
+---
+
+<Layout title="About xiao" description="Why xiao exists and whose work it is built on.">
+  <section class="page">
+    <h1>About xiao</h1>
+    <p class="lead">
+      Zen is a calm, well-made browser. xiao keeps all of that and adds the protection people otherwise put together by
+      hand: an ad blocker, a long list of privacy settings, and a way to send some tabs through Tor.
+    </p>
+    <p class="prose">
+      The name is Mandarin for small. xiao is a small layer on top of other people's work, and it tries to stay that way:
+      a few hundred lines of extension code, a settings file, and a script that renames Zen.
+    </p>
+
+    <h2>Built on</h2>
+    <ul class="credits">
+      <li><a href="https://github.com/zen-browser/desktop">Zen Browser</a> and its build tool <a href="https://github.com/zen-browser/surfer">surfer</a>, MPL 2.0</li>
+      <li><a href="https://github.com/zen-browser/www">Zen's website</a>, the starting point for this one, MPL 2.0</li>
+      <li><a href="https://www.mozilla.org/firefox/">Firefox</a>, MPL 2.0</li>
+      <li><a href="https://github.com/mullvad/mullvad-browser">Mullvad Browser</a> and Tor Browser's hardening, MPL 2.0 (ideas)</li>
+      <li><a href="https://github.com/BrowserWorks/waterfox">Waterfox</a>'s privacy defaults, MPL 2.0 (ideas)</li>
+      <li><a href="https://github.com/arkenfox/user.js">arkenfox</a> and <a href="https://github.com/yokoffing/Betterfox">Betterfox</a>, MIT (ideas)</li>
+      <li><a href="https://github.com/ghostery/adblocker">Ghostery's adblocker</a>, MPL 2.0</li>
+      <li><a href="https://www.torproject.org/">Tor</a>, BSD 3-Clause, downloaded at install time</li>
+      <li><a href="https://github.com/gorhill/uBlock">uBlock Origin</a>, GPL 3.0, optional, downloaded at install time</li>
+      <li>EB Garamond and Inter, SIL Open Font License</li>
+      <li>The look takes cues from <a href="https://thebrowser.company/">The Browser Company</a>'s site (ideas only)</li>
+    </ul>
+
+    <h2>Licence</h2>
+    <p class="prose">
+      xiao is free software under the <a href="https://www.mozilla.org/MPL/2.0/">Mozilla Public License 2.0</a>. The
+      <a href={REPO}>source is on GitHub</a>. xiao is not affiliated with or endorsed by Zen, Mozilla, Mullvad, the Tor
+      Project, Ghostery or The Browser Company. Their names are trademarks of their owners.
+    </p>
+  </section>
+</Layout>

@@ -1,0 +1,12 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# xiao's look, for the kit and the fork: Zen's own UI in xiao red (--brand in
+# shared/tokens.css) and no Zen logo on startup. Not hardening, so the privacy
+# page doesn't list these.
+
+- name: zen.theme.accent-color
+  value: "#e70923"
+- name: zen.watermark.enabled
+  value: false

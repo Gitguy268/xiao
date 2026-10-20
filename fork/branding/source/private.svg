@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- private-window variant: same mark, deep red field -->
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="#44020a"/>
+  <circle cx="512" cy="512" r="250" fill="none" stroke="#fa8d9a" stroke-width="46"/>
+  <circle cx="512" cy="512" r="82" fill="#fa8d9a"/>
+</svg>

@@ -1,0 +1,17 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>xiao e2e fixture</title>
+<div class="sponsored-ad" id="cosmetic" style="height:60px">an ad slot</div>
+<p id="content">Real content</p>
+<script>
+  window.results = {};
+  function load(name, src) {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => { results[name] = 'loaded'; };
+    s.onerror = () => { results[name] = 'blocked'; };
+    document.head.append(s);
+  }
+  load('ad', 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js');
+  load('control', 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js');
+</script>

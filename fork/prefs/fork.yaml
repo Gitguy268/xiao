@@ -1,0 +1,27 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Fork only (not the kit): xiao builds don't update from Zen's servers and
+# don't open Zen's welcome pages.
+
+- name: zen.updates.show-update-notification
+  value: false
+- name: app.update.auto
+  value: false
+- name: startup.homepage_override_url
+  value: ""
+- name: startup.homepage_welcome_url
+  value: ""
+- name: startup.homepage_welcome_url.additional
+  value: ""
+- name: app.update.url.manual
+  value: "https://github.com/Gitguy268/xiao/releases"
+- name: app.update.url.details
+  value: "https://github.com/Gitguy268/xiao/releases"
+- name: app.releaseNotesURL
+  value: "https://github.com/Gitguy268/xiao/releases"
+- name: app.releaseNotesURL.aboutDialog
+  value: "https://github.com/Gitguy268/xiao/releases"
+- name: app.releaseNotesURL.prompt
+  value: "https://github.com/Gitguy268/xiao/releases"

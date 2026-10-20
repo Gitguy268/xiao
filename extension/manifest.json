@@ -1,0 +1,30 @@
+{
+  "manifest_version": 2,
+  "name": "xiao",
+  "version": "0.1.0",
+  "description": "xiao's start page, ad and tracker blocking, and Tor container.",
+  "homepage_url": "https://github.com/Gitguy268/xiao",
+  "browser_specific_settings": {
+    "gecko": { "id": "xiao@gitguy268.github.io", "strict_min_version": "128.0" }
+  },
+  "icons": { "48": "icons/xiao.svg", "96": "icons/xiao.svg" },
+  "permissions": [
+    "<all_urls>", "webRequest", "webRequestBlocking", "webNavigation", "proxy",
+    "contextualIdentities", "cookies", "storage", "unlimitedStorage", "tabs", "privacy"
+  ],
+  "background": { "scripts": ["background.js"], "persistent": true },
+  "content_scripts": [{
+    "matches": ["http://*/*", "https://*/*"],
+    "js": ["cosmetics.js"],
+    "run_at": "document_start",
+    "all_frames": true,
+    "match_about_blank": true
+  }],
+  "chrome_url_overrides": { "newtab": "newtab/index.html" },
+  "chrome_settings_overrides": { "homepage": "newtab/index.html" },
+  "browser_action": {
+    "default_icon": "icons/xiao.svg",
+    "default_title": "xiao",
+    "default_popup": "popup/index.html"
+  }
+}

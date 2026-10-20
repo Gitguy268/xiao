@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm run site:build
+      - name: Shell scripts
+        run: shellcheck kit/install.sh kit/make-app.sh fork/apply.sh fork/branding/make.sh
+      - name: PowerShell parses
+        shell: pwsh
+        run: |
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile("$PWD/kit/install.ps1", [ref]$null, [ref]$errors) | Out-Null
+          if ($errors) { $errors; exit 1 }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xiao-kit
+          path: dist/xiao-kit.zip
+
+  kit-e2e:
+    # Installs the kit on the official Zen and checks blocking, prefs, WebRTC and Tor (test/e2e/run.mjs).
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      ZEN_VERSION: 1.23.3b
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install Zen (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          curl -fsSL -o zen.dmg "https://github.com/zen-browser/desktop/releases/download/$ZEN_VERSION/zen.macos-universal.dmg"
+          hdiutil attach -nobrowse -mountpoint /Volumes/zen zen.dmg
+          cp -R /Volumes/zen/Zen.app /Applications/
+          hdiutil detach /Volumes/zen
+          echo "ZEN=/Applications/Zen.app/Contents/MacOS/zen" >> "$GITHUB_ENV"
+      - name: Install Zen (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update && sudo apt-get install -y libgtk-3-0t64 libdbus-glib-1-2 libasound2t64
+          curl -fsSL "https://github.com/zen-browser/desktop/releases/download/$ZEN_VERSION/zen.linux-x86_64.tar.xz" | tar -xJ -C "$HOME"
+          echo "ZEN=$HOME/zen/zen" >> "$GITHUB_ENV"
+      - name: Install Zen (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest "https://github.com/zen-browser/desktop/releases/download/$env:ZEN_VERSION/zen.installer.exe" -OutFile zen.installer.exe
+          Start-Process .\zen.installer.exe -ArgumentList '/S' -Wait
+          "ZEN=$env:ProgramFiles\Zen Browser\zen.exe" >> $env:GITHUB_ENV
+      - run: npm ci
+      - run: npm run build
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-screenshots-${{ matrix.os }}
+          path: test/e2e/out/
+          if-no-files-found: ignore
