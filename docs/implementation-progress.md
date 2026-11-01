@@ -101,3 +101,24 @@ Open:
 1. Startup figures on a quiet machine (the commands are in performance-results.md; this session's machine was at load 8–58).
 2. The Linux Docker e2e (31 / 31 in 0.2) has not been repeated; Windows is untested.
 3. Nothing is committed (the user's choice). OpenFinder's source must be public before the `library` pack is released, as for convert's.
+
+# Xiao 0.5
+
+The approved plan is `~/.claude/plans/pasted-content-id-4dc1-feature-for-zesty-whale.md`. Work is on branch `xiao-0.5`; the 0.4 baseline is commit `43b22d8`. Check `df -h /System/Volumes/Data` before any build, test, download or sync, and stop under 5 GB free.
+
+## Phase 0 results (2026-11-01, Zen 1.23.3b / Fx 158, macOS arm64, headless, throwaway home)
+
+| Spike | Result |
+|---|---|
+| Widevine in the kit's copy of Zen | **Works.** CDM 4.10.3112.0 installed through `GMPInstallManager`. Shaka's encrypted Angel One stream played (0 → 5.97 s, 480 px wide, keySystem `com.widevine.alpha`). Linux and Windows not tested |
+| Ed25519 for updates | **Works** through `Services.appShell.hiddenDOMWindow.crypto.subtle`: a good signature verifies and a changed message fails |
+| Fingerprint targets | Present in the engine: `CanvasRandomization`, `EfficientCanvasRandomization`, `WebGLRandomization`, `WebGLRenderInfo`, `WebGLVendorRandomize`, `ScreenRect`, `ScreenAvailRect`, `WindowOuterSize`, `NavigatorHWConcurrency`, `NavigatorHWConcurrencyTiered`, `AudioSampleRate`, `FontVisibility*` and more |
+| What varies today | Default prefs: only `toDataURL` differs between sites. `getImageData` and WebGL readback are the same on both |
+| With `+AllTargets` minus colour scheme, locale, time zone and user agent | `getImageData` and WebGL readback differ between sites; WebGL renderer reads "Mozilla"; screen reads 1000x700; Zen's window still has its toolbars. **Still the same:** audio hash, core count (8), font width. Those are the gaps for `core/lib/farble.mjs`. Zen's UI was only checked headless, by measuring it |
+| `no_host` flip | The pref takes effect without a restart. With `no_host` and `default_address_only` off, candidates are mDNS `.local` names; with `obfuscate_host_addresses` off too, they are real LAN addresses. **Open:** a two-peer loopback test failed with the hardened prefs and with mDNS candidates, and was not run with real addresses. Send to a device isn't proven yet |
+| Glass | **Inconclusive.** `CSS.supports` accepts `backdrop-filter: blur()` and `url()`, but the Marionette screenshot showed neither, not even blur, so it can't test this. Needs a headed check with a real screen capture |
+| MiniCPM-V on the CPU path | Not run: needs about 3 GB and the disk is too tight |
+
+Also seen: `requestMediaKeySystemAccess` for Widevine already succeeded before the explicit install, in a profile a few minutes old. Firefox may have fetched the CDM by itself; this needs the Phase 1 audit to confirm. That's the background traffic zero mode has to stop.
+
+Next: finish the two open spikes (glass, `no_host` with real addresses), then Phase 1. Convert (33 changed files) and OpenFinder (42) are still uncommitted, and need their own baselines before publishing.
