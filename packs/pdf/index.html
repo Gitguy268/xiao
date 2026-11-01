@@ -1,0 +1,58 @@
+<!doctype html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF tools</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="pdf.css">
+  <script src="pdf.bundle.js" type="module"></script>
+</head>
+<body>
+  <main>
+    <h1>PDF tools</h1>
+    <p class="lede">Everything happens on this computer. To highlight, sign, add text or reorder pages, open the PDF in Xiao itself.</p>
+
+    <label id="drop" class="drop">
+      <input id="file" type="file" accept="application/pdf,.pdf">
+      <span id="file-name">Choose a PDF, or drop one here</span>
+    </label>
+
+    <fieldset class="tools">
+      <legend class="visually-hidden">Tool</legend>
+      <label><input type="radio" name="tool" value="nup" checked> Pages per sheet</label>
+      <label><input type="radio" name="tool" value="booklet"> Booklet</label>
+      <label><input type="radio" name="tool" value="numbers"> Page numbers</label>
+      <label><input type="radio" name="tool" value="crop"> Crop margins</label>
+      <label><input type="radio" name="tool" value="details"> Title and author</label>
+      <label><input type="radio" name="tool" value="protect"> Add a password</label>
+      <label><input type="radio" name="tool" value="unlock"> Remove a password</label>
+      <label><input type="radio" name="tool" value="attach"> Attach files</label>
+    </fieldset>
+
+    <form id="options" class="options">
+      <div data-for="nup"><label>Pages on each sheet <select name="per"><option value="2">2, side by side</option><option value="4">4, in a grid</option></select></label></div>
+      <div data-for="booklet"><p>Print on both sides, flipping on the short edge, then fold the stack in half.</p></div>
+      <div data-for="numbers">
+        <label>First number <input name="start" type="number" min="0" value="1"></label>
+        <label>Where <select name="where"><option value="bottom">Bottom, centred</option><option value="bottom-right">Bottom right</option><option value="top">Top, centred</option></select></label>
+      </div>
+      <div data-for="crop"><label>Margin to cut, in millimetres <input name="mm" type="number" min="0" max="100" value="10"></label></div>
+      <div data-for="details">
+        <label>Title <input name="title" type="text"></label>
+        <label>Author <input name="author" type="text"></label>
+        <label>Subject <input name="subject" type="text"></label>
+        <label>Keywords, separated by commas <input name="keywords" type="text"></label>
+      </div>
+      <div data-for="protect"><label>Password <input name="password" type="password" autocomplete="new-password"></label><p>AES-256. Without the password, nobody can open the file, you included.</p></div>
+      <div data-for="unlock"><label>The PDF's password <input name="password" type="password" autocomplete="off"></label><p>Bookmarks and form fields are not kept.</p></div>
+      <div data-for="attach"><label>Files to attach <input name="files" type="file" multiple></label></div>
+      <p class="actions"><button class="primary" type="submit">Make the PDF</button></p>
+    </form>
+    <p id="status" aria-live="polite"></p>
+  </main>
+</body>
+</html>

@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.4.0 (unreleased)
+
+- **The Library** (Features → Library, an optional download built from OpenFinder, GPL-3.0-or-later): one searchable place for your downloads, the folders you give it, your notes, collections and closed tabs. It runs in its own tab with Xiao's look and reaches files only through Xiao, one folder at a time. Private windows and Tor tabs never reach it, and never add to it.
+  - **Downloads** are remembered with the name they came with, so a file stays findable after a rename. "Remember my downloads" can be switched off.
+  - **Search** by name, earlier name, kind, tag, date or folder; 10,000 files answer in about 8 ms. ⇧⌘F (Ctrl+Shift+F) searches everything from anywhere in it.
+  - **Tags, collections and saved searches** refer to files, never copy them.
+  - **Files** in Zen's own Library panel and in the address bar search the same index.
+  - A scan of a large folder shows in the sidebar and can be stopped.
+- **Tidy names:** proposed clearer names for downloads and files, each reviewed before anything changes. Renames never overwrite, keep compound extensions, refuse files that changed meanwhile, and can be undone after a restart. Firefox's download list follows. Move to Trash uses the system's Trash, never a permanent delete.
+- **Auto-archive** (off until chosen): tabs unused for 12 hours to a week close into the Library's Archive, in every space. Pinned tabs, Essentials, tabs playing sound, unsaved work and Tor tabs stay. An archived tab opens again in its own space and container.
+- **Arc-style helpers:**
+  - `!w`, `!gh`, `!osm`, `!mdn`, `!yt` site shortcuts in the address bar (off until chosen);
+  - Save to Clippings: a selected quote and its source into a note;
+  - pause blocking for one tab, until it closes;
+  - Ctrl+Tab goes to the tab used last;
+  - the start page links to Zen's keyboard shortcut settings.
+- **Assist** (off until chosen): tidy tab titles and group tabs by site into folders, both with undo. Ask about this page shows the passages that answer; with the local AI on (MiniCPM5 2B on this computer) it answers with citations. It can summarise a link. It never reads passwords, hidden fields or Tor tabs, and nothing a page says can make it act.
+- **Boards** (off until chosen): gather links, quotes and notes into topics. "Add to Board" in a page's menu adds the link, the selected words with their page, or the page; the board page shows cards with clickable links and tickable tasks, and exports as Markdown or a web page that runs nothing. Each board is a sticky note, so it syncs with textarea.
+- **Quick window** (off until chosen): a link opened from another app gets a small window of its own, apart from your spaces. "Move tabs to" on its space name keeps it.
+- **Ask about this page** shows the passages that answer at once; the local AI's written answer follows when it is ready.
+- **Export and import** (start page settings): spaces with their tabs, folders, splits and containers; collections and saved searches; settings, in one JSON file you save. Tor and private tabs, folder paths and passwords in addresses are left out. An import shows every address before it adds anything, and never downloads a feature.
+
+## 0.3.0 (unreleased)
+
+- **Search goes to SearXNG by default:** searx.ononoki.org, then priv.au, then Brave Search. A search the first one refuses (blocked, rate-limited, down or unreachable) is loaded again on the next with the same words. The address bar uses the start page's choice too.
+- **Features, all off until you turn them on** (start page → Features). The big ones are downloaded only then, pinned by SHA-256, and turning them off deletes the download:
+  - **Sticky note:** a small square note from its own toolbar button. Notes are markdown files, kept in Xiao or in a folder you pick, such as the one textarea's Folder sync uses, so both apps share them. It can open the note for the site you are on.
+  - **Sort my notes by voice** (1.8 GB): speak, and Whisper small and MiniCPM5 2B, running on this computer, sort what you said and your sticky notes into a board of topics, tasks done and to do, and open questions. The board is saved as a sticky note.
+  - **File converter** (184 MB): convert-gitguy268, offline, from Xiao's button.
+  - **PDF tools** (0.3 MB): pages per sheet, booklets, page numbers, crop, title and author, add or remove a password, attach files. Firefox's own viewer already highlights, signs and reorders pages, and the converter merges, splits and compresses.
+  - **Tab sleep:** tabs unused for 15 minutes to two hours give their memory back.
+- Downloads live in Xiao's app folder (Firefox's content sandbox reads nothing else) and move with it when Xiao is rebuilt after a Zen update.
+
 ## 0.2.0 (unreleased)
 
 - **Blocking is built into the browser.** Xiao no longer uses an extension. Its code ships inside its own copy of Zen and is loaded by Firefox's AutoConfig. Ad and tracker blocking, cosmetic filtering, Tor routing, the start page and the toolbar button all run there. There is no add-on to disable, and add-on signing stays on.

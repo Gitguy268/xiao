@@ -22,6 +22,7 @@ export class Blocker {
     this.store = store; // { allow: Set, total, engineAt, save() }
     this.engine = null;
     this.perBrowser = new Map(); // browserId → blocked on the current page
+    this.paused = new Set(); // browserIds of tabs where blocking is paused until they close (never saved)
     this.typeName = typeNames(Ci.nsIContentPolicy);
     this.listeners = new Set();
   }
@@ -99,14 +100,16 @@ export class Blocker {
 
   check(channel, topic) {
     const info = this.describe(channel);
-    if (!fromWeb(info) || this.allowed(pageOf(info))) return;
+    if (!fromWeb(info)) return;
+    // a new page starts its count at 0, also where blocking is off or paused
+    if (topic !== 'http-on-examine-response' && info.type === 'main_frame' && info.browserId) this.perBrowser.set(info.browserId, 0);
+    if (this.allowed(pageOf(info)) || this.paused.has(info.browserId)) return;
     const request = Request.fromRawDetails(ghosteryDetails(info));
     if (topic === 'http-on-examine-response') {
       const csp = this.engine.getCSPDirectives(request);
       if (csp) channel.setResponseHeader('Content-Security-Policy', csp, true);
       return;
     }
-    if (info.type === 'main_frame' && info.browserId) this.perBrowser.set(info.browserId, 0);
     const { match, redirect } = this.engine.match(request);
     if (!match && !redirect) return;
     if (redirect) {
@@ -134,13 +137,22 @@ export class Blocker {
 
   forget(browserId) {
     this.perBrowser.delete(browserId);
+    this.paused.delete(browserId);
+  }
+
+  // A site that breaks with blocking on: pause it for this one tab. Closing
+  // the tab ends the pause; nothing about it is written down.
+  pause(browserId, on) {
+    if (!browserId) return;
+    if (on) this.paused.add(browserId);
+    else this.paused.delete(browserId);
   }
 
   // Cosmetic filtering, asked for by XiaoChild in each frame. The generic
   // hiding sheet (the same for every site) is sent once per content process
   // and shared; only what is particular to this page travels with each ask.
-  cosmetics({ url, lifecycle, classes = [], ids = [], hrefs = [] }, topUrl) {
-    if (!this.engine || this.allowed(topUrl) || !/^https?:/.test(url)) return { active: false };
+  cosmetics({ url, lifecycle, classes = [], ids = [], hrefs = [] }, topUrl, browserId = 0) {
+    if (!this.engine || this.allowed(topUrl) || this.paused.has(browserId) || !/^https?:/.test(url)) return { active: false };
     let host;
     let domain;
     try {

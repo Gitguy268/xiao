@@ -1,0 +1,136 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* The voice box and the board, in Xiao's paper and ink. The one bold thing
+ * is the round record button; the board stays quiet. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: var(--step-0) / 1.5 var(--sans);
+}
+
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+main {
+  width: min(760px, 100% - 32px);
+  margin: 0 auto;
+  padding: 56px 0 80px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font: italic 400 var(--step-3) / 1.1 var(--serif);
+  letter-spacing: -0.01em;
+}
+.lede { margin: 0 0 32px; color: var(--ink-soft); max-width: 60ch; }
+
+.voice { display: grid; justify-items: center; gap: 14px; }
+
+#record {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  border: 2px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font: 500 var(--step--1) / 1 var(--sans);
+  cursor: pointer;
+  transition: border-color var(--quick) var(--ease), box-shadow var(--calm) var(--ease);
+}
+#record svg rect { fill: currentColor; }
+#record:hover { border-color: var(--ink-soft); }
+#record[aria-pressed="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 16%, transparent);
+  animation: listen 1.6s var(--ease) infinite alternate;
+}
+@keyframes listen { to { box-shadow: 0 0 0 14px color-mix(in srgb, var(--accent) 8%, transparent); } }
+@media (prefers-reduced-motion: reduce) { #record[aria-pressed="true"] { animation: none; } }
+
+#said {
+  width: 100%;
+  min-height: 4.5em;
+  padding: 10px 4px;
+  border: 0;
+  border-bottom: 1.5px solid var(--rule);
+  background: transparent;
+  color: var(--ink);
+  font: 400 var(--step-1) / 1.4 var(--sans);
+  text-align: center;
+  resize: vertical;
+}
+#said:focus { outline: none; border-bottom-color: var(--accent); }
+
+.all { font-size: var(--step--1); color: var(--ink-soft); display: flex; gap: 8px; align-items: center; }
+.all input { accent-color: var(--accent); }
+.lang { font-size: var(--step--1); color: var(--ink-soft); display: flex; gap: 8px; align-items: center; }
+.lang select { font: inherit; color: var(--ink); background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 8px; padding: 4px 8px; }
+.actions { display: flex; gap: 10px; margin: 0; }
+
+button {
+  font: 500 var(--step--1) / 1 var(--sans);
+  color: var(--ink);
+  background: var(--fill);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 9px 18px;
+  cursor: pointer;
+}
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+button:disabled { opacity: 0.5; cursor: default; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+#status { min-height: 1.5em; margin: 0; color: var(--ink-soft); font-size: var(--step--1); text-align: center; }
+#status.error { color: var(--accent-text); }
+
+/* The board: lib/board-panel.js draws it, this page dresses it. */
+#board { margin-top: 48px; }
+#board-panel { position: static; }
+.board-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
+.board-title { margin: 0; font: italic 400 var(--step-2) / 1.2 var(--serif); }
+.board-close { display: none; }
+.board-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.board-card {
+  padding: 14px 16px 12px;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+.board-topic { margin: 0 0 8px; font: 600 var(--step-0) / 1.3 var(--sans); }
+.board-progress { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: var(--step--1); color: var(--ink-soft); }
+.board-progress progress {
+  flex: 1;
+  height: 6px;
+  appearance: none;
+  border: 0;
+  border-radius: 3px;
+  background: var(--fill);
+  overflow: hidden;
+}
+.board-progress progress::-moz-progress-bar { background: var(--accent); }
+.board-items { margin: 0; padding: 0; list-style: none; }
+.board-item { display: flex; gap: 8px; padding: 3px 0; font-size: var(--step--1); }
+.board-item label { display: flex; gap: 8px; align-items: baseline; cursor: pointer; }
+.board-item input { accent-color: var(--accent); }
+.board-done span { color: var(--ink-soft); text-decoration: line-through; }
+.board-note { color: var(--ink-soft); padding-left: 21px; }
+.board-mark {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+  border: 1.5px solid var(--accent-text);
+  border-radius: 50%;
+  color: var(--accent-text);
+  font: 700 10px / 12px var(--sans);
+  text-align: center;
+}

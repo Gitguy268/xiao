@@ -25,8 +25,23 @@ A calm, private browser built on Zen: ad and tracker blocking built into the bro
 | Uses less memory | With six busy sites open, the add-on process holds 39 MB instead of 0.1's 290 MB, even after Firefox frees what it can. The whole browser uses 2,179 MB instead of 3,193 MB after a minute, and 1,821 MB instead of 2,026 MB after freeing memory. These are medians of three runs; [how it was measured](https://gitguy268.github.io/xiao/privacy/#memory). |
 | Hardens 79 settings | No telemetry or studies, strict tracking protection, HTTPS only, DNS over HTTPS, no early connections, WebRTC without local addresses. Six more settings keep idle processes and tabs from holding memory. Strict mode adds 10, including Tor Browser's fingerprinting resistance. [Full list](https://gitguy268.github.io/xiao/privacy/). |
 | Tor tabs | A "Tor" container whose tabs go through Tor, with a circuit per site (and a new one from the Xiao button) and WebRTC removed. If Tor stops, they fail; they never fall back to a direct connection. |
+| Searches with SearXNG | searx.ononoki.org by default, then priv.au, then Brave Search: a search one of them refuses or can't answer is sent on to the next with the same words. Or pick DuckDuckGo, Mullvad Leta, Startpage, Brave or your own. |
 | Xiao Search | Optional: your own [SearXNG](https://github.com/searxng/searxng), in Xiao's style, on this computer only and running only while Xiao does. |
+| A Library of your files | One searchable place for your downloads, the folders you give it, your notes, collections and closed tabs, in Xiao's own look, built from [OpenFinder](https://github.com/Gitguy268/openfinder). Downloads keep the name they came with, so a renamed file is still found; tidy names are proposed and reviewed, never applied blindly, and every rename can be undone. Private windows and Tor tabs never reach it. |
+| Arc-style helpers | Auto-archive of old tabs (reopened in their own space), Boards of links and quotes, a quick window for links from other apps, `!w`-style site shortcuts, Save to Clippings, a blocking pause for one tab, and Assist: tidy tab titles, tab groups, and "Ask about this page" with the passages that answer. What Zen already does (spaces, split view, Glance, Boosts, routing) is checked to work, not rebuilt: [the ledger](docs/arc-parity.md). |
+| Features you add | All off until you turn them on in the start page's **Features**; the big ones download only then. The Library, a sticky note (shared with [textarea](https://github.com/Gitguy268/textarea) through a folder), sorting your notes into a board by voice with AI on this computer, Boards, a quick window, auto-archive, a file converter, PDF tools and tab sleep. Spaces, collections and settings export to one file and import back, with every address shown first. |
 | Start page | Opens with every new tab (Ctrl+T included) and when Xiao starts, with search, your sites, and what was blocked. Its settings can switch back to Zen's floating address bar or to reopening your tabs. [Try it on the website](https://gitguy268.github.io/xiao/#try). |
+
+<details>
+<summary>The Library and Boards, in pictures</summary>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screens/library-search-dark.png"><img src="docs/screens/library-search-light.png" width="860" alt="The Library: a sidebar with All, Downloads, Files, Notes and Collections, a search box, and a list of 10,109 files with their kind, size and date."></picture>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screens/library-tidy-dark.png"><img src="docs/screens/library-tidy-light.png" width="860" alt="Tidy Names: each file's current name beside a proposed clearer one, to accept or skip one by one."></picture>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screens/board-dark.png"><img src="docs/screens/board-light.png" width="860" alt="A board called Trip, with cards for Links, Quotes and Notes and a box to add to each."></picture>
+
+</details>
 
 ## Install
 
@@ -59,6 +74,9 @@ Full builds from Zen's source are set up in [`fork/`](fork/README.md).
 - **The kit is a copy of Zen.** Xiao's code lives in its own copy, so Zen's own updater doesn't touch it. When Zen has updated, the next start of Xiao rebuilds the copy first, which takes a few seconds (on Windows, a little longer). macOS may then ask again for camera or microphone access.
 - **Builds are early.** The overlay applies to Zen's source and its patches import, but no full build has been compiled yet, and builds don't include Tor.
 - **Windows** is tested only by CI, and has no Xiao Search (SearXNG doesn't support it). Its Start menu shortcut has Xiao's icon, but the taskbar shows Zen's while Xiao runs.
+- **Downloads need a writable app folder.** Features you add are stored in Xiao's own copy of Zen, the only folder Firefox's content sandbox lets their pages read. A fork build installed in a system folder can't take them.
+- **The voice organiser is slow in Firefox.** Firefox's WebGPU runs its model about ten times slower than the processor does, so Xiao uses the processor: about a minute or two per board. Its first use downloads 1.8 GB from Hugging Face.
+- **The converter is single-threaded** in Xiao, so long videos convert more slowly than on its website.
 - **Filter lists** come with the release and then, once a day, from the repository's `engine` release on GitHub. Until that release exists, Xiao keeps the engine it was installed with.
 
 <details>
@@ -69,6 +87,9 @@ Full builds from Zen's source are set up in [`fork/`](fork/README.md).
   - `Blocker.mjs` matches every request against Ghostery's engine in the parent process (`http-on-opening-request`), with a per-site allowlist. The engine is serialised at build time (`engine.bin`), so the browser never parses raw lists.
   - `actors/XiaoChild.sys.mjs` runs in each frame: cosmetic filtering, where the generic hiding sheet is parsed once per process and shared; removing WebRTC from Tor pages; and the start page's only bridge to Xiao.
   - `Tor.mjs` is a proxy channel filter: Tor-container requests go to SOCKS on 127.0.0.1:9160, with a SOCKS username and connection isolation key per site and remote DNS. Anything it can't place fails closed.
+  - `Search.mjs` gives the start page's search choice to the address bar and, for the default chain, loads a refused or failed search on the next engine (`failover` in `start/links.mjs`).
+  - `Packs.mjs` downloads the features you add, listed in `packs.json` with a size and SHA-256 for every file, into `<app>/xiao-packs/` and serves each as `resource://xiao-<id>/`. Models come from Hugging Face at a pinned revision, by byte range. `npm run packs` builds the catalogue and the code zips (`packs/`, plus textarea's speech and writing code and convert's build).
+  - `Notes.mjs` is the sticky note: a panel on its own toolbar button over a folder of markdown files, keeping any front matter textarea wrote.
   - `StartPage.mjs` and `Toolbar.mjs` set the start page as the new tab and home page, add the one Xiao button with its panel, and put `chrome.css` (Xiao's typefaces, no empty extensions button) in every window.
 - The kit's `make-app.sh` copies Zen (an APFS clone on macOS), adds the loader and `core/`, swaps in Xiao's name and icons, and removes the updater. The launcher rebuilds the copy when Zen's BuildID changes, then starts tor and Xiao Search, runs the copy on Xiao's profile, and stops them when Xiao quits.
 - Xiao Search is SearXNG downloaded at a pinned commit. The installer adds one stylesheet link (`kit/search/xiao.css`) and Xiao's mark to the installed copy only.
@@ -87,6 +108,8 @@ npm test                        # unit tests
 npm run build                   # dist/core/, dist/kit/, dist/xiao-kit.zip, dist/engine/
 npm run e2e                     # real Zen, throwaway home: blocking, prefs, new tab, WebRTC, Tor, fail-closed, restart
 E2E_SEARCH=1 npm run e2e        # also Xiao Search
+npm run packs                   # the downloadable features: core/packs.json, dist-packs/ (needs textarea and convert-gitguy268)
+AI=1 npm run e2e                # also download the voice organiser and sort notes with the real models
 node test/e2e/memory.mjs        # memory with six busy sites open
 npm run site:dev                # website at http://localhost:4321/xiao/
 node test/e2e/site-shots.mjs    # the built website in Zen, desktop and phone, light and dark

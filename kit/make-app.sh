@@ -65,6 +65,11 @@ if [ "$res" != . ]; then
   codesign --force --deep --sign - "$new" 2>/dev/null || die "could not sign $new"
 fi
 
+# Downloaded features (core/Packs.mjs) live in the app folder, the only place
+# Firefox's content sandbox can read them from: carry them into the new copy.
+# A rename on the same disk, so even the 1.8 GB voice models move instantly.
+[ -d "$app/$res/xiao-packs" ] && mv "$app/$res/xiao-packs" "$R/xiao-packs"
+
 # Swap in the finished copy, so an interrupted rebuild never leaves a broken app.
 # On macOS this also renames 0.1's lowercase xiao.app (the disk ignores case).
 rm -rf "$app.old"

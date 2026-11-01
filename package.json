@@ -1,6 +1,6 @@
 {
   "name": "xiao",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "A hardened Zen browser: built-in ad and tracker blocking, Tor tabs, and a calm start page.",
   "license": "MPL-2.0",
@@ -9,12 +9,15 @@
     "build": "node scripts/build.mjs",
     "test": "node --test test/",
     "e2e": "node test/e2e/run.mjs",
+    "e2e:upgrade": "node test/e2e/upgrade.mjs",
+    "packs": "node scripts/packs.mjs",
     "site:assets": "node scripts/site-assets.mjs",
     "site:dev": "npm run site:assets && astro dev --root site --port 4321",
     "site:build": "npm run site:assets && astro build --root site"
   },
   "devDependencies": {
     "@astrojs/sitemap": "^3.7.4",
+    "@cantoo/pdf-lib": "^2.11.1",
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "astro": "^7.3.6",
     "esbuild": "^0.28.2",

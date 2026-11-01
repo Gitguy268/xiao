@@ -1,0 +1,41 @@
+<!doctype html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Assist</title>
+  <link rel="stylesheet" href="../tokens.css">
+  <link rel="stylesheet" href="assist.css">
+  <script type="module" src="assist.js"></script>
+</head>
+<body>
+  <main>
+    <h1 id="heading">Ask about this page</h1>
+    <p id="about" class="soft"></p>
+    <form id="ask">
+      <label for="question" class="soft">Your question</label>
+      <div class="row">
+        <input id="question" autocomplete="off" spellcheck="true" maxlength="500">
+        <button class="primary" id="go">Ask</button>
+      </div>
+    </form>
+    <p id="status" role="status" aria-live="polite"></p>
+    <button id="cancel" hidden>Cancel</button>
+    <section id="answer" hidden aria-labelledby="answer-title">
+      <h2 id="answer-title">Answer</h2>
+      <p id="answer-text"></p>
+      <p id="answer-note" class="soft"></p>
+    </section>
+    <section id="evidence" hidden aria-labelledby="evidence-title">
+      <h2 id="evidence-title">Where the page says it</h2>
+      <ol id="passages"></ol>
+    </section>
+    <footer class="soft" id="footer"></footer>
+  </main>
+</body>
+</html>

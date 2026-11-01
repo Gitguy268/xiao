@@ -1,0 +1,38 @@
+<!doctype html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sort my notes</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="organise.css">
+  <script src="organise.js" type="module"></script>
+</head>
+<body>
+  <main>
+    <h1>Sort my notes</h1>
+    <p class="lede">Say where things stand. Xiao sorts it, with your sticky notes, into a board. Everything runs on this computer.</p>
+
+    <section class="voice" aria-label="Voice box">
+      <button id="record" type="button" aria-pressed="false">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="34" height="34"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span id="record-label">Record</span>
+      </button>
+      <label class="visually-hidden" for="said">What you said, or type it</label>
+      <textarea id="said" rows="3" placeholder="What you said appears here. You can also type."></textarea>
+      <label class="lang">Spoken language <select id="lang"></select></label>
+      <label class="all"><input id="all" type="checkbox" checked> Sort all my notes too, not only what I said</label>
+      <p class="actions">
+        <button id="organise" class="primary" type="button">Organise</button>
+        <button id="cancel" type="button" hidden>Cancel</button>
+      </p>
+      <p id="status" aria-live="polite"></p>
+    </section>
+
+    <section id="board" aria-label="Board"></section>
+  </main>
+</body>
+</html>

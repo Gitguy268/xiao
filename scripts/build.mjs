@@ -40,7 +40,7 @@ await build({
   logLevel: 'warning',
 });
 
-for (const p of ['start', 'icons', 'chrome.css']) cpSync(at('core', p), join(core, p), { recursive: true });
+for (const p of ['start', 'assist', 'board', 'icons', 'locales', 'chrome.css', 'packs.json']) cpSync(at('core', p), join(core, p), { recursive: true });
 cpSync(at('shared/tokens.css'), join(core, 'tokens.css'));
 for (const [from, file] of [
   ['node_modules/@fontsource-variable/bricolage-grotesque/files', 'bricolage-grotesque-latin-wght-normal.woff2'],

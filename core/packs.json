@@ -1,0 +1,346 @@
+[
+ {
+  "id": "notes-ai",
+  "licence": "MPL-2.0 and MIT (code); Apache-2.0 (MiniCPM5) and MIT (Whisper)",
+  "files": [
+   {
+    "path": "notes-ai-f3fd4239.zip",
+    "url": "https://github.com/Gitguy268/xiao/releases/download/packs/notes-ai-f3fd4239.zip",
+    "sha256": "f3fd4239b8dfbb4c3acd96653b3e64a04a9cdb0977d9619a683db310e4a1e0a2",
+    "size": 11468085,
+    "unzip": true
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part1",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     0,
+     67108863
+    ],
+    "sha256": "0f1e4f4ebdd10dea085ce80f87d98a05cac1ba42db8b2dd19a5cccf50dbad954",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part2",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     67108864,
+     134217727
+    ],
+    "sha256": "b3bce763585ccb353d3379d81913b3dec21ec49d4670cf57dbc9f9227bd18dc6",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part3",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     134217728,
+     201326591
+    ],
+    "sha256": "09cd7fbfd80d029ad46f80bca77086a25d75fe4845383953979336748b437234",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part4",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     201326592,
+     268435455
+    ],
+    "sha256": "7ac44392d2b07afadd19fec64a8baff08b5f8585ab591d14c6a13dc1045d9061",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part5",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     268435456,
+     335544319
+    ],
+    "sha256": "5f845077344a57607311ffbcb7310351974d4c2eaed2c6e40e8c6010dc40bcaf",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part6",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     335544320,
+     402653183
+    ],
+    "sha256": "5dc21f9a43405bd321b44693a3e305bdd1d4e88448f4b35c3df7eaa45200a774",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part7",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     402653184,
+     469762047
+    ],
+    "sha256": "a376a70e7fd5d28c818a7e367dc723af93a9fdccfd4247c892bb8f0a21134f11",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part8",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     469762048,
+     536870911
+    ],
+    "sha256": "a3445f92bc5216ba57b8f5a085a3e3c6fd679844c39fce3ca473f74e20de1beb",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part9",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     536870912,
+     603979775
+    ],
+    "sha256": "2fbffdc0d22edc63560f6321bbfe075b55ccdb118b07e3c0c3fe9fb4a0041017",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part10",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     603979776,
+     671088639
+    ],
+    "sha256": "b93814e938e0db2d98c73f91783ff27dc637d3b44025c588ca21ae99776b912a",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part11",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     671088640,
+     738197503
+    ],
+    "sha256": "13648a297e1598a15706037310ba0dd348daba117bc9184f733c702785fcbdbc",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part12",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     738197504,
+     805306367
+    ],
+    "sha256": "9f8a575f4748e3a3cf34582ee8a2a8d972119ef0ddbc51328663412c960541cc",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part13",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     805306368,
+     872415231
+    ],
+    "sha256": "d45d5961f68c43e2cf0352668585bc1915e9a93effa7b6c43c9022eeafb3f7ad",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part14",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     872415232,
+     939524095
+    ],
+    "sha256": "34484cf66bd92a9d3855ce1852366458c5ac4120bd3356d75c76f3266f59a544",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part15",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     939524096,
+     1006632959
+    ],
+    "sha256": "cce1b79cfa29f486a68ef0c6a7c004fc3d931c06e7b146208968efd66bb52a08",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part16",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     1006632960,
+     1073741823
+    ],
+    "sha256": "971b98cb6dee74662f31971a8590f2212acf87ce441ef13e4ba2fa32f4f20ec4",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part17",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     1073741824,
+     1140850687
+    ],
+    "sha256": "15d634a6c848fc6373bea4c944a8ffffbfa4ccfec8384d606126756f02c4a6ea",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part18",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     1140850688,
+     1207959551
+    ],
+    "sha256": "0496e662c05b14410ac7b6dd574f84ea19697488ff55f947e6a35719ffc773e8",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part19",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     1207959552,
+     1275068415
+    ],
+    "sha256": "477b34749267d4f26bde3553c363bb91d420408e78bb034e50dc20c7e87691a6",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part20",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     1275068416,
+     1342177279
+    ],
+    "sha256": "dcf5dbd152d445514d7daa07245843b79fa1bd7589a48625c59a9563c3a6923c",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part21",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     1342177280,
+     1409286143
+    ],
+    "sha256": "39979e88f59909ad18a1cfe580aa8679685f4be541320ad31d1939b8800d0f3c",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part22",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     1409286144,
+     1476395007
+    ],
+    "sha256": "84a0370dd99d7887b8090b6ca3916a46fd81d87bed303f4e89460cf99511a2b6",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part23",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     1476395008,
+     1543503871
+    ],
+    "sha256": "d2dfae27d743db3688838bf7f319e473a469cedc12879749363df4ba2d610701",
+    "size": 67108864
+   },
+   {
+    "path": "models/minicpm5-2b-2079a22f/MiniCPM5-2B-Q4_K_M.part24",
+    "url": "https://huggingface.co/openbmb/MiniCPM5-2B-GGUF/resolve/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q4_K_M.gguf",
+    "range": [
+     1543503872,
+     1561318367
+    ],
+    "sha256": "f1f3c1325cb58b59c397fbe72ecd2e2960a353b1bde211d6967222a02960393d",
+    "size": 17814496
+   },
+   {
+    "path": "models/whisper-small-2d67713f/onnx/encoder_model_quantized.part1",
+    "url": "https://huggingface.co/Xenova/whisper-small/resolve/2d67713f236afa48a18992566e7647f6ca848e13/onnx/encoder_model_quantized.onnx",
+    "range": [
+     0,
+     67108863
+    ],
+    "sha256": "c5c45f9b22c7481583169009c142ca097e028709489e3452b0f84652d28f3942",
+    "size": 67108864
+   },
+   {
+    "path": "models/whisper-small-2d67713f/onnx/encoder_model_quantized.part2",
+    "url": "https://huggingface.co/Xenova/whisper-small/resolve/2d67713f236afa48a18992566e7647f6ca848e13/onnx/encoder_model_quantized.onnx",
+    "range": [
+     67108864,
+     92324808
+    ],
+    "sha256": "9ee217850dd5730ace67a9c44ffc1a8eb8c43263ef2e5acd0ef93f5853638f74",
+    "size": 25215945
+   },
+   {
+    "path": "models/whisper-small-2d67713f/onnx/decoder_model_merged_quantized.part1",
+    "url": "https://huggingface.co/Xenova/whisper-small/resolve/2d67713f236afa48a18992566e7647f6ca848e13/onnx/decoder_model_merged_quantized.onnx",
+    "range": [
+     0,
+     67108863
+    ],
+    "sha256": "7443fded2774bc46a371dba463da1c16b7587dfddc14983af9fbed4b18de0dac",
+    "size": 67108864
+   },
+   {
+    "path": "models/whisper-small-2d67713f/onnx/decoder_model_merged_quantized.part2",
+    "url": "https://huggingface.co/Xenova/whisper-small/resolve/2d67713f236afa48a18992566e7647f6ca848e13/onnx/decoder_model_merged_quantized.onnx",
+    "range": [
+     67108864,
+     134217727
+    ],
+    "sha256": "cd92d475a1f2e54c7850fed1f1ca2d1cf21b7aece1dfa7787e41c5a8352ded1a",
+    "size": 67108864
+   },
+   {
+    "path": "models/whisper-small-2d67713f/onnx/decoder_model_merged_quantized.part3",
+    "url": "https://huggingface.co/Xenova/whisper-small/resolve/2d67713f236afa48a18992566e7647f6ca848e13/onnx/decoder_model_merged_quantized.onnx",
+    "range": [
+     134217728,
+     156780949
+    ],
+    "sha256": "67ff18e1754707ea95ac7a659227ec1ba16bc28caca99be0680fd0e01fafe533",
+    "size": 22563222
+   }
+  ]
+ },
+ {
+  "id": "pdf",
+  "licence": "MPL-2.0; pdf-lib MIT",
+  "files": [
+   {
+    "path": "pdf-939cae7c.zip",
+    "url": "https://github.com/Gitguy268/xiao/releases/download/packs/pdf-939cae7c.zip",
+    "sha256": "939cae7cad72d6d176057e2087af7f62bcda526df7196cc739b2d80a404a2782",
+    "size": 323292,
+    "unzip": true
+   }
+  ]
+ },
+ {
+  "id": "convert",
+  "licence": "GPL-2.0",
+  "source": "https://github.com/p2r3/convert",
+  "files": [
+   {
+    "path": "convert-94815302.zip",
+    "url": "https://github.com/Gitguy268/xiao/releases/download/packs/convert-94815302.zip",
+    "sha256": "948153022316518d3e1240455d59deeb856e828d6c88a1413fe2597eefc7e3c8",
+    "size": 184347379,
+    "unzip": true
+   }
+  ]
+ },
+ {
+  "id": "library",
+  "licence": "GPL-3.0-or-later (OpenFinder); fonts OFL-1.1",
+  "source": "https://github.com/Gitguy268/openfinder",
+  "files": [
+   {
+    "path": "library-d5f4b533.zip",
+    "url": "https://github.com/Gitguy268/xiao/releases/download/packs/library-d5f4b533.zip",
+    "sha256": "d5f4b533bc557f8c16b43f46af0fc5182ee7324233294e56b9280d44b22a1f08",
+    "size": 149277,
+    "unzip": true
+   }
+  ]
+ }
+]

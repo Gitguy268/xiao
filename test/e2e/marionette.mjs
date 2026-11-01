@@ -16,6 +16,8 @@ export class Marionette {
         }));
         await m.hello;
         await m.send('WebDriver:NewSession', { capabilities: {} });
+        // scripts may wait on the local AI; each check still sets its own limit with until()
+        await m.send('WebDriver:SetTimeouts', { script: 300_000 });
         return m;
       } catch (e) {
         if (Date.now() > until) throw new Error(`Marionette not reachable on ${port}: ${e.message}`);
@@ -83,7 +85,7 @@ export class Marionette {
       };
       const done = arguments[arguments.length - 1];
       Promise.resolve((${fn})(...Array.from(arguments).slice(0, -1))).then(done, (e) => done({ __error: String(e) }));`;
-    const { value } = await this.send('WebDriver:ExecuteAsyncScript', { script, args, scriptTimeout: 90_000 });
+    const { value } = await this.send('WebDriver:ExecuteAsyncScript', { script, args });
     if (value?.__error) throw new Error(value.__error);
     return value;
   }

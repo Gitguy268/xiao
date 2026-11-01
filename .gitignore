@@ -11,3 +11,4 @@ site/public/fonts/
 site/dist/
 site/.astro/
 site/public/demo/
+dist-packs/

@@ -60,8 +60,49 @@ their own licences) and uBlock Origin's scriptlet resources (GPL-3.0): turned
 into the blocking engine by scripts/build.mjs and by the website's daily
 build. The engine is not kept in this repository.
 
+Included in this repository
+---------------------------
+
+core/board/organise.js, unchanged from textarea
+(https://github.com/Gitguy268/textarea, the author's own), MIT: the board
+format (topics, tasks, questions) shared with textarea and the voice organiser.
+Its licence is in core/board/LICENSE-organise.txt, shipped beside it.
+
+Downloaded only when a feature is switched on, not included in this repository
+------------------------------------------------------------------------------
+
+Sort my notes by voice (packs/notes-ai plus):
+  textarea (https://github.com/Gitguy268/textarea, the author's own), MIT:
+  lib/organise.js, board-panel.js, gemma.js, whisper.js, whisper-worker.js.
+  wllama (https://github.com/ngxson/wllama) and llama.cpp
+  (https://github.com/ggml-org/llama.cpp), MIT.
+  Transformers.js (https://github.com/huggingface/transformers.js),
+  Apache-2.0, and ONNX Runtime (https://github.com/microsoft/onnxruntime), MIT.
+  MiniCPM5 2B (https://huggingface.co/openbmb/MiniCPM5-2B-GGUF), Apache-2.0,
+  and Whisper small (https://huggingface.co/Xenova/whisper-small), MIT:
+  fetched from Hugging Face at pinned revisions.
+
+PDF tools (packs/pdf): @cantoo/pdf-lib (https://github.com/cantoo-scribe/pdf-lib),
+  MIT, a fork of pdf-lib (https://github.com/Hopding/pdf-lib), MIT.
+
+File converter: convert (https://github.com/p2r3/convert), GPL-2.0, in the
+  author's fork convert-gitguy268. A separate program, downloaded as its own
+  zip and run in its own page; none of its code is part of Xiao.
+
 Ideas, no code
 --------------
+
+PDFCraft (https://github.com/PDFCraftTool/pdfcraft), AGPL-3.0: which PDF tools
+to offer (pages per sheet, booklet, page numbers, crop, details, passwords,
+attachments).
+
+tab_suspender_mini (https://github.com/mawnir/tab_suspender_mini), MIT, and
+Zen's former tab unloader: tab sleep after a chosen idle time, sparing the
+tab on screen, pinned tabs and tabs playing sound.
+
+Firefox Notes (https://github.com/mozilla/notes) and Websites Notes
+(https://github.com/Sav22999/websites-notes), MPL-2.0: a note kept for the
+site you are on.
 
 Mullvad Browser / Tor Browser (https://github.com/mullvad/mullvad-browser),
 MPL-2.0: hardening prefs in 001-base-profile.js; per-site Tor circuits and

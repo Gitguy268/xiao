@@ -1,0 +1,37 @@
+<!doctype html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Boards</title>
+  <link rel="stylesheet" href="../tokens.css">
+  <link rel="stylesheet" href="board.css">
+  <script type="module" src="board.js"></script>
+</head>
+<body>
+  <header>
+    <h1 id="title">Boards</h1>
+    <label class="pick">Board
+      <select id="boards"></select>
+    </label>
+    <form id="new-board" class="inline">
+      <input id="new-title" placeholder="New board" maxlength="80" aria-label="Name of a new board" autocomplete="off">
+      <button>Make</button>
+    </form>
+    <span class="grow"></span>
+    <button type="button" id="export-md">Export as Markdown</button>
+    <button type="button" id="export-html">Export as a web page</button>
+  </header>
+  <p id="note" class="soft" role="status"></p>
+  <main id="cards" aria-live="polite"></main>
+  <form id="new-topic" class="inline">
+    <input id="topic-name" placeholder="New topic" maxlength="80" aria-label="Name of a new topic" autocomplete="off">
+    <button>Add topic</button>
+  </form>
+</body>
+</html>

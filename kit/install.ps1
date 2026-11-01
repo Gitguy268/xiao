@@ -130,6 +130,8 @@ New-Item -ItemType Directory -Force (Join-Path $New 'distribution'), (Join-Path 
 Copy-Item (Join-Path $Assets 'loader\autoconfig.js') (Join-Path $New 'defaults\pref\autoconfig.js')
 Copy-Item (Join-Path $Assets 'loader\xiao.cfg') (Join-Path $New 'xiao.cfg')
 Copy-Item -Recurse (Join-Path $Assets 'xiao') (Join-Path $New 'xiao')
+# Downloaded features live in the app folder (the only one content can read): carry them over.
+if (Test-Path (Join-Path $App 'xiao-packs')) { Move-Item (Join-Path $App 'xiao-packs') (Join-Path $New 'xiao-packs') }
 Remove-Item -Recurse -Force "$App.old" -ErrorAction SilentlyContinue
 if (Test-Path $App) { Rename-Item $App "$App.old" }
 Rename-Item $New $App

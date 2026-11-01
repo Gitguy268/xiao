@@ -5,11 +5,18 @@
 // The content-process half of the Xiao actor, one per frame:
 // - web pages: Ghostery's cosmetic filtering (hide ad slots, run scriptlets);
 // - Tor tabs: no WebRTC, which would bypass tor;
-// - the start page: window.xiao.call(), its only way to reach Xiao.
+// - the start page: window.xiao.call(), its only way to reach Xiao;
+// - the Library (resource://xiao-library/): window.xiao.request(), checked
+//   again in XiaoParent and decoded in core/lib/library-protocol.mjs.
 import { handlePseudoDirective, querySelectorAll } from '@ghostery/adblocker-extended-selectors';
 import { DOMMonitor } from '@ghostery/adblocker-content';
 
 const START_URL = 'resource://xiao/start/';
+const ORGANISE_URL = 'resource://xiao-notes-ai/organise.html';
+const LIBRARY_URL = 'resource://xiao-library/index.html';
+const ASSIST_URL = 'resource://xiao/assist/index.html';
+const ASSIST_HOST_URL = 'resource://xiao-notes-ai/assist-host.html';
+const BOARD_URL = 'resource://xiao/board/index.html';
 const USER_SHEET = Ci.nsIStyleSheetService.USER_SHEET;
 const sss = Cc['@mozilla.org/content/style-sheet-service;1'].getService(Ci.nsIStyleSheetService);
 const cssUri = (css) => Services.io.newURI(`data:text/css;charset=utf-8,${encodeURIComponent(css)}`);
@@ -25,7 +32,8 @@ export class XiaoChild extends JSWindowActorChild {
       switch (event.type) {
         case 'DOMWindowCreated':
           if (this.inTor()) this.removeWebRTC();
-          if (uri.startsWith(START_URL) && !this.browsingContext.parent) this.exposeApi();
+          if ([START_URL, ORGANISE_URL, ASSIST_URL, ASSIST_HOST_URL, BOARD_URL].some((u) => uri.startsWith(u)) && !this.browsingContext.parent) this.exposeApi();
+          if (uri.split(/[?#]/)[0] === LIBRARY_URL && !this.browsingContext.parent) this.exposeLibrary();
           break;
         case 'DOMDocElementInserted':
           if (this.inTor()) this.removeWebRTC(); // an about:blank frame becoming a page
@@ -66,6 +74,48 @@ export class XiaoChild extends JSWindowActorChild {
       this.sendQuery('page', { call, arg: arg === undefined ? undefined : JSON.parse(JSON.stringify(arg)) })
         .then((v) => resolve(Cu.cloneInto(v, win)), (e) => reject(new win.Error(String(e?.message ?? e))));
     }), api, { defineAs: 'call' });
+  }
+
+  // The Library's one call. The page says whether it was a click or key
+  // press only through the browser's own record of user activation.
+  exposeLibrary() {
+    const win = this.contentWindow;
+    const api = Cu.createObjectIn(win, { defineAs: 'xiao' });
+    Cu.exportFunction((request) => new win.Promise((resolve, reject) => {
+      let plain;
+      try {
+        plain = JSON.parse(JSON.stringify(request ?? null));
+      } catch {
+        return reject(new win.Error('the request is not plain data'));
+      }
+      const gesture = !!this.document?.hasValidTransientUserGestureActivation;
+      this.sendQuery('library', { request: plain, gesture })
+        .then((v) => resolve(Cu.cloneInto(v, win)), (e) => reject(new win.Error(String(e?.message ?? e))));
+    }), api, { defineAs: 'request' });
+    this.sendAsyncMessage('library-watch');
+  }
+
+  receiveMessage({ name, data }) {
+    const win = this.contentWindow;
+    if (name === 'library-changed') {
+      win?.dispatchEvent(new win.CustomEvent('xiao-library-changed', { detail: Cu.cloneInto(data, win) }));
+    } else if (name === 'extract') {
+      return this.extract();
+    } else if (name === 'show') {
+      // the passage the reader clicked in Assist, found and selected in the page
+      return !!win?.find(String(data?.text ?? '').slice(0, 120), false, false, true, false, false, false);
+    }
+    return undefined;
+  }
+
+  // What Assist reads when asked about this page, and only then: the
+  // selection if there is one, otherwise the text a person sees. innerText
+  // leaves out hidden elements and what is typed in fields, passwords too.
+  extract() {
+    const doc = this.document;
+    const selection = this.contentWindow.getSelection()?.toString().trim() ?? '';
+    const text = selection || doc.body?.innerText || '';
+    return { title: doc.title.slice(0, 300), text: text.slice(0, 60_000), selection: !!selection };
   }
 
   // --- cosmetic filtering ---

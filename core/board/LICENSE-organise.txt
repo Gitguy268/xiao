@@ -1,0 +1,41 @@
+MIT License
+
+Copyright (c) 2026 Lucas Van De Weerd
+Copyright (c) 2026 Anton Medvedev
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+This project is a fork of antonmedv/textarea, which is also MIT licensed. See
+README.md for what this fork adds, changes and leaves out, and vendor/README.md
+for the third-party code checked in under vendor/.
+
+The MIT licence above covers the code in this repository. It does not cover:
+
+- vendor/, where each library keeps its own licence file (see vendor/README.md);
+- models/, which holds Gemma model weights from Google. Those are provided
+  under and subject to the Gemma Terms of Use (models/GEMMA_TERMS.md) and the
+  Gemma Prohibited Use Policy (models/GEMMA_PROHIBITED_USE_POLICY.md), not MIT.
+  models/whisper-small-2d67713f/ holds Whisper model weights from OpenAI, in
+  Xenova's ONNX conversion, under the Apache License 2.0
+  (models/whisper-small-2d67713f/LICENSE), not MIT.
+  models/whisper-large-v3-turbo-efd60f61/ holds OpenAI's Whisper large v3
+  turbo weights, in striimit's ONNX conversion for WebGPU, under OpenAI's MIT
+  licence (models/whisper-large-v3-turbo-efd60f61/LICENSE).

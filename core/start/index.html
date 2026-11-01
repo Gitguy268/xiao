@@ -30,6 +30,7 @@
     <p id="status" aria-live="polite">Checking protection…</p>
     <p class="actions">
       <button id="edit" type="button">Edit start page</button>
+      <button id="open-features" type="button">Features</button>
     </p>
   </footer>
 
@@ -40,6 +41,7 @@
       <h2>Start page</h2>
       <label>Search with
         <select name="search">
+          <option value="chain">SearXNG (searx.ononoki.org, then priv.au, then Brave)</option>
           <option value="xiao" id="xiao-search">Xiao Search, on this computer</option>
           <option value="ddg">DuckDuckGo</option>
           <option value="leta">Mullvad Leta</option>
@@ -73,11 +75,109 @@
           <option value="dark">Dark</option>
         </select>
       </label>
+      <p class="portable">
+        <button type="button" id="export">Export…</button>
+        <button type="button" id="import">Import…</button>
+        <span id="portable-note" role="status"></span>
+      </p>
       <p class="dialog-actions">
+        <button type="button" id="shortcuts" class="start">Keyboard shortcuts…</button>
         <button value="cancel" formnovalidate>Cancel</button>
         <button value="save" class="primary">Save</button>
       </p>
     </form>
+  </dialog>
+
+  <dialog id="import-preview" aria-labelledby="import-title">
+    <form method="dialog">
+      <h2 id="import-title">Import</h2>
+      <p id="import-summary"></p>
+      <details>
+        <summary id="import-count"></summary>
+        <ol id="import-urls"></ol>
+      </details>
+      <p id="import-result" role="status"></p>
+      <p class="dialog-actions">
+        <button value="cancel" formnovalidate id="import-cancel">Cancel</button>
+        <button value="apply" class="primary" id="import-apply">Import</button>
+      </p>
+    </form>
+  </dialog>
+
+  <dialog id="features" aria-labelledby="features-title">
+    <h2 id="features-title">Features</h2>
+    <p class="note">Each one is off until you turn it on. The big ones download only then. Turning one off stops it; Remove download deletes its files.</p>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="library"> Library</label>
+      <p>Your downloads, the folders you choose, notes and saved tabs in one searchable place, with tidier file names you can undo. It runs <a href="https://github.com/Gitguy268/openfinder">OpenFinder</a> (GPL-3.0) and looks only at what you give it. <span data-size="library"></span></p>
+      <p class="progress" data-progress="library" aria-live="polite"></p>
+      <div class="sub" id="library-more">
+        <label class="switch"><input type="checkbox" data-feature="libraryDownloads"> Remember my downloads in the Library</label>
+        <p>Each finished download, with the name it came with and the site it came from. Not downloads from private windows or Tor tabs.</p>
+        <label>Archive tabs left alone for
+          <select data-feature="autoArchive">
+            <option value="0">never</option>
+            <option value="12">12 hours</option>
+            <option value="24">a day</option>
+            <option value="72">three days</option>
+            <option value="168">a week</option>
+          </select>
+        </label>
+        <p>Archived tabs close and wait in the Library for 30 days, with their space and container, until you open them again. Never the tab on screen, pinned tabs, Essentials, tabs playing sound, sharing your camera or screen, or with unsaved work; never private or Tor tabs.</p>
+      </div>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="sticky"> Sticky note</label>
+      <p>A small square note from its own button in the toolbar.</p>
+      <div class="sub" id="sticky-more">
+        <label class="switch"><input type="checkbox" data-feature="perSite"> Open the note for the site I am on</label>
+        <p id="folder-line"></p>
+        <p class="actions"><button type="button" id="folder-choose">Choose folder…</button><button type="button" id="folder-reset">Keep in Xiao</button></p>
+      </div>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="assist"> Assist</label>
+      <p>Ask about the page you are on, summarise a link, and get file name ideas in the Library, written by AI on this computer (MiniCPM5, the same download as below). Only the page or link you choose is read; private windows and Tor tabs never are. Tidy tab titles and grouping tabs by site work without it, from the command bar.</p>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="notes-ai"> Sort my notes by voice</label>
+      <p>Speak, and AI on this computer (Whisper and MiniCPM5) sorts what you said and your sticky notes into a board. <span data-size="notes-ai"></span></p>
+      <p class="progress" data-progress="notes-ai" aria-live="polite"></p>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="convert"> File converter</label>
+      <p>Convert images, video, audio and documents on this computer, with <a href="https://github.com/p2r3/convert">convert</a> (GPL-2.0). <span data-size="convert"></span></p>
+      <p class="progress" data-progress="convert" aria-live="polite"></p>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="pdf"> PDF tools</label>
+      <p>Pages per sheet, booklets, page numbers, crop, details, passwords and attachments. Firefox's own viewer already highlights, signs and reorders pages. <span data-size="pdf"></span></p>
+      <p class="progress" data-progress="pdf" aria-live="polite"></p>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="quickWindow"> Quick window</label>
+      <p>A link you open from another app gets a small window of its own, kept apart from your spaces. To keep it, use "Move tabs to" on the window's space name. Links that match one of your space routing rules still go to that space; Zen's default space for links from other apps is replaced by the quick window.</p>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="boards"> Boards</label>
+      <p>Gather links, quotes and notes into topics. "Add to Board" in a page's menu adds the link, the page or the selected words; open your boards from Xiao's button. Each board is a sticky note, so it syncs like one.</p>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="siteShortcuts"> Site shortcuts</label>
+      <p>Type <code>!w</code>, <code>!gh</code>, <code>!osm</code>, <code>!mdn</code> or <code>!yt</code> and your words in the address bar to search Wikipedia, GitHub, OpenStreetMap, MDN or YouTube. They appear in Firefox's search settings, where you can change them.</p>
+    </div>
+    <div class="feature">
+      <label>Put tabs to sleep when unused for
+        <select data-feature="tabSleep">
+          <option value="0">never</option>
+          <option value="15">15 minutes</option>
+          <option value="30">30 minutes</option>
+          <option value="60">an hour</option>
+          <option value="120">two hours</option>
+        </select>
+      </label>
+    </div>
+    <form method="dialog" class="dialog-actions"><button class="primary">Done</button></form>
   </dialog>
 </body>
 </html>

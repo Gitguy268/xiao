@@ -1,0 +1,32 @@
+{
+ "openfinder": "0.1.0",
+ "revision": "23b7b80755ad8284db0f20d6c8e4df3e3147d633",
+ "dirty": true,
+ "fingerprint": "209eda11625ea75534852cc952f00637c0bd395b7a24fae393cb02f2461092fa",
+ "protocol": {
+  "min": 1,
+  "max": 1
+ },
+ "tokens": "88c9f359db193ba2c51f5d08c79d0932980e990f79c25fafd48244cb0c6dabbf",
+ "files": {
+  "LICENSE.txt": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+  "THIRD_PARTY_NOTICES.md": "9d3dc91c7aa31266ef8a0c1ce651585a84edf376c54861e7705aa8bc9950e54a",
+  "assets/App-Q9QkAA9g.js": "eb34193ee57d555913bcb8c5bb0ddd3f2455d71150b3960606d6fd3e3130acee",
+  "assets/bricolage-grotesque-latin-ext-wght-normal-CcLUaPy7.woff2": "e808f16b56f84dc7933e498cc8a41d4a5cd853adc6eef154584baa5de1008b15",
+  "assets/bricolage-grotesque-latin-wght-normal-DLoelf7F.woff2": "a97804dc9fbe5fc972a08018c5eda4dab7ef2346f64c57e61419d05e6de4ea1c",
+  "assets/bricolage-grotesque-vietnamese-wght-normal-BUzh504Q.woff2": "33ae5254fa09938c5abef5f1acaf848c0303aa21e3eb5632edb7d434deb3f572",
+  "assets/handles-D5lvTwdA.js": "6825450a2139d1550b7c28ddbace8279113440f3425e27f41cd0648bcecf950e",
+  "assets/index-CH0LBAnZ.js": "3a68770e667e75190552bd962ccec82a072809f48714034bf0e208d96477aad5",
+  "assets/index-RLXU5OTz.css": "acdc31402972eca71475511daa1d4c84480720cf68253a202c6b6553d899cf02",
+  "assets/junicode-italic-latin-D3jp9WdW.woff2": "bcc836c2d1984b15410969080d063884a6fa3fbc8412483dc4561b8fbfece4f5",
+  "assets/library-protocol-Cs4ZME33.js": "1065d983b34ad4fe10fbe20e9459fae4312a92453fbb4518ff748d1f87c9627b",
+  "assets/naming-4y3Ryj89.js": "a2587f02ded62feafcb67c934d163af57a3920139830ed48e22b2f1cfab3e01a",
+  "assets/state-Bfd9TR7n.js": "18c948dabc3efdde3bc358100fe09bb9992c8f4e4b8736e239179f350f6a93bc",
+  "assets/store-DtqXZAik.js": "780139f5fa110e59df35b388081047958096f0f24604e697ff79d91d2d2e6647",
+  "assets/types-xyDr99Fw.js": "e3d0ebbd66881e5d8f8b774388d424b168c366c27b9c11f41df20be11d60728a",
+  "assets/xiao-eqIiYskA.js": "133dc7bf16bb8acefb3502d60d545815c2eede7270eeaf5e6b6b439a5b779a4f",
+  "favicon.svg": "da4b27ae3d31c6022bfae2c9fa14890e80892b13d8e609f160e0c495def1db42",
+  "index.html": "dcb22c001e0931153fae9e7381fce8ea857ee0d1e28bb810d7b6ffc09e99842d",
+  "openfinder-build.json": "8df1c1d5baa1dae0af86616b913dfb72c1a714d37309d847e95035a94a5dd886"
+ }
+}

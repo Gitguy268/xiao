@@ -5,7 +5,10 @@
 // Xiao's one toolbar button and its panel (blocked count, the per-site
 // switch, Tor), plus chrome.css in every browser window: Xiao's typefaces on
 // Zen's UI, and no extensions button while there are no extensions.
+import { BOARD_URL } from './Boards.mjs';
+import { linkItem, quoteItem } from './board/model.mjs';
 import { lazy } from './mod.mjs';
+import { everyTab } from './tabs.mjs';
 
 const addons = lazy('toolkit/mozapps/extensions/AddonManager.sys.mjs', 'AddonManager');
 const customizable = lazy('browser/components/customizableui/CustomizableUI.sys.mjs', 'CustomizableUI');
@@ -55,8 +58,122 @@ export class Toolbar {
 
   dress(win) {
     win.windowUtils.loadSheetUsingURIString('resource://xiao/chrome.css', win.windowUtils.AUTHOR_SHEET);
+    this.xiao.zenFiles?.attach(win).catch((e) => console.error('Xiao: Files section', e));
     win.gBrowser.tabContainer.addEventListener('TabSelect', () => this.badge(win.gBrowser.selectedBrowser.browserId, win));
+    this.addClipItem(win);
+    this.addSummaryItem(win);
+    this.addBoardMenu(win);
+    // a closed tab's count, and any pause of blocking in it, go with it
+    win.gBrowser.tabContainer.addEventListener('TabClose', (e) => this.xiao.blocker.forget(e.target.linkedBrowser?.browserId));
     this.checkAddons();
+  }
+
+  // "Save to Clippings" in the page's context menu, for selected text, while
+  // the sticky note is on. Never in private windows or Tor tabs, so what is
+  // read there is not written down. The link kept is the page without its
+  // query, fragment or login, which can carry personal details.
+  addClipItem(win) {
+    const menu = win.document.getElementById('contentAreaContextMenu');
+    if (!menu || win.document.getElementById('xiao-clip')) return;
+    const item = win.document.createXULElement('menuitem');
+    item.id = 'xiao-clip';
+    item.setAttribute('label', 'Save to Clippings');
+    win.document.getElementById('context-copy')?.after(item) ?? menu.append(item);
+    menu.addEventListener('popupshowing', (e) => {
+      if (e.target !== menu) return;
+      const ctx = win.gContextMenu;
+      const browser = ctx?.browser;
+      const torTab = browser && browser.contentPrincipal?.originAttributes?.userContextId === this.xiao.tor.torId;
+      item.hidden = !ctx?.isTextSelected || !this.xiao.features.sticky || !browser || ctx.isPrivate
+        || browser.browsingContext?.usePrivateBrowsing || torTab || !/^https?$/.test(browser.currentURI.scheme);
+    });
+    item.addEventListener('command', () => {
+      const ctx = win.gContextMenu;
+      const text = ctx?.selectionInfo?.fullText || ctx?.textSelected || '';
+      const browser = ctx?.browser;
+      if (!text.trim() || !browser) return;
+      const url = browser.currentURI.mutate().setUserPass('').setQuery('').setRef('').finalize().spec;
+      this.xiao.notes.clip({ text, title: browser.contentTitle, url }).catch((err) => console.error('Xiao: clipping', err));
+    });
+  }
+
+  // "Add to Board" in the page's context menu, while Boards is on: the link
+  // under the pointer, else the selected words with their page, else the
+  // page itself. Never in private windows or Tor tabs. Addresses keep their
+  // query (it can be the page itself) but lose any login.
+  addBoardMenu(win) {
+    const doc = win.document;
+    const menu = doc.getElementById('contentAreaContextMenu');
+    if (!menu || doc.getElementById('xiao-board')) return;
+    const item = doc.createXULElement('menu');
+    item.id = 'xiao-board';
+    item.setAttribute('label', 'Add to Board');
+    const popup = doc.createXULElement('menupopup');
+    item.append(popup);
+    (doc.getElementById('xiao-clip') ?? doc.getElementById('context-copy'))?.after(item) ?? menu.append(item);
+    const clean = (uri) => uri.mutate().setUserPass('').finalize().spec;
+    const what = () => {
+      const ctx = win.gContextMenu;
+      const browser = ctx?.browser;
+      if (ctx?.onLink && /^https?:/.test(ctx.linkURL)) return { topic: 'Links', text: linkItem({ title: ctx.linkTextStr || ctx.linkURL, url: clean(Services.io.newURI(ctx.linkURL)) }) };
+      const page = { title: browser.contentTitle, url: clean(browser.currentURI) };
+      const words = ctx?.isTextSelected && (ctx.selectionInfo?.fullText || ctx.textSelected);
+      return words ? { topic: 'Quotes', text: quoteItem({ text: words, ...page }) } : { topic: 'Links', text: linkItem(page) };
+    };
+    menu.addEventListener('popupshowing', (e) => {
+      if (e.target !== menu) return;
+      const ctx = win.gContextMenu;
+      const browser = ctx?.browser;
+      const torTab = browser && browser.contentPrincipal?.originAttributes?.userContextId === this.xiao.tor.torId;
+      item.hidden = !this.xiao.features.boards || !browser || ctx.isPrivate || browser.browsingContext?.usePrivateBrowsing || torTab
+        || !/^https?$/.test(browser.currentURI.scheme);
+      if (item.hidden) return;
+      popup.replaceChildren();
+      this.xiao.boards.list().then((boards) => {
+        for (const b of boards.slice(0, 12)) {
+          const entry = doc.createXULElement('menuitem');
+          entry.setAttribute('label', b.title);
+          entry.addEventListener('command', () => {
+            const { topic, text } = what();
+            this.xiao.boards.add(b.name, topic, text).catch((err) => console.error('Xiao: board', err));
+          });
+          popup.append(entry);
+        }
+        if (boards.length) popup.append(doc.createXULElement('menuseparator'));
+        const open = doc.createXULElement('menuitem');
+        open.setAttribute('label', boards.length ? 'Open Boards' : 'Make a Board…');
+        open.addEventListener('command', () => this.openBoards(win));
+        popup.append(open);
+      });
+    });
+  }
+
+  openBoards(win) {
+    const tab = everyTab(win).find((t) => t.linkedBrowser.currentURI.spec.split(/[?#]/)[0] === BOARD_URL);
+    win.gBrowser.selectedTab = tab ?? win.gBrowser.addTab(BOARD_URL, { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
+  }
+
+  // "Summarize Link" on a link, while Assist is on: the link is fetched
+  // only when chosen, never on hover. Not in private windows or Tor tabs.
+  addSummaryItem(win) {
+    const menu = win.document.getElementById('contentAreaContextMenu');
+    if (!menu || win.document.getElementById('xiao-summarize')) return;
+    const item = win.document.createXULElement('menuitem');
+    item.id = 'xiao-summarize';
+    item.setAttribute('label', 'Summarize Link');
+    win.document.getElementById('context-copylink')?.after(item) ?? menu.append(item);
+    menu.addEventListener('popupshowing', (e) => {
+      if (e.target !== menu) return;
+      const ctx = win.gContextMenu;
+      const tab = win.gBrowser.getTabForBrowser(ctx?.browser);
+      item.hidden = !this.xiao.assist.on || !ctx?.onLink || !/^https?:/.test(ctx.linkURL ?? '') || ctx.isPrivate
+        || !tab || tab.userContextId === this.xiao.tor.torId || win.gBrowser.selectedBrowser.browsingContext.usePrivateBrowsing;
+    });
+    item.addEventListener('command', () => {
+      const ctx = win.gContextMenu;
+      const tab = win.gBrowser.getTabForBrowser(ctx?.browser);
+      if (tab && ctx?.linkURL) this.xiao.assist.open(win, tab, { summarize: ctx.linkURL });
+    });
   }
 
   // Firefox's puzzle-piece button only lists extensions; with none installed it would only list nothing.
@@ -109,6 +226,15 @@ export class Toolbar {
         browser.reload();
       });
       body.append(box);
+      if (box.checked) {
+        const pause = el('checkbox', { id: 'xiao-pause', label: 'Pause blocking in this tab until it closes' });
+        pause.checked = this.xiao.blocker.paused.has(browser.browserId);
+        pause.addEventListener('command', () => {
+          this.xiao.blocker.pause(browser.browserId, pause.checked);
+          browser.reload();
+        });
+        body.append(pause);
+      }
     }
     body.append(el('toolbarseparator'));
     const torLine = el('html:p', { id: 'xiao-tor' }, 'Checking Tor…');
@@ -134,6 +260,27 @@ export class Toolbar {
       action('New Tor circuit for this site', () => {
         this.xiao.tor.newCircuit(host);
         browser.reloadWithFlags(Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE);
+      });
+    }
+    // The downloaded features, each once it is installed.
+    const tools = [
+      ['library', 'Library', () => this.xiao.openLibrary(win)],
+      ['convert', 'Convert a file', 'resource://xiao-convert/index.html'],
+      ['pdf', 'PDF tools', 'resource://xiao-pdf/index.html'],
+      ['notes-ai', 'Sort my notes by voice', this.xiao.ORGANISE_URL],
+    ];
+    let first = true;
+    if (this.xiao.features.boards) {
+      body.append(el('toolbarseparator'));
+      first = false;
+      action('Boards', () => this.openBoards(win));
+    }
+    for (const [id, label, url] of tools) {
+      if (!(await this.xiao.packs.installed(id)) || !this.xiao.packOn(id)) continue;
+      if (first) body.append(el('toolbarseparator'));
+      first = false;
+      action(label, typeof url === 'function' ? url : () => {
+        win.gBrowser.selectedTab = win.gBrowser.addTab(url, { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
       });
     }
   }
