@@ -56,8 +56,19 @@ export class Toolbar {
     this.dress(win);
   }
 
+  // Choosing the Liquid glass style counts as asking for the glass toolbars too.
+  glassOn(win) {
+    const { glass, style } = this.xiao.settings();
+    win.document.documentElement.toggleAttribute('xiao-glass', glass || style === 'glass');
+  }
+
+  applyGlass() {
+    for (const win of Services.wm.getEnumerator('navigator:browser')) this.glassOn(win);
+  }
+
   dress(win) {
     win.windowUtils.loadSheetUsingURIString('resource://xiao/chrome.css', win.windowUtils.AUTHOR_SHEET);
+    this.glassOn(win);
     this.xiao.zenFiles?.attach(win).catch((e) => console.error('Xiao: Files section', e));
     win.gBrowser.tabContainer.addEventListener('TabSelect', () => this.badge(win.gBrowser.selectedBrowser.browserId, win));
     this.addClipItem(win);
@@ -235,6 +246,18 @@ export class Toolbar {
         });
         body.append(pause);
       }
+      const site = browser.contentPrincipal?.baseDomain || host;
+      const siteBox = (id, label, checked, change) => {
+        const b = el('checkbox', { id, label });
+        b.checked = checked;
+        b.addEventListener('command', () => {
+          change(b.checked);
+          browser.reload();
+        });
+        body.append(b);
+      };
+      if (this.xiao.features.shield) siteBox('xiao-shield', 'Vary my fingerprint on this site', this.xiao.shield.isOn(site), (on) => this.xiao.shield.setSite(site, on));
+      if (this.xiao.features.fakeCamera) siteBox('xiao-camera', 'Show this site a blank camera', this.xiao.shield.hasCamera(site), (on) => this.xiao.shield.setCamera(site, on));
     }
     body.append(el('toolbarseparator'));
     const torLine = el('html:p', { id: 'xiao-tor' }, 'Checking Tor…');

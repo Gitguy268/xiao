@@ -4,7 +4,10 @@
 
 // The start page. Xiao's browser code gives this page (and only this page)
 // window.xiao.call(name, data); the website's demo gives it a stand-in.
+import { ownBangsText, parseBang } from '../lib/bangs.mjs';
 import { parseLinks, searchTemplate, toUrl } from './links.mjs';
+import { runCommand } from './terminal.mjs';
+import { paintDesktop } from './wallpaper.mjs';
 
 const $ = (id) => document.getElementById(id);
 const ask = (name, data) => window.xiao.call(name, data);
@@ -47,15 +50,24 @@ function renderLinks() {
 }
 
 function applyTheme() {
-  const { theme } = state.settings;
-  if (theme === 'auto') delete document.documentElement.dataset.theme;
-  else document.documentElement.dataset.theme = theme;
+  const { theme, style } = state.settings;
+  const root = document.documentElement;
+  if (theme === 'auto') delete root.dataset.theme;
+  else root.dataset.theme = theme;
+  root.dataset.style = style;
+  $('style-sheet').href = style === 'normal' ? 'data:text/css,' : `styles/${style}.css`;
+  const sky = style === 'glass' || style === 'retrofind';
+  $('desktop').hidden = !sky;
+  if (sky) paintDesktop($('desktop'));
+  $('q').placeholder = style === 'terminal' ? 'Type help, or search' : 'Search or enter an address';
 }
 
 function sentence(s) {
   const parts = [`<strong>${s.total.toLocaleString()}</strong> ads and trackers blocked so far.`];
   parts.push(s.https ? 'HTTPS-Only is on.' : 'HTTPS-Only is off.');
-  if (s.tor.isTor) parts.push('Tor is connected.');
+  if (s.tor.silent) parts.push('Silent mode is on, so Tor stays off.');
+  else if (s.tor.unknown) return parts.join(' '); // not asked: the check is a connection out
+  else if (s.tor.isTor) parts.push('Tor is connected.');
   else if (s.tor.running) parts.push('Tor answered, but not as a Tor exit.');
   else if (s.tor.installed) parts.push('Tor is not connected yet; it takes a few seconds after Xiao starts.');
   return parts.join(' ');
@@ -70,11 +82,41 @@ async function refreshStatus() {
   }
 }
 
+async function go(q) {
+  const bang = parseBang(q) ? await ask('bang', { text: q }).catch(() => null) : null;
+  if (bang?.action) return void ask('bang.run', { action: bang.action });
+  location.href = bang?.url ?? toUrl(q, searchTemplate(state.settings, state));
+}
+
+// The Terminal style's prompt. True when the line was a command, not a search.
+async function command(line) {
+  const r = runCommand(line, state.settings.links);
+  if (r.search) return false;
+  const log = $('term-log');
+  $('q').value = '';
+  log.textContent += `xiao ~ $ ${line}\n${(r.print ?? []).map((l) => `${l}\n`).join('')}`;
+  if (r.clear) log.textContent = '';
+  if (r.action) await ask('bang.run', { action: r.action });
+  if (r.open === 'features') await openFeatures();
+  if (r.open === 'settings') openSettings();
+  if (r.go) location.href = toUrl(r.go, searchTemplate(state.settings, state));
+  if (r.style || r.theme) {
+    state.settings = await ask('save', { ...state.settings, bangs: ownBangsText(state.settings.bangs), ...choices(), ...(r.style && { style: r.style }), ...(r.theme && { theme: r.theme }) });
+    applyTheme();
+  }
+  return true;
+}
+
+// The two choices that live in prefs, as the save call expects them.
+const choices = () => ({ newtab: state.settings.newtab, launch: state.settings.launch });
+
 function openSettings() {
   const f = $('settings-form');
   const s = state.settings;
-  for (const name of ['search', 'custom', 'theme', 'newtab', 'launch']) f[name].value = s[name];
+  for (const name of ['search', 'custom', 'theme', 'style', 'newtab', 'launch']) f[name].value = s[name];
+  f.glass.checked = s.glass;
   f.links.value = s.links.map((l) => `${l.name} ${l.url}`).join('\n');
+  f.bangs.value = ownBangsText(s.bangs);
   $('custom-row').hidden = s.search !== 'custom';
   $('settings').showModal();
 }
@@ -90,13 +132,19 @@ async function init() {
   clock();
   document.addEventListener('visibilitychange', clock);
   // Tor takes a few seconds to connect after Xiao starts.
-  if (!state.status.tor.isTor && state.status.tor.installed) setTimeout(refreshStatus, 6_000);
+  if (state.inTor && !state.status.tor.isTor && state.status.tor.installed) setTimeout(refreshStatus, 6_000);
 
-  $('search').addEventListener('submit', (e) => {
+  addEventListener('resize', () => {
+    if (!$('desktop').hidden) paintDesktop($('desktop'));
+  });
+  $('search').addEventListener('submit', async (e) => {
     e.preventDefault();
     const q = $('q').value;
-    if (q.trim()) location.href = toUrl(q, searchTemplate(state.settings, state));
+    if (!q.trim()) return;
+    if (state.settings.style === 'terminal' && await command(q)) return;
+    go(q);
   });
+  $('open-notes').addEventListener('click', () => ask('bang.run', { action: 'notes' }));
   $('edit').addEventListener('click', openSettings);
   $('shortcuts').addEventListener('click', () => ask('shortcuts'));
   $('export').addEventListener('click', async () => {
@@ -115,9 +163,12 @@ async function init() {
       search: f.search.value,
       custom: f.custom.value.includes('%s') ? f.custom.value : '',
       theme: f.theme.value,
+      style: f.style.value,
+      glass: f.glass.checked,
       newtab: f.newtab.value,
       launch: f.launch.value,
       links: parseLinks(f.links.value),
+      bangs: f.bangs.value,
     };
     state.settings = await ask('save', settings);
     applyTheme();
@@ -187,6 +238,7 @@ function renderFeatures(f) {
     else input.value = String(f[id]);
   }
   $('sticky-more').hidden = !f.sticky;
+  $('silent-more').hidden = !f.silent;
   const library = f.packs.find((p) => p.id === 'library');
   $('library-more').hidden = !library?.installed;
   $('folder-line').textContent = f.folder ? `Notes are kept in ${f.folder}.` : 'Notes are kept in Xiao. Choose a folder to share them with textarea or another app.';
@@ -208,8 +260,18 @@ function renderFeatures(f) {
     const line = dlg.querySelector(`[data-progress="${p.id}"]`);
     if (!line) continue;
     line.classList.toggle('error', !!p.error);
-    line.textContent = p.error ? `Download stopped: ${p.error}. Turn it off and on to try again.`
+    line.textContent = p.error ? `Download stopped: ${p.error}.`
       : p.total ? `Downloading… ${Math.floor((100 * p.done) / p.total)}%` : '';
+    const box = dlg.querySelector(`input[data-feature="${p.id}"]`);
+    if (box) box.disabled = !!p.missing;
+    if (p.error) {
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'remove';
+      retry.textContent = 'Try again';
+      retry.addEventListener('click', async () => renderFeatures(await ask('feature', { id: p.id, on: true })));
+      line.append(' ', retry);
+    }
   }
   const busy = f.packs.some((p) => p.total && !p.error);
   if (busy && !polling) polling = setInterval(() => ask('features').then(renderFeatures), 1000);
@@ -236,6 +298,19 @@ function wireFeatures() {
       }
     });
   }
+  $('updates-check').addEventListener('click', async () => {
+    $('updates-note').textContent = 'Asking…';
+    const u = await ask('updates.check');
+    $('updates-note').textContent = u.state === 'ready' ? `Xiao ${u.version} will install at the next start.`
+      : u.state === 'current' ? `Xiao ${u.running} is the latest.`
+        : u.state === 'none' ? 'This copy of Xiao does not update itself.'
+          : 'Could not check right now. Try again later.';
+  });
+  $('filters-update').addEventListener('click', async () => {
+    $('filters-note').textContent = 'Asking…';
+    const { changed } = await ask('filters.update');
+    $('filters-note').textContent = changed ? 'Filters updated.' : 'No newer filters could be fetched.';
+  });
   $('folder-choose').addEventListener('click', async () => renderFeatures(await ask('notes.folder', { choose: true })));
   $('folder-reset').addEventListener('click', async () => renderFeatures(await ask('notes.folder', { choose: false })));
 }

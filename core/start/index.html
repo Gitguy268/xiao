@@ -9,26 +9,36 @@
   <title>New tab</title>
   <link rel="stylesheet" href="../tokens.css">
   <link rel="stylesheet" href="start.css">
+  <link rel="stylesheet" id="style-sheet" href="data:text/css,">
   <script src="start.js" type="module"></script>
 </head>
 <body>
+  <canvas id="desktop" aria-hidden="true" hidden></canvas>
   <header class="bar">
     <span class="mark">Xiao</span>
     <time id="clock"></time>
   </header>
 
   <main>
+    <div class="retro-title" aria-hidden="true">Xiao Search</div>
+    <div class="retro-page">
+    <p class="retro-logo" aria-hidden="true"><span>X</span><span>i</span><span>a</span><span>o</span></p>
     <h1 id="greeting">Hello.</h1>
+    <pre id="term-log" aria-live="polite"></pre>
     <form id="search" role="search">
       <label class="visually-hidden" for="q">Search or enter an address</label>
+      <span id="term-prompt" aria-hidden="true">xiao ~ $</span>
       <input id="q" name="q" type="text" autocomplete="off" spellcheck="false" autofocus placeholder="Search or enter an address">
+      <button id="retro-go">Search</button>
     </form>
     <nav id="links" aria-label="Your sites"></nav>
+    </div>
   </main>
 
   <footer>
     <p id="status" aria-live="polite">Checking protection…</p>
     <p class="actions">
+      <button id="open-notes" type="button">Notes</button>
       <button id="edit" type="button">Edit start page</button>
       <button id="open-features" type="button">Features</button>
     </p>
@@ -56,6 +66,9 @@
       <label>Your sites, one per line: name, then address
         <textarea name="links" rows="5" spellcheck="false"></textarea>
       </label>
+      <label>Your own bangs, one per line: !name, then address with %s
+        <textarea name="bangs" rows="2" spellcheck="false" placeholder="!news https://example.org/search?q=%s"></textarea>
+      </label>
       <label>A new tab opens
         <select name="newtab">
           <option value="start">this start page</option>
@@ -68,6 +81,15 @@
           <option value="restore">the tabs from last time</option>
         </select>
       </label>
+      <label>Style
+        <select name="style">
+          <option value="normal">Normal</option>
+          <option value="glass">Liquid glass</option>
+          <option value="terminal">Terminal</option>
+          <option value="retrofind">Retrofind</option>
+        </select>
+      </label>
+      <label class="switch"><input type="checkbox" name="glass"> Liquid glass on Xiao's toolbars, panels and sticky note</label>
       <label>Appearance
         <select name="theme">
           <option value="auto">Match the system</option>
@@ -107,6 +129,26 @@
   <dialog id="features" aria-labelledby="features-title">
     <h2 id="features-title">Features</h2>
     <p class="note">Each one is off until you turn it on. The big ones download only then. Turning one off stops it; Remove download deletes its files.</p>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="silent"> Silent mode</label>
+      <p>Xiao connects to nothing by itself: only the pages and downloads you ask for. No update checks, new filters, phishing or certificate lists, and Tor and Xiao Search stay stopped. The cost: those lists go out of date, so newly known bad sites and revoked certificates stop being caught, and security fixes wait until you ask for them. Restart Xiao for all of it to apply.</p>
+      <div class="sub" id="silent-more">
+        <p class="actions"><button type="button" id="filters-update">Update filters now</button> <span id="filters-note" role="status"></span></p>
+      </div>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="updates"> Automatic updates</label>
+      <p>When Xiao starts, at most once a day, it looks for a new version on GitHub, checks it is really from Xiao, and installs it at the next start. Silent mode turns this off.</p>
+      <p class="actions"><button type="button" id="updates-check">Check for updates</button> <span id="updates-note" role="status"></span></p>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="shield"> Vary my fingerprint</label>
+      <p>Adds noise to what sites can measure about this browser, different on each site and after each restart, so a measurement can't follow you. On by default; a site that misbehaves can be switched off from Xiao's button. <a href="https://coveryourtracks.eff.org/">Test my privacy</a> with the EFF's Cover Your Tracks.</p>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="fakeCamera"> Blank camera</label>
+      <p>Choose sites from Xiao's button that see a blank picture instead of your camera, without it ever turning on.</p>
+    </div>
     <div class="feature">
       <label class="switch"><input type="checkbox" data-feature="library"> Library</label>
       <p>Your downloads, the folders you choose, notes and saved tabs in one searchable place, with tidier file names you can undo. It runs <a href="https://github.com/Gitguy268/openfinder">OpenFinder</a> (GPL-3.0) and looks only at what you give it. <span data-size="library"></span></p>
@@ -163,8 +205,8 @@
       <p>Gather links, quotes and notes into topics. "Add to Board" in a page's menu adds the link, the page or the selected words; open your boards from Xiao's button. Each board is a sticky note, so it syncs like one.</p>
     </div>
     <div class="feature">
-      <label class="switch"><input type="checkbox" data-feature="siteShortcuts"> Site shortcuts</label>
-      <p>Type <code>!w</code>, <code>!gh</code>, <code>!osm</code>, <code>!mdn</code> or <code>!yt</code> and your words in the address bar to search Wikipedia, GitHub, OpenStreetMap, MDN or YouTube. They appear in Firefox's search settings, where you can change them.</p>
+      <label class="switch"><input type="checkbox" data-feature="bangs"> Bangs</label>
+      <p>Type <code>!gh cats</code> or <code>cats !gh</code> in the address bar or here to go straight to that site's search. Thousands of sites work, from a list kept on this computer, so no search engine sees it. <code>!note</code> opens your notes and <code>!lib</code> the Library. Add your own in Edit start page.</p>
     </div>
     <div class="feature">
       <label>Put tabs to sleep when unused for

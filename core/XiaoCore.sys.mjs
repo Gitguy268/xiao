@@ -7,6 +7,7 @@
 // fork alike. There is no extension to disable: blocking, Tor routing, the
 // start page and the toolbar panel all live here.
 import { Archive, CHOICES as ARCHIVE_HOURS } from './Archive.mjs';
+import { Bangs } from './Bangs.mjs';
 import { Assist, ASSIST_URL, HOST_URL as ASSIST_HOST_URL } from './Assist.mjs';
 import { Blocker } from './Blocker.mjs';
 import { BOARD_URL, Boards } from './Boards.mjs';
@@ -17,11 +18,15 @@ import { Packs } from './Packs.mjs';
 import { Portable } from './Portable.mjs';
 import { QuickWindow } from './QuickWindow.mjs';
 import { Search } from './Search.mjs';
+import { Shield } from './Shield.mjs';
+import { Silent } from './Silent.mjs';
 import { Tor } from './Tor.mjs';
 import { applyChoices, choicesFromPrefs, setDefaults, START_URL } from './StartPage.mjs';
 import { Toolbar } from './Toolbar.mjs';
+import { Updater } from './Updater.mjs';
 import { everyTab } from './tabs.mjs';
 import { ZenFilesSection } from './ZenLibrarySection.mjs';
+import { parseOwnBangs } from './lib/bangs.mjs';
 import { mod } from './mod.mjs';
 
 export { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL };
@@ -37,9 +42,12 @@ const DEFAULT_LINKS = [
 // Everything Xiao remembers, in <profile>/xiao.json, written 5 s after a change.
 class Store {
   allow = new Set();
+  shieldOff = new Set(); // sites where fingerprint noise is off
+  cameraSites = new Set(); // sites given the fake camera
   total = 0;
   engineAt = 0;
   checkedAt = 0;
+  updateAt = 0;
   settings = {};
   engine = ''; // the search choice last given to the address bar
   features = {}; // the switches in the start page's Features section
@@ -47,15 +55,15 @@ class Store {
   async load() {
     try {
       const saved = await IOUtils.readJSON(STORE());
-      Object.assign(this, saved, { allow: new Set(saved.allow ?? []) });
+      Object.assign(this, saved, { allow: new Set(saved.allow ?? []), shieldOff: new Set(saved.shieldOff ?? []), cameraSites: new Set(saved.cameraSites ?? []) });
     } catch {} // first start
   }
 
   save() {
     this.saving ??= setTimeout(() => {
       this.saving = null;
-      const { allow, total, engineAt, checkedAt, settings, engine, features } = this;
-      IOUtils.writeJSON(STORE(), { allow: [...allow], total, engineAt, checkedAt, settings, engine, features }, { tmpPath: `${STORE()}.tmp` })
+      const { allow, shieldOff, cameraSites, total, engineAt, checkedAt, updateAt, settings, engine, features } = this;
+      IOUtils.writeJSON(STORE(), { allow: [...allow], shieldOff: [...shieldOff], cameraSites: [...cameraSites], total, engineAt, checkedAt, updateAt, settings, engine, features }, { tmpPath: `${STORE()}.tmp` })
         .catch((e) => console.error('Xiao: could not save', e));
     }, 5_000);
   }
@@ -70,12 +78,18 @@ export const Xiao = {
   init() {
     if (this.started) return;
     this.started = true;
+    this.silent = new Silent();
+    this.silent.start();
     this.store = new Store();
+    this.shield = new Shield(this);
     this.tor = new Tor();
-    this.blocker = new Blocker(this.store);
+    this.tor.silent = this.silent;
+    this.blocker = new Blocker(this.store, this.silent);
+    this.bangs = new Bangs(this);
     this.search = new Search();
     this.search.start();
     this.packs = new Packs();
+    this.packs.silent = this.silent;
     this.packs.isOn = (id) => this.packOn(id);
     this.packsReady = this.packs.start().catch((e) => console.error('Xiao: packs', e));
     this.notes = new Notes(this);
@@ -85,6 +99,7 @@ export const Xiao = {
     this.portable = new Portable(this);
     this.boards = new Boards(this);
     this.quickWindow = new QuickWindow();
+    this.updater = new Updater(this);
     this.searchUrl = Services.prefs.getStringPref('xiao.search.url', '');
     setDefaults();
     this.tor.start();
@@ -102,7 +117,10 @@ export const Xiao = {
       safeForUntrustedWebProcess: true,
     });
     this.ready = this.store.load()
-      .then(() => this.blocker.start())
+      .then(() => {
+        this.shield.publish();
+        return this.blocker.start();
+      })
       .catch((e) => console.error('Xiao: blocking did not start', e));
     Services.obs.addObserver(this, 'final-ui-startup');
     Services.obs.addObserver(this, 'xiao-pack-installed');
@@ -121,8 +139,18 @@ export const Xiao = {
     this.toolbar = new Toolbar(this);
     this.toolbar.start();
     registerUrlbar(this);
+    this.bangs.register();
     this.ready.then(() => {
+      this.updater.started().catch((e) => console.error('Xiao: update marker', e));
+      this.updater.atLaunch();
       this.applySearch();
+      // 0.4's five shortcuts were search engines; bangs replace them.
+      if (this.store.features.siteShortcuts !== undefined) {
+        const { siteShortcuts, ...rest } = this.store.features;
+        this.store.features = rest;
+        this.store.save();
+        if (siteShortcuts) this.search.shortcuts(false).catch((e) => console.error('Xiao: old shortcuts', e));
+      }
       this.notes.show(this.features.sticky);
       this.sleepTabs(this.features.tabSleep);
       this.archive.start(this.features.autoArchive);
@@ -136,10 +164,11 @@ export const Xiao = {
     });
   },
 
-  // Every switch is off until the reader turns it on.
+  // Every switch is off until the reader turns it on, but for the fingerprint
+  // noise, which costs nothing, needs nothing downloaded and has a per-site switch.
   get features() {
     // libraryDownloads only matters while the Library is on; it starts on with it.
-    return { sticky: false, perSite: false, tabSleep: 0, libraryDownloads: true, autoArchive: 0, siteShortcuts: false, assist: false, boards: false, quickWindow: false, ...this.store.features };
+    return { updates: true, shield: true, fakeCamera: false, sticky: false, perSite: false, tabSleep: 0, libraryDownloads: true, autoArchive: 0, bangs: true, assist: false, boards: false, quickWindow: false, ...this.store.features, silent: this.silent.on };
   },
 
   async featureState() {
@@ -148,6 +177,10 @@ export const Xiao = {
   },
 
   async setFeature({ id, on, value, remove }) {
+    if (id === 'silent') {
+      await this.silent.set(!!on);
+      return;
+    }
     if (this.packs.catalogue?.has(id) && remove) {
       // the separate "Remove download": switched off first, then deleted
       await this.setFeature({ id, on: false });
@@ -175,6 +208,11 @@ export const Xiao = {
     } else if (id === 'quickWindow') {
       this.store.features = { ...this.store.features, quickWindow: !!on };
       this.quickWindow.set(!!on);
+    } else if (id === 'updates') {
+      this.store.features = { ...this.store.features, updates: !!on };
+    } else if (id === 'shield' || id === 'fakeCamera') {
+      this.store.features = { ...this.store.features, [id]: !!on };
+      this.shield.publish();
     } else if (id === 'sticky' || id === 'perSite' || id === 'boards') {
       this.store.features = { ...this.store.features, [id]: !!on };
       if (id === 'sticky') this.notes.show(!!on);
@@ -187,9 +225,8 @@ export const Xiao = {
       if (!on) this.assist.stopHost(); // off stops the model at once; its download stays
       else if (this.packs.catalogue?.has('notes-ai') && !(await this.packs.installed('notes-ai'))) this.packs.install('notes-ai');
       await this.servePacks();
-    } else if (id === 'siteShortcuts') {
-      this.store.features = { ...this.store.features, siteShortcuts: !!on };
-      await this.search.shortcuts(!!on);
+    } else if (id === 'bangs') {
+      this.store.features = { ...this.store.features, bangs: !!on };
     } else if (id === 'tabSleep') {
       const minutes = [0, 15, 30, 60, 120].includes(value) ? value : 0;
       this.store.features = { ...this.store.features, tabSleep: minutes };
@@ -259,18 +296,21 @@ export const Xiao = {
       search: 'chain',
       custom: '',
       theme: 'auto',
+      style: 'normal',
+      glass: false,
       links: DEFAULT_LINKS,
+      bangs: {},
       ...this.store.settings,
       ...choicesFromPrefs(),
     };
   },
 
-  async status() {
+  async status(inTor = false) {
     return {
       total: this.store.total,
       ready: !!this.blocker.engine,
       https: Services.prefs.getBoolPref('dom.security.https_only_mode', false),
-      tor: await this.tor.status(),
+      tor: await this.tor.status({ known: !inTor }),
     };
   },
 
@@ -298,11 +338,16 @@ export const Xiao = {
       else this.notes.useProfile();
       return this.featureState();
     }
+    if (name === 'bang') return this.bangs.resolve(data?.text);
+    if (name === 'bang.run') return void await this.bangs.run(data?.action, browsingContext.topChromeWindow);
+    if (name === 'updates.check') return this.updater.check();
+    if (name === 'filters.update') return { changed: await this.blocker.update({ asked: true }) };
     if (name === 'get') {
+      const inTor = browsingContext.originAttributes.userContextId === this.tor.torId;
       return {
         settings: this.settings(),
-        status: await this.status(),
-        inTor: browsingContext.originAttributes.userContextId === this.tor.torId,
+        status: await this.status(inTor),
+        inTor,
         local: this.searchUrl,
       };
     }
@@ -313,6 +358,9 @@ export const Xiao = {
         search: pick(s.search, ['chain', 'xiao', 'ddg', 'leta', 'startpage', 'brave', 'custom'], 'chain'),
         custom: typeof s.custom === 'string' && /^https?:\/\/.*%s/.test(s.custom) ? s.custom : '',
         theme: pick(s.theme, ['auto', 'light', 'dark'], 'auto'),
+        style: pick(s.style, ['normal', 'glass', 'terminal', 'retrofind'], 'normal'),
+        glass: s.glass === true,
+        bangs: parseOwnBangs(s.bangs),
         links: (Array.isArray(s.links) ? s.links : []).slice(0, 40)
           .filter((l) => typeof l?.name === 'string' && /^https?:\/\//.test(l?.url))
           .map(({ name, url }) => ({ name: name.slice(0, 80), url })),
@@ -320,6 +368,7 @@ export const Xiao = {
       applyChoices({ newtab: pick(s.newtab, ['start', 'floating'], 'start'), launch: pick(s.launch, ['start', 'restore'], 'start') });
       this.store.settings = settings;
       this.store.save();
+      this.toolbar?.applyGlass();
       await this.applySearch();
       return this.settings();
     }

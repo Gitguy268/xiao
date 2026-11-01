@@ -8,3 +8,7 @@ e1ae4d4a734d28bb590839188511deb3cebc26fcbce9df66d01b2c452060fe95  tor-expert-bun
 19cf18726eecb362e0f21d27afa9ea9efe5da928bfdfbb1ceb5fe54519e87f4a  tor-expert-bundle-linux-x86_64-15.0.25.tar.gz
 c1988c701de2f24f7d098d1d6d7f507b58f27740d097f29c246e0524d639b252  tor-expert-bundle-windows-x86_64-15.0.25.tar.gz
 c8b2defd0c91401f25efc43d10a1d7ed88642705489da51c520ec60fd98eb559  searxng-81371861f67226091d1c4df2e3908a11d3b54eb9.tar.gz
+# Zen 1.23.3b, used only on Linux when no Zen is installed. GitHub's digests for the
+# release's own files, recorded on 2026-11-01.
+bb2045d3e21654d40fe841250092eeadfd2c1fc831eefb509222773c8bdca149  zen.linux-x86_64.tar.xz
+1100cb3e857254edba833a293eb50010de66a166465edfcdcc8536dde732dfa7  zen.linux-aarch64.tar.xz

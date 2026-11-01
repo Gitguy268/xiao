@@ -78,9 +78,13 @@ export class Tor {
   }
 
   // Is tor up, and is it really Tor? Cached 30 s when yes, 5 s when no (it may still be starting).
-  async status({ fresh = false } = {}) {
+  // The probe is a connection out, so it runs only when the reader is using Tor:
+  // known returns what was last seen, without asking. In silent mode tor is stopped.
+  async status({ fresh = false, known = false } = {}) {
     if (!this.installed) return { installed: false, running: false, isTor: false };
+    if (this.silent?.on) return { installed: true, running: false, isTor: false, silent: true };
     const p = this.probe;
+    if (known) return p.result ?? { installed: true, running: false, isTor: false, unknown: true };
     if (!fresh && Date.now() - p.at < (p.result?.isTor ? 30_000 : 5_000)) return p.result;
     let result;
     // AbortSignal.timeout() needs a window, which system modules don't have.

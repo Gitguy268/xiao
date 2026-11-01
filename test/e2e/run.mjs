@@ -1510,23 +1510,16 @@ try {
       && journey.preview === 'keyboard words' && journey.spaceHides && journey.spaceShows === 'keyboard words' && journey.asked === 'minutes.txt'
       && journey.renamed && /page\.html\?journey$/.test(journey.back ?? ''), JSON.stringify(journey));
 
-    const shortcuts = await xiaoDo(async (Xiao, mod) => {
-      const { SearchService } = mod('toolkit/components/search/SearchService.sys.mjs');
-      const service = Services.search ?? SearchService;
-      await Xiao.setFeature({ id: 'siteShortcuts', on: true });
-      const on = (await service.getEngineByAlias('!w'))?.name;
+    const shortcuts = await xiaoDo(async (Xiao) => {
       const w = Services.wm.getMostRecentWindow('navigator:browser');
       w.gURLBar.focus();
       w.gURLBar.search('!w kittens');
       await new Promise((r) => w.setTimeout(r, 1500));
-      const heuristic = w.gURLBar.view.visibleResults?.[0];
-      const picked = heuristic?.payload?.engine ?? heuristic?.payload?.url ?? JSON.stringify(heuristic?.payload ?? {});
+      const picked = w.gURLBar.view.visibleResults?.[0]?.payload?.url;
       w.gURLBar.view.close();
-      await Xiao.setFeature({ id: 'siteShortcuts', on: false });
-      return { on, picked, off: (await service.getEngineByAlias('!w'))?.name ?? null };
+      return { picked };
     });
-    check('site shortcuts: "!w kittens" searches Wikipedia while they are on, and switching them off removes them', shortcuts.on === 'Wikipedia (!w)'
-      && /Wikipedia/.test(shortcuts.picked) && shortcuts.off === null, JSON.stringify(shortcuts));
+    check('bangs: "!w kittens" goes straight to Wikipedia', /wikipedia\.org.*kittens/.test(shortcuts.picked ?? ''), JSON.stringify(shortcuts));
 
     // A tab that breaks with blocking: paused for that tab only, until it closes.
     await m.chrome((host) => Services.prefs.setStringPref('network.dns.localDomains', host), HOST);

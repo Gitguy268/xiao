@@ -13,7 +13,7 @@
 // sandbox lets web content processes read only the app folder (a page mapped
 // to the profile fails with fileAccessDenied). make-app.sh carries the folder
 // over when it rebuilds Xiao after a Zen update.
-import { checkPack, safePath, sizeLabel, sourceOf, totalSize } from './lib/packs.mjs';
+import { checkPack, downloadProblem, isMissing, safePath, sizeLabel, sourceOf, totalSize } from './lib/packs.mjs';
 
 const CATALOGUE = 'resource://xiao/packs.json';
 const root = () => PathUtils.join(Services.dirsvc.get('GreD', Ci.nsIFile).path, 'xiao-packs');
@@ -59,6 +59,7 @@ export class Packs {
         done: b?.done,
         total: b?.total,
         error: b?.error,
+        missing: b?.missing,
       };
     }));
   }
@@ -78,6 +79,7 @@ export class Packs {
       if (state.stop.signal.aborted) return; // switched off: remove() cleans up
       console.error(`Xiao: pack ${id}`, e);
       state.error = e.message;
+      state.missing = e.missing === true;
     });
   }
 
@@ -90,6 +92,7 @@ export class Packs {
     }
     await IOUtils.remove(PathUtils.join(dir, DONE), { ignoreAbsent: true });
     const mirror = Services.prefs.getStringPref('xiao.packs.mirror', '');
+    await this.ask(sourceOf(pack.files[0], mirror), state);
     for (const f of pack.files) {
       const target = PathUtils.join(dir, ...f.path.split('/'));
       if (!f.unzip && await this.matches(target, f)) {
@@ -109,6 +112,23 @@ export class Packs {
     await IOUtils.writeUTF8(PathUtils.join(dir, DONE), `${pack.files.length} files\n`);
   }
 
+  // Before a byte is written: is the download there at all? Otherwise a pack
+  // with no release would look like a broken download part way through.
+  async ask({ url }, state) {
+    const status = await this.silent.asking([new URL(url).host], () => fetch(url, { method: 'HEAD', signal: state.stop.signal }))
+      .then((r) => r.status, (e) => {
+        if (state.stop.signal.aborted) throw e;
+        return 0;
+      });
+    if (status < 200 || status >= 400) this.refuse(status);
+  }
+
+  refuse(status) {
+    const e = new Error(downloadProblem(status));
+    e.missing = isMissing(status);
+    throw e;
+  }
+
   // A file left by an interrupted download counts if its size is right; its
   // hash was checked before it got its name.
   async matches(path, f) {
@@ -120,8 +140,12 @@ export class Packs {
   }
 
   async fetchTo({ url, range }, f, path, state) {
-    const r = await fetch(url, { signal: state.stop.signal, ...(range && { headers: { Range: `bytes=${range[0]}-${range[1]}` } }) });
-    if (!r.ok) throw new Error(`${f.path} could not be downloaded (${r.status})`);
+    const r = await this.silent.asking([new URL(url).host], () => fetch(url, { signal: state.stop.signal, ...(range && { headers: { Range: `bytes=${range[0]}-${range[1]}` } }) }))
+      .catch((e) => {
+        if (state.stop.signal.aborted) throw e;
+        return this.refuse(0);
+      });
+    if (!r.ok) this.refuse(r.status);
     const hash = Cc['@mozilla.org/security/hash;1'].createInstance(Ci.nsICryptoHash);
     hash.init(Ci.nsICryptoHash.SHA256);
     await IOUtils.write(path, new Uint8Array(0));
@@ -131,7 +155,7 @@ export class Packs {
       const { done, value } = await reader.read();
       if (done) break;
       got += value.byteLength;
-      if (got > f.size) throw new Error(`${f.path} is larger than it should be`);
+      if (got > f.size) throw new Error('the download came out damaged, so it was not kept. Try again');
       hash.update(value, value.length);
       await IOUtils.write(path, value, { mode: 'append' });
       state.done += value.byteLength;
@@ -139,7 +163,7 @@ export class Packs {
     const hex = [...hash.finish(false)].map((c) => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
     if (got !== f.size || hex !== f.sha256) {
       await IOUtils.remove(path, { ignoreAbsent: true });
-      throw new Error(`${f.path} did not match its SHA-256, so it was not kept`);
+      throw new Error('the download came out damaged, so it was not kept. Try again');
     }
   }
 

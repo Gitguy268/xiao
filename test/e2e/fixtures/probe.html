@@ -1,0 +1,94 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>probe</title>
+<canvas id="c" width="200" height="60"></canvas>
+<script>
+const hash = async (b) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', b))].slice(0, 6).map((v) => v.toString(16).padStart(2, '0')).join('');
+const render = () => {
+  const a = new OfflineAudioContext(1, 4410, 44100);
+  const o = a.createOscillator();
+  o.connect(a.destination);
+  o.start();
+  return a.startRendering();
+};
+window.audioHash = async (win = window) => hash((await render()).getChannelData(0).slice().buffer);
+window.probe = async () => {
+  const c = document.getElementById('c');
+  const x = c.getContext('2d');
+  x.clearRect(0, 0, 200, 60);
+  x.font = '18px serif';
+  x.fillStyle = '#c33';
+  x.fillRect(150, 10, 20, 20);
+  x.fillText('Xiao probe', 4, 30);
+  const r = {};
+  r.canvasData = await hash(new TextEncoder().encode(c.toDataURL()));
+  r.canvasPixels = await hash(x.getImageData(0, 0, 200, 60).data.buffer);
+  r.canvasRed = x.getImageData(160, 20, 1, 1).data[0];
+  const g = document.createElement('canvas').getContext('webgl');
+  g.clearColor(0.2, 0.4, 0.6, 1);
+  g.clear(g.COLOR_BUFFER_BIT);
+  const p = new Uint8Array(64);
+  g.readPixels(0, 0, 4, 4, g.RGBA, g.UNSIGNED_BYTE, p);
+  r.webgl = await hash(p.buffer);
+  r.audio = await window.audioHash();
+  const buf = await render();
+  const copy = new Float32Array(4410);
+  buf.copyFromChannel(copy, 0);
+  r.copyAudio = await hash(copy.buffer);
+  r.cores = navigator.hardwareConcurrency;
+  r.nativeCores = navigator.hardwareConcurrency >= 2 && Object.getOwnPropertyDescriptor(Navigator.prototype, 'hardwareConcurrency').get.toString().includes('[native code]');
+  r.looksNative = AudioBuffer.prototype.getChannelData.toString().includes('[native code]');
+  r.screen = `${screen.width}x${screen.height}`;
+  r.tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  r.lang = navigator.language;
+
+  const frame = document.createElement('iframe');
+  document.body.append(frame);
+  r.blankFrameCores = frame.contentWindow.navigator.hardwareConcurrency;
+  frame.remove();
+  r.frameAudio = await new Promise((ok) => {
+    const f = document.createElement('iframe');
+    f.src = location.href + '?frame';
+    f.onload = async () => {
+      ok(await f.contentWindow.audioHash());
+      f.remove();
+    };
+    document.body.append(f);
+  });
+  r.sandboxAudio = await new Promise((ok) => {
+    const f = document.createElement('iframe');
+    f.sandbox = 'allow-scripts';
+    addEventListener('message', function on(e) {
+      if (e.source !== f.contentWindow) return;
+      removeEventListener('message', on);
+      ok(e.data);
+      f.remove();
+    });
+    f.srcdoc = `<script>
+      const a = new OfflineAudioContext(1, 4410, 44100), o = a.createOscillator();
+      o.connect(a.destination); o.start();
+      a.startRendering().then(async (b) => {
+        const d = await crypto.subtle?.digest('SHA-256', b.getChannelData(0).slice().buffer);
+        parent.postMessage(d ? [...new Uint8Array(d)].slice(0, 6).map((v) => v.toString(16).padStart(2, '0')).join('') : 'no-subtle', '*');
+      });
+    <\/script>`;
+    document.body.append(f);
+    setTimeout(() => ok('timeout'), 4000);
+  });
+  return r;
+};
+window.camera = async () => {
+  try {
+    const stream = await Promise.race([
+      navigator.mediaDevices.getUserMedia({ video: true }),
+      new Promise((_, no) => setTimeout(() => no(new Error('waiting on a prompt')), 1500)),
+    ]);
+    const [t] = stream.getVideoTracks();
+    const out = { fake: !t.getSettings().deviceId, tracks: stream.getTracks().length, width: t.getSettings().width, label: t.label };
+    stream.getTracks().forEach((k) => k.stop());
+    return out;
+  } catch (e) {
+    return { fake: false, error: e.message };
+  }
+};
+</script>

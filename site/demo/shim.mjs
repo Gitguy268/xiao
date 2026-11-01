@@ -13,6 +13,9 @@ const defaults = {
   search: 'ddg',
   custom: '',
   theme: 'auto',
+  style: 'normal',
+  glass: false,
+  bangs: {},
   newtab: 'start',
   launch: 'start',
   links: [

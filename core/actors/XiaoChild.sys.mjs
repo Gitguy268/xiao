@@ -5,11 +5,13 @@
 // The content-process half of the Xiao actor, one per frame:
 // - web pages: Ghostery's cosmetic filtering (hide ad slots, run scriptlets);
 // - Tor tabs: no WebRTC, which would bypass tor;
+// - web pages: fingerprint noise and the fake camera (see ../Shield.mjs);
 // - the start page: window.xiao.call(), its only way to reach Xiao;
 // - the Library (resource://xiao-library/): window.xiao.request(), checked
 //   again in XiaoParent and decoded in core/lib/library-protocol.mjs.
 import { handlePseudoDirective, querySelectorAll } from '@ghostery/adblocker-extended-selectors';
 import { DOMMonitor } from '@ghostery/adblocker-content';
+import { farblePixels, farbleSamples, pickCores, siteSalt } from '../lib/farble.mjs';
 
 const START_URL = 'resource://xiao/start/';
 const ORGANISE_URL = 'resource://xiao-notes-ai/organise.html';
@@ -31,12 +33,14 @@ export class XiaoChild extends JSWindowActorChild {
     try {
       switch (event.type) {
         case 'DOMWindowCreated':
+          this.shield();
           if (this.inTor()) this.removeWebRTC();
           if ([START_URL, ORGANISE_URL, ASSIST_URL, ASSIST_HOST_URL, BOARD_URL].some((u) => uri.startsWith(u)) && !this.browsingContext.parent) this.exposeApi();
           if (uri.split(/[?#]/)[0] === LIBRARY_URL && !this.browsingContext.parent) this.exposeLibrary();
           break;
         case 'DOMDocElementInserted':
-          if (this.inTor()) this.removeWebRTC(); // an about:blank frame becoming a page
+          this.shield(); // an about:blank frame becoming a page
+          if (this.inTor()) this.removeWebRTC();
           if (/^https?:/.test(uri)) this.started = this.cosmeticsStart(uri).catch(() => false);
           break;
         case 'DOMContentLoaded':
@@ -56,6 +60,116 @@ export class XiaoChild extends JSWindowActorChild {
   inTor() {
     const torId = Services.cpmm.sharedData.get('xiao:torId');
     return !!torId && this.browsingContext.originAttributes.userContextId === torId;
+  }
+
+  // Which site this frame counts as, or null for Xiao's and Firefox's own pages.
+  // A sandboxed frame has no origin of its own, so it counts as the site that made it.
+  siteOf() {
+    let p = this.document?.nodePrincipal;
+    if (p?.isNullPrincipal) p = p.precursorPrincipal;
+    if (!p?.isContentPrincipal || !(p.schemeIs('http') || p.schemeIs('https'))) return null;
+    return p.baseDomain || p.host;
+  }
+
+  // Before the page's own scripts: each frame has its own copy of these APIs,
+  // so a page can't reach a clean one by making a frame. Workers aren't covered.
+  shield() {
+    if (this.shielded) return;
+    const s = Services.cpmm.sharedData.get('xiao:shield');
+    const site = s && this.siteOf();
+    if (!site) return;
+    this.shielded = true;
+    const win = this.contentWindow;
+    const page = win.wrappedJSObject;
+    if (s.on && !s.off.includes(site)) this.addNoise(win, page, siteSalt(s.seed, `${site}|${this.browsingContext.originAttributes.userContextId}`));
+    if (s.camera.includes(site)) this.fakeCamera(win, page);
+  }
+
+  addNoise(win, page, salt) {
+    const cores = pickCores(salt, win.navigator.hardwareConcurrency);
+    Object.defineProperty(page.Navigator.prototype, 'hardwareConcurrency', {
+      get: Cu.exportFunction(() => cores, win), configurable: true, enumerable: true,
+    });
+    const nudge = (proto, name) => {
+      const real = proto?.[name];
+      if (!real) return;
+      proto[name] = Cu.exportFunction(function (target, ...rest) {
+        Reflect.apply(real, Cu.waiveXrays(this), [target, ...rest]);
+        farbleSamples(Cu.waiveXrays(target), salt);
+      }, win);
+    };
+    // getChannelData hands out the buffer's own array, so it is nudged only once.
+    const buffer = page.AudioBuffer?.prototype;
+    const getChannelData = buffer?.getChannelData;
+    if (getChannelData) {
+      const done = new WeakSet();
+      buffer.getChannelData = Cu.exportFunction(function (channel) {
+        const samples = Reflect.apply(getChannelData, Cu.waiveXrays(this), [channel]);
+        const raw = Cu.waiveXrays(samples);
+        if (!done.has(raw)) {
+          done.add(raw);
+          farbleSamples(raw, salt);
+        }
+        return samples;
+      }, win);
+    }
+    nudge(buffer, 'copyFromChannel');
+    nudge(page.AnalyserNode?.prototype, 'getFloatFrequencyData');
+    nudge(page.AnalyserNode?.prototype, 'getFloatTimeDomainData');
+    // Firefox's own canvas noise covers toDataURL. Its setting for image data
+    // hands back random colours, which would break real canvas apps.
+    for (const proto of [page.CanvasRenderingContext2D?.prototype, page.OffscreenCanvasRenderingContext2D?.prototype]) {
+      const real = proto?.getImageData;
+      if (!real) continue;
+      proto.getImageData = Cu.exportFunction(function (...args) {
+        const image = Reflect.apply(real, Cu.waiveXrays(this), Cu.cloneInto(args, win));
+        farblePixels(Cu.waiveXrays(image).data, salt);
+        return image;
+      }, win);
+    }
+    for (const proto of [page.WebGLRenderingContext?.prototype, page.WebGL2RenderingContext?.prototype]) {
+      const real = proto?.readPixels;
+      if (!real) continue;
+      proto.readPixels = Cu.exportFunction(function (...args) {
+        const raw = args.map((v) => Cu.waiveXrays(v));
+        Reflect.apply(real, Cu.waiveXrays(this), raw);
+        const out = raw[6];
+        // Only RGBA bytes read into an array; a read into a bound buffer has no array to change.
+        if (raw[4] === this.RGBA && raw[5] === this.UNSIGNED_BYTE && out?.length) farblePixels(out, salt);
+      }, win);
+    }
+  }
+
+  // The site asks for the camera and gets a blank moving picture; a microphone
+  // it asked for is still the real one, behind Firefox's own permission prompt.
+  fakeCamera(win, page) {
+    const proto = page.MediaDevices?.prototype;
+    const real = proto?.getUserMedia;
+    if (!real) return;
+    proto.getUserMedia = Cu.exportFunction(function (constraints) {
+      const self = Cu.waiveXrays(this);
+      const wants = Cu.waiveXrays(constraints);
+      if (!wants?.video) return Reflect.apply(real, self, [constraints]);
+      return new win.Promise((resolve, reject) => {
+        const canvas = win.document.createElement('canvas');
+        canvas.width = 640;
+        canvas.height = 480;
+        const paint = () => {
+          const g = canvas.getContext('2d');
+          g.fillStyle = '#16181d';
+          g.fillRect(0, 0, canvas.width, canvas.height);
+        };
+        paint();
+        win.setInterval(paint, 500); // a stream with no new frames looks like a broken camera
+        const video = canvas.captureStream(2);
+        if (!wants.audio) return resolve(video);
+        const audio = Cu.cloneInto({ audio: wants.audio }, win);
+        return Reflect.apply(real, self, [audio]).then(Cu.exportFunction((mic) => {
+          for (const track of mic.getAudioTracks()) video.addTrack(track);
+          resolve(video);
+        }, win), reject);
+      });
+    }, win);
   }
 
   removeWebRTC() {

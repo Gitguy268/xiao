@@ -5,7 +5,7 @@ import { buildUserJs, merge, readPrefs, toUserJs } from '../scripts/userjs.mjs';
 const prefsOf = (js) => new Map([...js.matchAll(/^user_pref\("([^"]+)", (.*)\);$/gm)].map(([, n, v]) => [n, JSON.parse(v)]));
 
 test('each YAML file names a pref once', () => {
-  for (const name of ['balanced', 'speed', 'look', 'strict', 'kit']) {
+  for (const name of ['balanced', 'speed', 'look', 'strict', 'kit', 'zero']) {
     const names = readPrefs(name).map((p) => p.name);
     assert.deepEqual(names.filter((n, i) => names.indexOf(n) !== i), [], name);
   }

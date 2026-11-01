@@ -1,0 +1,55 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Terminal: keyboard first, the computer's own monospace, nothing to load. */
+:root {
+  --term-bg: #fbfbf8;
+  --term-ink: #1a1c1a;
+  --term-soft: #55605a;
+  --term-accent: #0a6b3d;
+  --sans: ui-monospace, Menlo, Consolas, "DejaVu Sans Mono", monospace;
+  --serif: var(--sans);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --term-bg: #0d0f0e; --term-ink: #dbe4dc; --term-soft: #8b978e; --term-accent: #5fd38d; }
+}
+:root[data-theme="dark"] { --term-bg: #0d0f0e; --term-ink: #dbe4dc; --term-soft: #8b978e; --term-accent: #5fd38d; }
+
+body { background: var(--term-bg); color: var(--term-ink); font-size: 14px; }
+.pool, #links { display: none; }
+main {
+  align-self: start;
+  justify-self: stretch;
+  width: auto;
+  margin: 0;
+  padding: 0 28px;
+  text-align: start;
+  overflow: auto;
+  min-height: 0;
+}
+h1 { margin: 0 0 12px; font: 400 14px / 1.5 var(--sans); letter-spacing: 0; color: var(--term-soft); animation: none; }
+#term-log { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+#search { display: flex; gap: 1ch; align-items: baseline; }
+#term-prompt { color: var(--term-accent); white-space: nowrap; }
+#q {
+  flex: 1;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  text-align: start;
+  color: var(--term-ink);
+  caret-color: var(--term-accent);
+}
+#q::placeholder { color: var(--term-soft); }
+#q:focus { outline: none; }
+.bar, footer, #status, .mark { color: var(--term-soft); }
+#status strong, .mark { color: var(--term-ink); }
+button { background: none; border-color: var(--term-soft); border-radius: 0; color: var(--term-ink); font-family: var(--sans); }
+button.primary { background: var(--term-accent); color: var(--term-bg); border-color: transparent; }
+dialog { background: var(--term-bg); color: var(--term-ink); border-color: var(--term-soft); border-radius: 0; }
+dialog h2 { font: 700 16px / 1.3 var(--sans); }
+dialog label, #features .note, .feature p, #portable-note { color: var(--term-soft); }
+dialog label.switch { color: var(--term-ink); }
+dialog select, dialog input, dialog textarea { background: var(--term-bg); color: var(--term-ink); border-color: var(--term-soft); border-radius: 0; font-family: var(--sans); }
+:focus-visible { outline-color: var(--term-accent); }

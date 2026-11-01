@@ -43,3 +43,14 @@ export const totalSize = (pack) => pack.files.reduce((n, f) => n + f.size, 0);
 export function sizeLabel(bytes) {
   return bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : bytes >= 1e6 ? `${Math.round(bytes / 1e6)} MB` : `${Math.max(1, Math.round(bytes / 1e3))} KB`;
 }
+
+// What went wrong with a download, in words: never a status code or an exception.
+// status is the HTTP status, or 0 when nothing answered.
+export function downloadProblem(status) {
+  if (status === 0) return 'Xiao could not reach the download site. Check your connection and try again';
+  if (status === 404 || status === 410) return 'this download is not available for this version of Xiao yet';
+  if (status === 403 || status === 429) return 'the download site is refusing for now. Try again later';
+  return 'the download site is having trouble. Try again later';
+}
+
+export const isMissing = (status) => status === 404 || status === 410;

@@ -1,0 +1,121 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Retrofind: a 1998 search page in a see-through Windows 98 window, after
+ * ~/retrofind (MIT, by the same author). Original CSS; fonts already on the computer. */
+:root {
+  --face: #c0c0c0;
+  --pane: rgb(222 222 222 / 0.62);
+  --page: #fff;
+  --page-ink: #000;
+  --page-soft: #333;
+  --link: #00c;
+  --raised: inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+  --sunken: inset -1px -1px #fff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a;
+  --ui: 11px 'Microsoft Sans Serif', Tahoma, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --face: #4a4a4e;
+    --pane: rgb(60 60 66 / 0.72);
+    --page: #17181b;
+    --page-ink: #eee;
+    --page-soft: #bbb;
+    --link: #8ab4ff;
+    --raised: inset -1px -1px #000, inset 1px 1px #888, inset -2px -2px #2a2a2c, inset 2px 2px #6a6a6e;
+    --sunken: inset -1px -1px #888, inset 1px 1px #2a2a2c, inset -2px -2px #6a6a6e, inset 2px 2px #000;
+  }
+  :root:not([data-theme="light"]) #desktop { filter: brightness(0.45); }
+}
+:root[data-theme="dark"] {
+  --face: #4a4a4e;
+  --pane: rgb(60 60 66 / 0.72);
+  --page: #17181b;
+  --page-ink: #eee;
+  --page-soft: #bbb;
+  --link: #8ab4ff;
+  --raised: inset -1px -1px #000, inset 1px 1px #888, inset -2px -2px #2a2a2c, inset 2px 2px #6a6a6e;
+  --sunken: inset -1px -1px #888, inset 1px 1px #2a2a2c, inset -2px -2px #6a6a6e, inset 2px 2px #000;
+}
+:root[data-theme="dark"] #desktop { filter: brightness(0.45); }
+
+body { background: #2f6fc4; color: var(--page-ink); font: var(--ui); }
+.pool, h1 { display: none; }
+.bar { display: none; }
+main {
+  position: relative;
+  z-index: 1;
+  width: min(760px, 100% - 24px);
+  margin: 0;
+  padding: 4px;
+  background: var(--pane);
+  backdrop-filter: blur(10px) saturate(150%);
+  box-shadow: var(--raised);
+}
+.retro-title {
+  display: flex;
+  padding: 3px 6px;
+  color: #fff;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgb(0 0 60 / 0.6);
+  background: linear-gradient(90deg, rgb(0 0 128 / 0.85), rgb(16 132 208 / 0.6));
+}
+.retro-page {
+  background: var(--page);
+  box-shadow: var(--sunken);
+  padding: 34px 16px 26px;
+  margin-top: 4px;
+  font: 16px 'Times New Roman', Times, serif;
+}
+.retro-logo { display: block; margin: 0 0 16px; font: bold 72px / 1 Baskerville, 'Book Antiqua', Georgia, serif; letter-spacing: -1px; }
+.retro-logo span { text-shadow: 4px 4px 0 #a9a9a9; }
+.retro-logo span:nth-child(1) { color: #1f3fcf; }
+.retro-logo span:nth-child(2) { color: #d62916; }
+.retro-logo span:nth-child(3) { color: #e9a800; }
+.retro-logo span:nth-child(4) { color: #158a2a; }
+#search { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+#q {
+  width: min(100%, 380px);
+  padding: 3px 4px;
+  border: 0;
+  background: var(--page);
+  color: var(--page-ink);
+  box-shadow: var(--sunken);
+  font: 13px Arial, sans-serif;
+  text-align: start;
+}
+#q:focus { outline: 1px dotted var(--page-ink); outline-offset: -4px; }
+#q::placeholder { color: var(--page-soft); }
+#retro-go { display: inline-block; }
+#links { margin-top: 18px; }
+#links a, #links button { color: var(--link); text-decoration: underline; font: 14px 'Times New Roman', Times, serif; }
+footer {
+  padding: 3px 8px;
+  margin: 0;
+  color: var(--page-ink);
+  background: var(--face);
+  box-shadow: var(--raised);
+  font: var(--ui);
+}
+#status strong { color: inherit; }
+button {
+  font: var(--ui);
+  color: var(--page-ink);
+  background: var(--face);
+  border: 0;
+  border-radius: 0;
+  box-shadow: var(--raised);
+  padding: 4px 10px;
+  min-height: 23px;
+}
+button:active { box-shadow: var(--sunken); }
+button.primary { background: var(--face); color: var(--page-ink); font-weight: bold; }
+dialog { background: var(--face); color: var(--page-ink); border: 0; border-radius: 0; box-shadow: var(--raised); font: var(--ui); }
+dialog h2 { font: bold 14px / 1.3 Arial, sans-serif; }
+dialog label, #features .note, .feature p, #portable-note { color: var(--page-ink); font-size: 12px; }
+dialog label.switch { color: var(--page-ink); font-size: 12px; }
+dialog select, dialog input, dialog textarea { background: var(--page); color: var(--page-ink); border: 0; border-radius: 0; box-shadow: var(--sunken); font: 12px Arial, sans-serif; }
+.feature { border-top-color: #808080; }
+.feature a { color: var(--link); }
+:focus-visible { outline: 1px dotted var(--page-ink); outline-offset: -4px; }

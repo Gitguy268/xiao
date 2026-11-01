@@ -205,7 +205,7 @@ export class Assist {
   // A link's page, fetched on the reader's request without cookies, read as text.
   async summarize(url, { signal } = {}) {
     if (!/^https?:\/\//.test(url)) throw new Error('Only web links can be summarised.');
-    const r = await fetch(url, { credentials: 'omit', redirect: 'follow', signal });
+    const r = await this.xiao.silent.asking([new URL(url).host], () => fetch(url, { credentials: 'omit', redirect: 'follow', signal })); // the reader chose this link
     if (!r.ok) throw new Error(`The page answered ${r.status}.`);
     if (!/text\/html|text\/plain/.test(r.headers.get('content-type') ?? '')) throw new Error('That link is not a page of text.');
     const html = (await r.text()).slice(0, 2_000_000);

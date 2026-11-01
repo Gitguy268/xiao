@@ -111,6 +111,15 @@ export class Notes {
     }
   }
 
+  // From the start page, a bang or the command bar: pressing it means wanting
+  // the note, so this switches the feature on if it was off.
+  async openFrom(win) {
+    if (!this.xiao.features.sticky) await this.xiao.setFeature({ id: 'sticky', on: true });
+    // The address bar closing its results would close a panel opened in the same moment.
+    await new Promise((r) => setTimeout(r, 200));
+    return this.open(win);
+  }
+
   // The note is a popup of its own, not a toolbar sub-view: Zen tucks extra
   // buttons into its "…" menu, whose sub-views would squeeze the square.
   async open(win) {

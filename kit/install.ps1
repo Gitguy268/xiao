@@ -159,7 +159,8 @@ if (`$zenHome -and -not `$xiaoOpen -and (Test-Path (Join-Path `$zenHome 'applica
 `$pidFile = '$(Join-Path $Data 'tor.pid')'
 # If Xiao is already open, its launcher owns tor: leave it alone (Zen just opens a new window there).
 `$torUp = (Test-Path `$pidFile) -and (Get-Process -Id (Get-Content `$pidFile) -ErrorAction SilentlyContinue | Where-Object ProcessName -eq 'tor')
-if ((Test-Path '$Torrc') -and -not `$torUp) {
+# Silent mode (start page, Features): tor connects out as soon as it starts.
+if ((Test-Path '$Torrc') -and -not `$torUp -and -not (Test-Path '$(Join-Path $ProfileDir 'xiao-zero')')) {
   `$tor = Start-Process -FilePath '$(Join-Path $TorDir 'tor\tor.exe')' -ArgumentList '-f', '"$Torrc"', '--quiet' -WindowStyle Hidden -PassThru
 }
 try {

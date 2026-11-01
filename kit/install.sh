@@ -10,6 +10,7 @@
 #
 #   sh install.sh [--strict] [--tor] [--search] [--zen /path/to/zen]
 #   sh install.sh --uninstall
+#   sh install.sh --update      the launcher's: the same choices as last time
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -17,8 +18,9 @@ TOR_VERSION=15.0.25
 TOR_PORT=${XIAO_TOR_PORT:-9160} # XIAO_TOR_PORT: tests only, so a test install can run beside a real one
 SEARCH_PORT=${XIAO_SEARCH_PORT:-8890}
 SEARXNG=81371861f67226091d1c4df2e3908a11d3b54eb9
+ZEN_VERSION=1.23.3b # the Zen this kit was tested on, used when no Zen is installed
 
-STRICT=0 TOR=0 SEARCH=0 UNINSTALL=0 ZEN=${ZEN:-}
+STRICT=0 TOR=0 SEARCH=0 UNINSTALL=0 UPDATE=0 ZEN=${ZEN:-}
 while [ $# -gt 0 ]; do
   case $1 in
     --strict) STRICT=1 ;;
@@ -26,6 +28,7 @@ while [ $# -gt 0 ]; do
     --search) SEARCH=1 ;;
     --ubo) echo "--ubo was removed in Xiao 0.2: Xiao's own blocking is built in, and two blockers only block twice." >&2 ;;
     --uninstall) UNINSTALL=1 ;;
+    --update) UPDATE=1 ;;
     --zen) ZEN=$2; shift ;;
     -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
     *) echo "Unknown option: $1 (try --help)" >&2; exit 2 ;;
@@ -49,19 +52,33 @@ case $OS in
     ;;
   Linux)
     DATA="${XDG_DATA_HOME:-$HOME/.local/share}/xiao-kit"
+    # A Zen Xiao downloaded itself stays Xiao's to update, even if another appears.
+    [ -z "$ZEN" ] && [ -x "$DATA/zen/zen" ] && ZEN="$DATA/zen/zen"
     if [ -z "$ZEN" ]; then
       for z in "$(command -v zen 2>/dev/null || true)" /opt/zen/zen "$HOME/.local/share/zen/zen" /usr/lib/zen-browser/zen /opt/zen-browser-bin/zen-bin; do
         [ -n "$z" ] && [ -x "$z" ] && ZEN=$z && break
       done
-    fi
-    if [ -z "$ZEN" ] && command -v flatpak >/dev/null && flatpak info app.zen_browser.zen >/dev/null 2>&1; then
-      die "Xiao needs a Zen it can copy, and the Flatpak can't be copied. Install Zen's tarball from https://zen-browser.app/download and run this again (or pass --zen /path/to/zen)."
     fi
     TOR_OS=linux TOR_ARCH=$ARCH
     ;;
   *) die "use install.ps1 on Windows" ;;
 esac
 PROFILE="$DATA/profile"
+
+# --update repeats the choices of the first install, with the Zen it used.
+if [ "$UPDATE" = 1 ] && [ -f "$DATA/install-flags" ]; then
+  for flag in $(cat "$DATA/install-flags"); do
+    case $flag in
+      --strict) STRICT=1 ;;
+      --tor) TOR=1 ;;
+      --search) SEARCH=1 ;;
+    esac
+  done
+  if [ -z "$ZEN" ] && [ -f "$DATA/zen-app" ]; then
+    home=$(cat "$DATA/zen-app")
+    if [ "$OS" = Darwin ]; then ZEN="$home/Contents/MacOS/zen"; else ZEN="$home/zen"; fi
+  fi
+fi
 
 pgrep -f -- "-profile $PROFILE" >/dev/null 2>&1 && die "Xiao is running. Quit it first."
 
@@ -71,18 +88,6 @@ if [ "$UNINSTALL" = 1 ]; then
     "$HOME/Applications/xiao.app" "${XDG_DATA_HOME:-$HOME/.local/share}/applications/xiao.desktop"
   echo "Xiao removed (its copy of Zen, profile, Tor, search and launcher). Zen itself was not touched."
   exit 0
-fi
-
-[ -n "$ZEN" ] || die "Zen not found. Install it from https://zen-browser.app or pass --zen /path/to/zen"
-for f in user.js user-strict.js xiao/XiaoCore.sys.mjs loader/xiao.cfg; do
-  [ -f "$HERE/$f" ] || die "$f is missing next to install.sh. Run 'npm run build' and use dist/kit/."
-done
-# The folder that holds Zen's application.ini: Zen.app on macOS, Zen's own folder on Linux.
-if [ "$OS" = Darwin ]; then
-  ZEN_HOME=${ZEN%/Contents/MacOS/*}
-else
-  ZEN_HOME=$(dirname "$(readlink -f "$ZEN")")
-  [ -f "$ZEN_HOME/application.ini" ] || die "$ZEN_HOME has no application.ini; pass --zen with the zen binary inside Zen's folder"
 fi
 
 sha256() { if command -v sha256sum >/dev/null; then sha256sum "$1"; else shasum -a 256 "$1"; fi | cut -d' ' -f1; }
@@ -95,8 +100,56 @@ fetch() { # fetch <url> <file> [name]: download and check against downloads.sha2
   [ "$got" = "$want" ] || { rm -f "$2"; die "$name does not match its pinned hash (got $got)"; }
 }
 
+# Linux with no Zen to copy (none at all, or only the Flatpak): Xiao fetches
+# Zen's own tarball into its folder, and each Xiao update keeps it current.
+if [ "$OS" = Linux ] && { [ -z "$ZEN" ] || [ "$ZEN" = "$DATA/zen/zen" ]; }; then
+  if [ "$(cat "$DATA/zen/.xiao-version" 2>/dev/null)" != "$ZEN_VERSION" ]; then
+    command -v xz >/dev/null || die "xz is needed to unpack Zen. Install the xz or xz-utils package and run this again."
+    tarball="zen.linux-$ARCH.tar.xz"
+    grep -q " $tarball\$" "$HERE/downloads.sha256" || die "Zen has no build for $ARCH. Xiao needs x86_64 or aarch64."
+    tmp=$(mktemp -d)
+    say "Downloading Zen $ZEN_VERSION (about 110 MB)"
+    fetch "https://github.com/zen-browser/desktop/releases/download/$ZEN_VERSION/$tarball" "$tmp/$tarball"
+    mkdir -p "$DATA"
+    rm -rf "$DATA/zen" && tar -xJf "$tmp/$tarball" -C "$tmp" && mv "$tmp/zen" "$DATA/zen"
+    rm -rf "$tmp"
+    printf '%s\n' "$ZEN_VERSION" > "$DATA/zen/.xiao-version"
+  fi
+  ZEN="$DATA/zen/zen"
+  if [ -x "$(command -v ldd)" ] && ldd "$DATA/zen/libxul.so" 2>/dev/null | grep -q 'not found'; then
+    missing=$(ldd "$DATA/zen/libxul.so" | sed -n 's/^[[:space:]]*\(.*\) => not found$/\1/p' | tr '\n' ' ')
+    family=$( { . /etc/os-release 2>/dev/null; echo "${ID_LIKE:-} ${ID:-}"; } )
+    case $family in
+      *debian*|*ubuntu*) hint="sudo apt install libgtk-3-0 libdbus-glib-1-2 libasound2 libx11-xcb1" ;;
+      *fedora*|*rhel*) hint="sudo dnf install gtk3 dbus-glib alsa-lib libXtst" ;;
+      *arch*) hint="sudo pacman -S gtk3 dbus-glib alsa-lib" ;;
+      *suse*) hint="sudo zypper install libgtk-3-0 libdbus-glib-1-2 libasound2" ;;
+      *) hint="Install them with your package manager" ;;
+    esac
+    die "Zen needs libraries this computer doesn't have: $missing. $hint, and run this again."
+  fi
+fi
+[ -n "$ZEN" ] || die "Zen not found. Install it from https://zen-browser.app or pass --zen /path/to/zen"
+for f in user.js user-strict.js xiao/XiaoCore.sys.mjs loader/xiao.cfg; do
+  [ -f "$HERE/$f" ] || die "$f is missing next to install.sh. Run 'npm run build' and use dist/kit/."
+done
+# The folder that holds Zen's application.ini: Zen.app on macOS, Zen's own folder on Linux.
+if [ "$OS" = Darwin ]; then
+  ZEN_HOME=${ZEN%/Contents/MacOS/*}
+else
+  ZEN_HOME=$(dirname "$(readlink -f "$ZEN")")
+  [ -f "$ZEN_HOME/application.ini" ] || die "$ZEN_HOME has no application.ini; pass --zen with the zen binary inside Zen's folder"
+fi
+
 echo "Installing Xiao for $ZEN_HOME"
 mkdir -p "$PROFILE"
+{ [ "$STRICT" = 1 ] && echo --strict; [ "$TOR" = 1 ] && echo --tor; [ "$SEARCH" = 1 ] && echo --search; true; } > "$DATA/install-flags"
+# This kit stays in DATA, so a later update can put it back if its first start fails.
+if [ "$HERE" != "$DATA/kit" ]; then
+  rm -rf "$DATA/kit-previous"
+  [ -d "$DATA/kit" ] && mv "$DATA/kit" "$DATA/kit-previous"
+  cp -R "$HERE" "$DATA/kit"
+fi
 if [ "$STRICT" = 1 ]; then cp "$HERE/user-strict.js" "$PROFILE/user.js"; say "Strict prefs"; else cp "$HERE/user.js" "$PROFILE/user.js"; say "Balanced prefs"; fi
 # Xiao 0.1 was an extension (and could add uBlock Origin). Both go: blocking is built in now.
 rm -f "$PROFILE/extensions/xiao@gitguy268.github.io.xpi" "$PROFILE/extensions/uBlock0@raymondhill.net.xpi"
@@ -106,7 +159,10 @@ cp "$HERE/xiao.svg" "$DATA/xiao.svg" 2>/dev/null || true
 TOR_BIN=
 if [ "$TOR" = 1 ]; then
   bundle="tor-expert-bundle-$TOR_OS-$TOR_ARCH-$TOR_VERSION.tar.gz"
-  if grep -q " $bundle\$" "$HERE/downloads.sha256"; then
+  if [ "$(cat "$DATA/tor/.xiao-version" 2>/dev/null)" = "$TOR_VERSION" ]; then
+    TOR_BIN="$DATA/tor/tor/tor"
+    say "Tor $TOR_VERSION already here"
+  elif grep -q " $bundle\$" "$HERE/downloads.sha256"; then
     tmp=$(mktemp -d)
     fetch "https://dist.torproject.org/torbrowser/$TOR_VERSION/$bundle" "$tmp/$bundle"
     rm -rf "$DATA/tor" && mkdir -p "$DATA/tor"
@@ -118,6 +174,7 @@ if [ "$TOR" = 1 ]; then
       find "$DATA/tor/tor" -type f \( -name tor -o -name '*.dylib' -o -perm -u+x \) -exec codesign --force --sign - {} \; 2>/dev/null
     fi
     TOR_BIN="$DATA/tor/tor/tor"
+    printf '%s\n' "$TOR_VERSION" > "$DATA/tor/.xiao-version"
     say "Tor $TOR_VERSION expert bundle (hash checked)"
   elif command -v tor >/dev/null; then
     TOR_BIN=$(command -v tor)
@@ -143,8 +200,11 @@ fi
 # while Xiao runs. Xiao's look is added to the installed copy: one stylesheet
 # link and Xiao's mark in place of SearXNG's.
 PY=
-if [ "$SEARCH" = 1 ]; then
-  S="$DATA/searxng"
+S="$DATA/searxng"
+if [ "$SEARCH" = 1 ] && [ "$(cat "$S/.xiao-version" 2>/dev/null)" = "$SEARXNG" ]; then
+  PY="$S/venv/bin/python"
+  say "Xiao Search already here"
+elif [ "$SEARCH" = 1 ]; then
   tarball="searxng-$SEARXNG.tar.gz"
   tmp=$(mktemp -d)
   fetch "https://github.com/searxng/searxng/archive/$SEARXNG.tar.gz" "$tmp/$tarball" "$tarball"
@@ -196,9 +256,10 @@ ui:
   results_on_new_tab: false
 YAML
   chmod 600 "$S/settings.yml"
+  printf '%s\n' "$SEARXNG" > "$S/.xiao-version"
   say "Xiao Search: SearXNG ${SEARXNG%"${SEARXNG#???????}"} on 127.0.0.1:$SEARCH_PORT, runs while Xiao runs (hash checked)"
 else
-  rm -rf "$DATA/searxng"
+  rm -rf "$S"
 fi
 
 # Settings Xiao's browser code reads (core/Tor.mjs, XiaoCore.sys.mjs). In
@@ -244,6 +305,26 @@ PY="$PY"
 running() { # running <pid file> <process name>
   [ -f "\$DATA/\$1" ] && ps -p "\$(cat "\$DATA/\$1")" -o comm= 2>/dev/null | grep -qi "\$2"
 }
+# Updates (core/Updater.mjs left one ready). The file "trying" says the last one
+# was installed and has not yet reached a working start; Core removes it.
+if ! pgrep -f -- "-profile $PROFILE" >/dev/null 2>&1 && [ -z "\$XIAO_UPDATED" ]; then
+  if [ -f "\$DATA/update/trying" ] && [ -f "\$DATA/kit-previous/install.sh" ]; then
+    cat "\$DATA/update/version" > "\$DATA/update-refused" 2>/dev/null
+    rm -rf "\$DATA/update"
+    mv "\$DATA/kit-previous" "\$DATA/kit-rollback"
+    sh "\$DATA/kit-rollback/install.sh" --update >>"\$DATA/update.log" 2>&1
+    rm -rf "\$DATA/kit-rollback"
+    XIAO_UPDATED=1 exec "\$DATA/xiao-launch" "\$@"
+  elif [ -f "\$DATA/update/ready" ]; then
+    if sh "\$DATA/update/new/xiao-kit/install.sh" --update >>"\$DATA/update.log" 2>&1; then
+      mv "\$DATA/update/ready" "\$DATA/update/version"
+      rm -rf "\$DATA/update/new"
+      : > "\$DATA/update/trying"
+      XIAO_UPDATED=1 exec "\$DATA/xiao-launch" "\$@"
+    fi
+    rm -rf "\$DATA/update"
+  fi
+fi
 zen=\$(cat "\$DATA/zen-app" 2>/dev/null)
 ini="\$zen/$( [ "$OS" = Darwin ] && echo Contents/Resources/ )application.ini"
 if [ -f "\$ini" ] && ! pgrep -f -- "-profile $PROFILE" >/dev/null 2>&1 &&
@@ -253,6 +334,10 @@ if [ -f "\$ini" ] && ! pgrep -f -- "-profile $PROFILE" >/dev/null 2>&1 &&
 fi
 # If Xiao is already open, its launcher owns tor and search: leave them alone (Zen just opens a new window there).
 PIDS=
+# Silent mode (start page, Features): tor and search connect out as they start.
+if [ -f "$PROFILE/xiao-zero" ]; then
+  TOR_BIN= PY=
+fi
 if [ -n "\$TOR_BIN" ] && [ -f "\$DATA/torrc" ] && ! running tor.pid tor; then
   "\$TOR_BIN" -f "\$DATA/torrc" --quiet &
   PIDS="\$PIDS \$!"

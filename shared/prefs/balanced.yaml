@@ -88,6 +88,9 @@
   value: true
 - name: privacy.fingerprintingProtection.pbmode
   value: true
+# On top of Firefox's defaults: screen size, graphics card, fonts and core count read as common values. Colour scheme, language and time zone stay real, so sites keep working.
+- name: privacy.fingerprintingProtection.overrides
+  value: "+WebGLRenderInfo,+WebGLVendorRandomize,+ScreenRect,+ScreenAvailRect,+WindowOuterSize,+NavigatorHWConcurrencyTiered,+FontVisibilityBaseSystem,+FontVisibilityLangPack,+AudioSampleRate"
 - name: privacy.partition.network_state.ocsp_cache
   value: true
 - name: network.http.referer.XOriginTrimmingPolicy
@@ -192,3 +195,8 @@
   value: true
 - name: privacy.userContext.ui.enabled
   value: true
+
+# --- Local-only data ---
+# Your browsing data stays on this computer: no Firefox Account and no Firefox Sync.
+- name: identity.fxaccounts.enabled
+  value: false

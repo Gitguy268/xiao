@@ -18,7 +18,8 @@ cpSync(at('shared/fonts/junicode-italic-latin.woff2'), at('site/public/fonts/jun
 const demo = at('site/public/demo');
 rmSync(demo, { recursive: true, force: true });
 mkdirSync(at('site/public/demo/start'), { recursive: true });
-for (const f of ['start.css', 'start.js', 'links.mjs']) cpSync(at(`core/start/${f}`), `${demo}/start/${f}`);
+for (const f of ['start.css', 'start.js', 'links.mjs', 'terminal.mjs', 'wallpaper.mjs', 'styles']) cpSync(at(`core/start/${f}`), `${demo}/start/${f}`, { recursive: true });
+cpSync(at('core/lib/bangs.mjs'), `${demo}/lib/bangs.mjs`);
 cpSync(at('site/demo/shim.mjs'), `${demo}/start/shim.mjs`);
 cpSync(at('shared/tokens.css'), `${demo}/tokens.css`);
 cpSync(at('site/public/fonts'), `${demo}/fonts`, { recursive: true });

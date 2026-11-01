@@ -13,7 +13,7 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statS
 import { join, relative } from 'node:path';
 import { adsAndTrackingLists, ENGINE_VERSION, FiltersEngine } from '@ghostery/adblocker';
 import { build } from 'esbuild';
-import { buildUserJs } from './userjs.mjs';
+import { buildUserJs, readPrefs } from './userjs.mjs';
 import { zip } from './zip.mjs';
 
 const root = new URL('..', import.meta.url).pathname;
@@ -36,11 +36,13 @@ await build({
   target: 'firefox140',
   external: ['resource://*', 'moz-src://*', 'chrome://*'],
   banner: { js: timers },
+  define: { XIAO_SILENT_PREFS: JSON.stringify(readPrefs('zero')), XIAO_VERSION: JSON.stringify(version) },
   legalComments: 'linked',
   logLevel: 'warning',
 });
 
-for (const p of ['start', 'assist', 'board', 'icons', 'locales', 'chrome.css', 'packs.json']) cpSync(at('core', p), join(core, p), { recursive: true });
+for (const p of ['start', 'assist', 'board', 'icons', 'locales', 'chrome.css', 'packs.json', 'bangs.json']) cpSync(at('core', p), join(core, p), { recursive: true });
+cpSync(at('core/lib/bangs.mjs'), join(core, 'lib/bangs.mjs'));
 cpSync(at('shared/tokens.css'), join(core, 'tokens.css'));
 for (const [from, file] of [
   ['node_modules/@fontsource-variable/bricolage-grotesque/files', 'bricolage-grotesque-latin-wght-normal.woff2'],

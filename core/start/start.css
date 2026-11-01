@@ -179,3 +179,13 @@ dialog label.switch input { width: 18px; height: 18px; margin: 0; accent-color: 
 #portable-note { font-size: var(--step--1); color: var(--ink-soft); }
 #import-urls { max-height: 40vh; overflow: auto; margin: 8px 0 0; padding-inline-start: 1.4em; font-size: var(--step--1); overflow-wrap: anywhere; }
 #import-summary, #import-result { font-size: var(--step--1); }
+
+/* Parts only some styles show (see styles/). */
+#desktop { position: fixed; inset: 0; width: 100%; height: 100%; }
+.retro-title, .retro-logo, #retro-go, #term-log, #term-prompt { display: none; }
+:root[data-style="retrofind"] .retro-title, :root[data-style="retrofind"] #retro-go { display: revert; }
+:root[data-style="retrofind"] .retro-title { display: flex; }
+:root[data-style="retrofind"] .retro-logo { display: block; }
+:root[data-style="terminal"] #term-log, :root[data-style="terminal"] #term-prompt { display: revert; }
+:root[data-style="terminal"] #term-log { display: block; }
+header.bar, main, footer { position: relative; z-index: 1; }

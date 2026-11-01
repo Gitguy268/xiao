@@ -1,0 +1,87 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Silent mode (start page, Features). Not part of user.js: core/Silent.mjs sets
+# these while the switch is on and puts the earlier values back when it goes
+# off. test/e2e/network-audit.mjs is what proves the list is complete.
+
+# --- Lists and settings Firefox fetches by itself ---
+# Release builds ignore services.settings.server, so Remote Settings itself is
+# stopped by Silent.mjs's request check; these keep it from trying.
+- name: services.settings.poll_interval
+  value: 2147483647
+- name: security.remote_settings.crlite_filters.enabled
+  value: false
+- name: security.remote_settings.intermediates.enabled
+  value: false
+- name: privacy.fingerprintingProtection.remoteOverrides.enabled
+  value: false
+- name: browser.safebrowsing.malware.enabled
+  value: false
+- name: browser.safebrowsing.phishing.enabled
+  value: false
+- name: browser.safebrowsing.blockedURIs.enabled
+  value: false
+- name: browser.safebrowsing.downloads.enabled
+  value: false
+- name: browser.safebrowsing.provider.google.updateURL
+  value: ""
+- name: browser.safebrowsing.provider.google4.updateURL
+  value: ""
+- name: browser.safebrowsing.provider.mozilla.updateURL
+  value: ""
+- name: urlclassifier.updateinterval
+  value: 2147483647
+
+# --- Checks that the network is there ---
+- name: network.captive-portal-service.enabled
+  value: false
+- name: network.connectivity-service.enabled
+  value: false
+- name: captivedetect.canonicalURL
+  value: ""
+- name: network.trr.mode
+  value: 5
+- name: network.trr.confirmationNS
+  value: "skip"
+
+# --- Push, DRM and add-on downloads ---
+- name: dom.push.enabled
+  value: false
+- name: dom.push.connection.enabled
+  value: false
+- name: media.gmp-manager.updateEnabled
+  value: false
+- name: media.gmp-gmpopenh264.autoupdate
+  value: false
+- name: media.gmp-widevinecdm.autoupdate
+  value: false
+- name: media.gmp-widevinecdm.allow-chromium-update
+  value: false
+- name: extensions.update.enabled
+  value: false
+- name: extensions.update.autoUpdateDefault
+  value: false
+- name: extensions.getAddons.cache.enabled
+  value: false
+- name: extensions.systemAddon.update.enabled
+  value: false
+- name: extensions.blocklist.enabled
+  value: false
+- name: browser.search.update
+  value: false
+
+# --- Connections made ahead of a click ---
+- name: network.dns.disablePrefetch
+  value: true
+- name: network.prefetch-next
+  value: false
+- name: network.predictor.enabled
+  value: false
+- name: network.http.speculative-parallel-limit
+  value: 0
+- name: browser.places.speculativeConnect.enabled
+  value: false
+- name: browser.urlbar.speculativeConnect.enabled
+  value: false

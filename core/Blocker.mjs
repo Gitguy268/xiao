@@ -7,9 +7,10 @@
 //
 // The engine ships prebuilt (engine.bin, made by scripts/build.mjs from
 // EasyList, EasyPrivacy and uBlock Origin's lists), so the browser never
-// downloads or parses raw lists. Once a day Xiao looks for a newer prebuilt
-// engine in the repository's "engine" release on GitHub (rebuilt daily by
-// .github/workflows/engine.yml), checks its SHA-256 and keeps it in the profile.
+// downloads or parses raw lists. When Xiao starts, at most once a day and never
+// in silent mode, it looks for a newer prebuilt engine in the repository's
+// "engine" release on GitHub (rebuilt daily by .github/workflows/engine.yml),
+// checks its SHA-256 and keeps it in the profile.
 import { ENGINE_VERSION, FiltersEngine, Request } from '@ghostery/adblocker';
 import { fromWeb, ghosteryDetails, hostOf, pageOf, typeNames } from './lib/request.mjs';
 
@@ -18,8 +19,9 @@ const BUILT_IN = 'resource://xiao/engine.bin';
 const UPDATE = `https://github.com/Gitguy268/xiao/releases/download/engine/engine-${ENGINE_VERSION}.bin`;
 
 export class Blocker {
-  constructor(store) {
+  constructor(store, silent) {
     this.store = store; // { allow: Set, total, engineAt, save() }
+    this.silent = silent; // { on }
     this.engine = null;
     this.perBrowser = new Map(); // browserId → blocked on the current page
     this.paused = new Set(); // browserIds of tabs where blocking is paused until they close (never saved)
@@ -40,17 +42,18 @@ export class Blocker {
     }
     Services.obs.addObserver(this, 'http-on-opening-request');
     Services.obs.addObserver(this, 'http-on-examine-response');
-    this.timer = setInterval(() => this.update(), 60 * 60 * 1000);
-    this.update();
+    if (!this.silent.on) this.update();
   }
 
   // A newer prebuilt engine, if the engine release has one for this engine version.
-  async update() {
-    if (Date.now() - (this.store.engineAt || this.store.checkedAt || 0) < DAY) return;
+  // asked: the reader pressed the button, so the day's wait does not apply.
+  // Returns true if the engine changed.
+  async update({ asked = false } = {}) {
+    if (!asked && Date.now() - (this.store.engineAt || this.store.checkedAt || 0) < DAY) return false;
     this.store.checkedAt = Date.now();
     try {
-      const [bin, sum] = await Promise.all([fetch(UPDATE, { cache: 'no-store' }), fetch(`${UPDATE}.sha256`, { cache: 'no-store' })]);
-      if (!bin.ok || !sum.ok) return;
+      const [bin, sum] = await this.silent.asking(['github.com'], () => Promise.all([fetch(UPDATE, { cache: 'no-store' }), fetch(`${UPDATE}.sha256`, { cache: 'no-store' })]));
+      if (!bin.ok || !sum.ok) return false;
       const bytes = new Uint8Array(await bin.arrayBuffer());
       const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
       const hex = [...digest].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -62,8 +65,10 @@ export class Blocker {
       // Content processes re-read the shared hiding sheet when this changes (XiaoChild).
       Services.ppmm.sharedData.set('xiao:engineGen', this.store.engineAt);
       Services.ppmm.sharedData.flush();
+      return true;
     } catch (e) {
       console.warn('Xiao: engine update failed', e);
+      return false;
     } finally {
       this.store.save();
     }

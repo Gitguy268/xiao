@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { checkPack, safePath, sizeLabel, sourceOf, totalSize } from '../core/lib/packs.mjs';
+import { checkPack, safePath, sizeLabel, sourceOf, totalSize, downloadProblem, isMissing } from '../core/lib/packs.mjs';
 
 const sha = 'a'.repeat(64);
 const file = (over = {}) => ({ path: 'lib/organise.js', url: 'https://example.org/x', sha256: sha, size: 10, ...over });
@@ -32,4 +32,16 @@ test('a mirror serves files by their hash, the network by their address and rang
   assert.equal(sizeLabel(1_561_318_368), '1.6 GB');
   assert.equal(sizeLabel(458_000_000), '458 MB');
   assert.equal(sizeLabel(900), '1 KB');
+});
+
+test('a failed download is explained in words, with no status code', () => {
+  for (const status of [0, 403, 404, 410, 429, 500, 502]) {
+    const said = downloadProblem(status);
+    assert.doesNotMatch(said, /\d{3}|error|HTTP/i, String(status));
+    assert.ok(said.length > 20);
+  }
+  assert.match(downloadProblem(404), /not available/);
+  assert.match(downloadProblem(0), /connection/);
+  assert.equal(isMissing(404), true);
+  assert.equal(isMissing(500), false);
 });
