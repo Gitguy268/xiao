@@ -200,3 +200,8 @@
 # Your browsing data stays on this computer: no Firefox Account and no Firefox Sync.
 - name: identity.fxaccounts.enabled
   value: false
+
+# --- Translation on this computer ---
+# Firefox's own translation runs on your computer. Its language files come from Mozilla the first time you use a language.
+- name: browser.translations.enable
+  value: true

@@ -107,7 +107,9 @@ export class Send {
     all.set(body, head8.length);
     const source = Cc['@mozilla.org/io/arraybuffer-input-stream;1'].createInstance(Ci.nsIArrayBufferInputStream);
     source.setData(all.buffer, 0, all.length);
-    NetUtil.asyncCopy(source, transport.openOutputStream(0, 0, 0), () => transport.close(Cr.NS_OK));
+    // Closing the socket as soon as the copy ends can cut off what is still on its
+    // way. The reply states its length, so the browser doesn't need the close.
+    NetUtil.asyncCopy(source, transport.openOutputStream(0, 0, 0), () => setTimeout(() => transport.close(Cr.NS_OK), 5000));
   }
 
   begin(page) {

@@ -8,11 +8,12 @@
 #
 #   powershell -ExecutionPolicy Bypass -File install.ps1 [-Strict] [-Tor] [-Zen C:\path\zen.exe]
 #   powershell -ExecutionPolicy Bypass -File install.ps1 -Uninstall
-param([switch]$Strict, [switch]$Tor, [switch]$Search, [switch]$Ubo, [switch]$Uninstall, [string]$Zen = '')
+#   powershell -ExecutionPolicy Bypass -File install.ps1 -Update    the launcher's: the same choices as last time
+param([switch]$Strict, [switch]$Tor, [switch]$Search, [switch]$Ubo, [switch]$Uninstall, [switch]$Update, [string]$Zen = '')
 $ErrorActionPreference = 'Stop'
 
 $Here = $PSScriptRoot
-$TorVersion = '15.0.25'
+$TorVersion = '16.0'
 $TorPort = if ($env:XIAO_TOR_PORT) { [int]$env:XIAO_TOR_PORT } else { 9160 }
 $Data = Join-Path $env:APPDATA 'xiao-kit'
 $ProfileDir = Join-Path $Data 'profile'
@@ -34,6 +35,18 @@ if ($Uninstall) {
   Remove-Item -Recurse -Force $Data, (Split-Path $App), $Shortcut, $OldShortcut -ErrorAction SilentlyContinue
   Write-Host 'Xiao removed (its copy of Zen, profile, Tor and shortcut). Zen itself was not touched.'
   exit 0
+}
+
+# -Update repeats the choices of the first install, with the Zen it used.
+if ($Update) {
+  $flagsFile = Join-Path $Data 'install-flags'
+  if (Test-Path $flagsFile) {
+    $flags = Get-Content $flagsFile
+    if ($flags -contains '-Strict') { $Strict = $true }
+    if ($flags -contains '-Tor') { $Tor = $true }
+  }
+  $zenApp = Join-Path $Data 'zen-app'
+  if (-not $Zen -and (Test-Path $zenApp)) { $Zen = Join-Path (Get-Content $zenApp) 'zen.exe' }
 }
 
 if (-not $Zen) {
@@ -67,6 +80,14 @@ function Fetch($url, $file) {
 
 Write-Host "Installing Xiao for $ZenHome"
 New-Item -ItemType Directory -Force $ProfileDir | Out-Null
+@($(if ($Strict) { '-Strict' }), $(if ($Tor) { '-Tor' })) | Where-Object { $_ } | Set-Content -Encoding ascii (Join-Path $Data 'install-flags')
+# This kit stays in DATA, so a later update can put it back if its first start fails.
+$Kit = Join-Path $Data 'kit'
+if ($Here -ne $Kit) {
+  Remove-Item -Recurse -Force (Join-Path $Data 'kit-previous') -ErrorAction SilentlyContinue
+  if (Test-Path $Kit) { Rename-Item $Kit 'kit-previous' }
+  Copy-Item -Recurse $Here $Kit
+}
 $UserJs = Join-Path $ProfileDir 'user.js'
 if ($Strict) { Copy-Item (Join-Path $Here 'user-strict.js') $UserJs; Say 'Strict prefs' }
 else { Copy-Item (Join-Path $Here 'user.js') $UserJs; Say 'Balanced prefs' }
@@ -79,7 +100,7 @@ $Torrc = Join-Path $Data 'torrc'
 if ($Tor) {
   $bundle = "tor-expert-bundle-windows-x86_64-$TorVersion.tar.gz"
   $tmp = Join-Path ([IO.Path]::GetTempPath()) $bundle
-  Fetch "https://dist.torproject.org/torbrowser/$TorVersion/$bundle" $tmp
+  Fetch "https://archive.torproject.org/tor-package-archive/torbrowser/$TorVersion/$bundle" $tmp
   Remove-Item -Recurse -Force $TorDir -ErrorAction SilentlyContinue
   New-Item -ItemType Directory -Force $TorDir, (Join-Path $Data 'tor-data') | Out-Null
   tar -xzf $tmp -C $TorDir
@@ -148,6 +169,32 @@ Say "App: $App (a copy of $ZenHome, rebuilt when Zen updates)"
 # installed), runs the copy on Xiao's profile, and stops tor when Xiao quits.
 $Launch = Join-Path $Data 'xiao-launch.ps1'
 @"
+# Updates (core/Updater.mjs left one ready). The file "trying" says the last one
+# was installed and has not yet reached a working start; Core removes it.
+`$updates = '$(Join-Path $Data 'update')'
+`$open = Get-CimInstance Win32_Process -Filter "Name = 'zen.exe'" -ErrorAction SilentlyContinue | Where-Object { `$_.CommandLine -like '*$ProfileDir*' }
+if (-not `$open -and -not `$env:XIAO_UPDATED) {
+  `$env:XIAO_UPDATED = '1'
+  if ((Test-Path (Join-Path `$updates 'trying')) -and (Test-Path '$(Join-Path $Data 'kit-previous\install.ps1')')) {
+    Get-Content (Join-Path `$updates 'version') -ErrorAction SilentlyContinue | Set-Content '$(Join-Path $Data 'update-refused')'
+    Remove-Item -Recurse -Force `$updates
+    Rename-Item '$(Join-Path $Data 'kit-previous')' 'kit-rollback'
+    & powershell -NoProfile -ExecutionPolicy Bypass -File '$(Join-Path $Data 'kit-rollback\install.ps1')' -Update *>> '$(Join-Path $Data 'update.log')'
+    Remove-Item -Recurse -Force '$(Join-Path $Data 'kit-rollback')'
+    & powershell -NoProfile -ExecutionPolicy Bypass -File '$Launch' @args
+    exit
+  } elseif (Test-Path (Join-Path `$updates 'ready')) {
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path `$updates 'new\xiao-kit\install.ps1') -Update *>> '$(Join-Path $Data 'update.log')'
+    if (`$LASTEXITCODE -eq 0) {
+      Rename-Item (Join-Path `$updates 'ready') 'version'
+      Remove-Item -Recurse -Force (Join-Path `$updates 'new')
+      New-Item -ItemType File (Join-Path `$updates 'trying') | Out-Null
+      & powershell -NoProfile -ExecutionPolicy Bypass -File '$Launch' @args
+      exit
+    }
+    Remove-Item -Recurse -Force `$updates
+  }
+}
 `$zenHome = Get-Content '$(Join-Path $Data 'zen-app')' -ErrorAction SilentlyContinue
 `$build = Get-Content '$(Join-Path $Data 'zen-build')' -ErrorAction SilentlyContinue
 `$xiaoOpen = Get-CimInstance Win32_Process -Filter "Name = 'zen.exe'" -ErrorAction SilentlyContinue | Where-Object { `$_.CommandLine -like '*$ProfileDir*' }

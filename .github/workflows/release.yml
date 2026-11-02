@@ -27,3 +27,10 @@ jobs:
         run: |
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "Xiao $GITHUB_REF_NAME" --notes-file CHANGELOG.md
           gh release upload "$GITHUB_REF_NAME" dist/xiao-kit.zip --clobber
+      - name: Sign the update manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          XIAO_UPDATE_KEY: ${{ secrets.XIAO_UPDATE_KEY }}
+        run: |
+          node scripts/sign-updates.mjs "$GITHUB_REF_NAME"
+          gh release upload "$GITHUB_REF_NAME" dist/updates.json dist/updates.json.sig --clobber

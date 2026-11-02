@@ -1,0 +1,53 @@
+name: Follow Zen
+
+# Daily: if Zen has a new release, try Xiao on it. Only when every check passes
+# does this commit the new pin and tag a release, which ships it to every Xiao.
+# Firefox's security fixes reach Xiao this way, so a failure here needs a person.
+on:
+  schedule:
+    - cron: '41 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  follow:
+    # Off until set up: the XIAO_RELEASE_TOKEN secret, then the repository variable FOLLOW_ZEN=true.
+    if: vars.FOLLOW_ZEN == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.XIAO_RELEASE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.XIAO_RELEASE_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - id: pin
+        run: echo "tag=$(node scripts/zen-pin.mjs)" >> "$GITHUB_OUTPUT"
+      - name: Libraries for Zen
+        if: steps.pin.outputs.tag != ''
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-0t64 libdbus-glib-1-2 libasound2t64
+      - if: steps.pin.outputs.tag != ''
+        run: npm test
+      - if: steps.pin.outputs.tag != ''
+        run: npm run build
+      - name: Xiao on the new Zen
+        if: steps.pin.outputs.tag != ''
+        run: E2E_TOR=0 npm run e2e && ONLY=shield,bangs,styles npm run e2e:new
+      - name: Ship it
+        if: steps.pin.outputs.tag != ''
+        run: |
+          version=$(node -p "require('./package.json').version")
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -am "Follow Zen ${{ steps.pin.outputs.tag }}"
+          git tag "v$version"
+          git push origin HEAD "v$version"

@@ -121,4 +121,21 @@ The approved plan is `~/.claude/plans/pasted-content-id-4dc1-feature-for-zesty-w
 
 Also seen: `requestMediaKeySystemAccess` for Widevine already succeeded before the explicit install, in a profile a few minutes old. Firefox may have fetched the CDM by itself; this needs the Phase 1 audit to confirm. That's the background traffic zero mode has to stop.
 
-Next: finish the two open spikes (glass, `no_host` with real addresses), then Phase 1. Convert (33 changed files) and OpenFinder (42) are still uncommitted, and need their own baselines before publishing.
+Later answers to those open spikes:
+- **Glass:** Marionette screenshots do show the blur once there is detail behind a pane; the stripes test was misleading. Zen's `zen.theme.acrylic-*` prefs do the toolbars.
+- **`no_host`:** a connection needs `no_host`, `default_address_only` and `obfuscate_host_addresses` all off. Firefox also never starts gathering on a `resource://` page, so `core/Send.mjs` serves the page from a loopback server.
+- **Canvas and WebGL:** `+CanvasRandomization` and `+WebGLRandomization` don't change readback, and `+CanvasImageExtractionPrompt` returns random colours, so `XiaoChild` adds the noise.
+- **MiniCPM-V image tools:** not run and not built, as the disk was too tight for the model. Left out of 0.5.
+
+## Test results (2 November 2026)
+
+| Suite | Result |
+|---|---|
+| `npm test` | 106 / 106 |
+| `npm run e2e` with Tor 16.0 | 125 / 125 |
+| `npm run e2e:new` | all pass on macOS; the Send transfer is skipped there (macOS firewall), and CI's Linux job must prove it |
+| `npm run e2e:upgrade` | passes |
+| `npm run e2e:audit`, 10 minutes each | silent: 0 requests, 0 sockets; normal: inside its list |
+| Cover Your Tracks | [docs/privacy-results.md](privacy-results.md) |
+
+Open: the AI run (`AI=1`, about 3 GB) for writing tools on the real model; camera scanning on the Send page and the blank-camera video choice aren't tested or built; Widevine played on macOS only.

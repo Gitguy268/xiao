@@ -4,10 +4,10 @@
   "licence": "MPL-2.0 and MIT (code); Apache-2.0 (MiniCPM5) and MIT (Whisper)",
   "files": [
    {
-    "path": "notes-ai-f3fd4239.zip",
-    "url": "https://github.com/Gitguy268/xiao/releases/download/packs/notes-ai-f3fd4239.zip",
-    "sha256": "f3fd4239b8dfbb4c3acd96653b3e64a04a9cdb0977d9619a683db310e4a1e0a2",
-    "size": 11468085,
+    "path": "notes-ai-adeb42e6.zip",
+    "url": "https://github.com/Gitguy268/xiao/releases/download/packs/notes-ai-adeb42e6.zip",
+    "sha256": "adeb42e642616e274ce5f5b507a79599595603200a75b1a5481012d97d7618e2",
+    "size": 11468253,
     "unzip": true
    },
    {
@@ -335,10 +335,10 @@
   "source": "https://github.com/Gitguy268/openfinder",
   "files": [
    {
-    "path": "library-d5f4b533.zip",
-    "url": "https://github.com/Gitguy268/xiao/releases/download/packs/library-d5f4b533.zip",
-    "sha256": "d5f4b533bc557f8c16b43f46af0fc5182ee7324233294e56b9280d44b22a1f08",
-    "size": 149277,
+    "path": "library-7d06e589.zip",
+    "url": "https://github.com/Gitguy268/xiao/releases/download/packs/library-7d06e589.zip",
+    "sha256": "7d06e58921063151be441302cfd86ffe40debdb2fa004cace61966297c478b8a",
+    "size": 149276,
     "unzip": true
    }
   ]

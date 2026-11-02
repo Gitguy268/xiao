@@ -8,7 +8,7 @@
 
 // The public half of the release signing key, base64. Empty: this build has
 // none, so it never updates itself.
-export const UPDATE_KEY = '';
+export const UPDATE_KEY = 'ONq/FlOZ4E0vL61DEvPKnIMi3yqDBnuuBitA7V84UBc=';
 
 // True when a is a later version than b, comparing x.y.z as numbers.
 export function isNewer(a, b) {

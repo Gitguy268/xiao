@@ -14,7 +14,7 @@
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-TOR_VERSION=15.0.25
+TOR_VERSION=16.0
 TOR_PORT=${XIAO_TOR_PORT:-9160} # XIAO_TOR_PORT: tests only, so a test install can run beside a real one
 SEARCH_PORT=${XIAO_SEARCH_PORT:-8890}
 SEARXNG=81371861f67226091d1c4df2e3908a11d3b54eb9
@@ -164,7 +164,7 @@ if [ "$TOR" = 1 ]; then
     say "Tor $TOR_VERSION already here"
   elif grep -q " $bundle\$" "$HERE/downloads.sha256"; then
     tmp=$(mktemp -d)
-    fetch "https://dist.torproject.org/torbrowser/$TOR_VERSION/$bundle" "$tmp/$bundle"
+    fetch "https://archive.torproject.org/tor-package-archive/torbrowser/$TOR_VERSION/$bundle" "$tmp/$bundle"
     rm -rf "$DATA/tor" && mkdir -p "$DATA/tor"
     tar -xzf "$tmp/$bundle" -C "$DATA/tor"
     rm -rf "$tmp"

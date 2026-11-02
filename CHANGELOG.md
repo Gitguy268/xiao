@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.5.0 (unreleased)
+
+- **Silent mode** (Features, off by default): Xiao connects to nothing by itself, only the pages and downloads you ask for. Tor and Xiao Search stay stopped, and updates, filters and DRM wait for a button. The cost is said beside the switch: certificate and phishing lists go out of date. An idle test logs every connection the browser makes, and in silent mode it finds none.
+- **Quieter in normal mode too:** the hourly filter timer is gone (once at launch, at most daily), and Tor is only checked while you use it.
+- **Local-only data:** Firefox Accounts and Firefox Sync are off. Notes folder sync stays, because it is a folder you choose.
+- **Your fingerprint varies** (on by default, with a switch per site in Xiao's button): audio, canvas and WebGL readings get tiny noise, and the core count varies, differently on each site and after each restart, the idea Brave calls farbling. Screen size and graphics card read as common values.
+- **Blank camera** (off until chosen): sites you pick see a blank picture, and your camera never turns on.
+- **Bangs** (on by default): `!gh cats` or `cats !gh` in the address bar or start page goes straight to that site's search, from a list of about 13,000 names kept on this computer. Add your own. They replace the five site shortcuts. `!note` opens your notes, `!lib` the Library, `!ol` Open Library.
+- **Start page styles:** Normal, Liquid glass, Terminal and Retrofind, each light, dark or matching the system. Terminal has a keyboard prompt; type `help`.
+- **Liquid glass setting** for Xiao's toolbars, panels and sticky note.
+- **Notes are easier to reach:** a Notes button on the start page and in Xiao's button, "Open your notes" in the command bar, and `!note`.
+- **From textarea** (off until chosen): Send to a device over your Wi-Fi with no server, writing tools in the sticky note, `#tags`, and dictating into a note.
+- **Clipboard history** (off until chosen): the last 50 things copied from pages, never password fields, private windows or Tor tabs, plus a page showing every format a paste holds.
+- **Reader** (off until chosen): EPUB and PDF from this computer in one or two page views. A book can't run scripts or reach the network.
+- **Translate this page** in Xiao's button, using Firefox's local translation.
+- **Downloads explain themselves:** a check before anything is written, problems in plain words, and Try again.
+- **Automatic updates**, signed with Xiao's own key, installed at the next start, and undone by themselves if that start fails.
+- **Linux:** with no Zen to copy, including Flatpak-only computers, the installer downloads Zen's own tarball, and a missing library names the package to install.
+
 ## 0.4.0 (unreleased)
 
 - **The Library** (Features → Library, an optional download built from OpenFinder, GPL-3.0-or-later): one searchable place for your downloads, the folders you give it, your notes, collections and closed tabs. It runs in its own tab with Xiao's look and reaches files only through Xiao, one folder at a time. Private windows and Tor tabs never reach it, and never add to it.
@@ -11,7 +30,7 @@
 - **Tidy names:** proposed clearer names for downloads and files, each reviewed before anything changes. Renames never overwrite, keep compound extensions, refuse files that changed meanwhile, and can be undone after a restart. Firefox's download list follows. Move to Trash uses the system's Trash, never a permanent delete.
 - **Auto-archive** (off until chosen): tabs unused for 12 hours to a week close into the Library's Archive, in every space. Pinned tabs, Essentials, tabs playing sound, unsaved work and Tor tabs stay. An archived tab opens again in its own space and container.
 - **Arc-style helpers:**
-  - `!w`, `!gh`, `!osm`, `!mdn`, `!yt` site shortcuts in the address bar (off until chosen);
+  - `!w`, `!gh`, `!osm`, `!mdn`, `!yt` site shortcuts in the address bar (off until chosen; replaced by bangs in 0.5);
   - Save to Clippings: a selected quote and its source into a note;
   - pause blocking for one tab, until it closes;
   - Ctrl+Tab goes to the tab used last;

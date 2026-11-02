@@ -85,7 +85,7 @@ try {
       addons: (await AddonManager.getAddonsByTypes(['extension'])).filter((a) => !a.isSystem && !a.isBuiltin).map((a) => a.id),
       bookmark: !!(await PlacesUtils.bookmarks.fetch({ url: 'https://example.org/kept-bookmark' })),
       history: !!(await PlacesUtils.history.fetch('https://example.org/kept-history')),
-      on: ['sticky', 'perSite', 'siteShortcuts', 'assist', 'boards', 'quickWindow'].filter((k) => f[k]).concat(f.tabSleep ? ['tabSleep'] : [], f.autoArchive ? ['autoArchive'] : []),
+      on: ['sticky', 'perSite', 'assist', 'boards', 'quickWindow'].filter((k) => f[k]).concat(f.tabSleep ? ['tabSleep'] : [], f.autoArchive ? ['autoArchive'] : []),
       packs: f.packs.filter((p) => p.installed).map((p) => p.id),
       newtab: Services.wm.getMostRecentWindow('navigator:browser').gBrowser.selectedBrowser.currentURI.spec,
     };

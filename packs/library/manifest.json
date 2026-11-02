@@ -1,7 +1,7 @@
 {
  "openfinder": "0.1.0",
- "revision": "23b7b80755ad8284db0f20d6c8e4df3e3147d633",
- "dirty": true,
+ "revision": "53b21add0c47680797fde990337741d1c033696d",
+ "dirty": false,
  "fingerprint": "209eda11625ea75534852cc952f00637c0bd395b7a24fae393cb02f2461092fa",
  "protocol": {
   "min": 1,

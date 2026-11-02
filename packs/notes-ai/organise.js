@@ -143,5 +143,14 @@ $('record').addEventListener('click', () => {
   if (!busy || recorder) toggleRecording();
 });
 $('organise').addEventListener('click', () => run(organise));
+// Dictation: what was said goes at the end of the latest note, unsorted.
+$('to-note').addEventListener('click', async () => {
+  const said = $('said').value.trim();
+  if (!said) return say('Say or type something first.');
+  const [latest] = await window.xiao.call('notes.list');
+  await window.xiao.call('notes.save', latest ? { ...latest, text: `${latest.text.replace(/\s+$/, '')}\n\n${said}` } : { name: null, text: said });
+  $('said').value = '';
+  return say('Added to your note.');
+});
 $('cancel').addEventListener('click', () => busy?.abort());
 if (window.xiao) showLatest().catch((e) => say(`Xiao is not answering: ${e.message}`, { error: true }));

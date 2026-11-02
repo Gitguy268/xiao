@@ -12,14 +12,13 @@ const ask = (name, data) => window.xiao.call(name, data);
 const say = (text) => {
   $('status').textContent = text;
 };
-const pair = (code) => `https://gitguy268-textarea.vercel.app/#rtc=${code}`;
 
 let notes = [];
 let sender = null;
 let receiver = null; // held here: nothing else keeps the connection alive
 
 async function draw(where, code) {
-  $(where).innerHTML = await qrSvg(pair(code)); // our own QR drawing of our own code
+  $(where).innerHTML = await qrSvg(code); // our own QR drawing of our own code
 }
 
 async function makeOffer() {
