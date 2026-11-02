@@ -10,6 +10,7 @@
 # It tests the distribution's libraries, not the computer's own sandbox rules.
 set -eu
 
+# shellcheck disable=SC1091 # each distribution has its own
 . /etc/os-release
 family="${ID_LIKE:-} ${ID:-}"
 say() { printf '== %s\n' "$*"; }

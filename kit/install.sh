@@ -67,13 +67,13 @@ PROFILE="$DATA/profile"
 
 # --update repeats the choices of the first install, with the Zen it used.
 if [ "$UPDATE" = 1 ] && [ -f "$DATA/install-flags" ]; then
-  for flag in $(cat "$DATA/install-flags"); do
+  while read -r flag; do
     case $flag in
       --strict) STRICT=1 ;;
       --tor) TOR=1 ;;
       --search) SEARCH=1 ;;
     esac
-  done
+  done < "$DATA/install-flags"
   if [ -z "$ZEN" ] && [ -f "$DATA/zen-app" ]; then
     home=$(cat "$DATA/zen-app")
     if [ "$OS" = Darwin ]; then ZEN="$home/Contents/MacOS/zen"; else ZEN="$home/zen"; fi
@@ -116,8 +116,10 @@ if [ "$OS" = Linux ] && { [ -z "$ZEN" ] || [ "$ZEN" = "$DATA/zen/zen" ]; }; then
     printf '%s\n' "$ZEN_VERSION" > "$DATA/zen/.xiao-version"
   fi
   ZEN="$DATA/zen/zen"
-  if [ -x "$(command -v ldd)" ] && ldd "$DATA/zen/libxul.so" 2>/dev/null | grep -q 'not found'; then
-    missing=$(ldd "$DATA/zen/libxul.so" | sed -n 's/^[[:space:]]*\(.*\) => not found$/\1/p' | tr '\n' ' ')
+  # Zen's own libraries sit beside it, so only look for what the system must provide.
+  if [ -x "$(command -v ldd)" ] && LD_LIBRARY_PATH="$DATA/zen" ldd "$DATA/zen/libxul.so" 2>/dev/null | grep -q 'not found'; then
+    missing=$(LD_LIBRARY_PATH="$DATA/zen" ldd "$DATA/zen/libxul.so" | sed -n 's/^[[:space:]]*\(.*\) => not found$/\1/p' | tr '\n' ' ')
+    # shellcheck disable=SC1091 # each distribution has its own
     family=$( { . /etc/os-release 2>/dev/null; echo "${ID_LIKE:-} ${ID:-}"; } )
     case $family in
       *debian*|*ubuntu*) hint="sudo apt install libgtk-3-0 libdbus-glib-1-2 libasound2 libx11-xcb1" ;;

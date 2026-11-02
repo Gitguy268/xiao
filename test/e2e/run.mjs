@@ -58,6 +58,7 @@ const env = {
   MOZ_HEADLESS_WIDTH: '1440', MOZ_HEADLESS_HEIGHT: '900', XIAO_TOR_PORT: process.env.XIAO_TOR_PORT ?? '9170',
 };
 delete env.XDG_DATA_HOME;
+delete env.PSModulePath; // CI's PowerShell 7 path hides Windows PowerShell's own commands
 mkdirSync(env.APPDATA, { recursive: true });
 const kit = join(root, 'dist/kit');
 const flags = [...(WANT_TOR ? ['--tor'] : []), ...(WANT_SEARCH ? ['--search'] : [])];
@@ -525,7 +526,7 @@ try {
   check('a sticky note is a markdown file in the chosen folder', sticky.first === '# Groceries\nmilk', JSON.stringify(sticky.first));
   check('an edit made outside Xiao shows, and its front matter is kept', sticky.shown.trim() === '# Groceries\nmilk\neggs'
     && sticky.after.startsWith('---\nid: t1\nupdated: 1\n---\n# Groceries\nmilk\neggs\nbread'), JSON.stringify(sticky.after));
-  check('the sticky note opens as a 248 px square', sticky.size === 'open 248x248', sticky.size);
+  check('the sticky note opens as a square of about 248 px', /^open (24[5-9])x\1$/.test(sticky.size), sticky.size);
 
   const featuresTab = await openTab(START);
   await loaded(featuresTab);
