@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1 (2 November 2026)
+
+- The first update delivered by Xiao itself, confirming that updating from 0.5.0 works from the public release.
+
 ## 0.5.0 (2 November 2026)
 
 - **Silent mode** (Features, off by default): Xiao connects to nothing by itself, only the pages and downloads you ask for. Tor and Xiao Search stay stopped, and updates, filters and DRM wait for a button. The cost is said beside the switch: certificate and phishing lists go out of date. An idle test logs every connection the browser makes, and in silent mode it finds none.
