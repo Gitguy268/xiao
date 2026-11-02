@@ -36,7 +36,7 @@
   },
   "author": "Lucas Van De Weerd",
   "dependencies": {
-    "@ghostery/adblocker": "^2.20.1",
+    "@ghostery/adblocker": "^2.20.3",
     "@ghostery/adblocker-content": "^2.20.1",
     "@ghostery/adblocker-extended-selectors": "^2.20.1"
   }
