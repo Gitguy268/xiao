@@ -18,8 +18,9 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Marionette } from './marionette.mjs';
+import { fileURLToPath } from 'node:url';
 
-const root = new URL('../..', import.meta.url).pathname;
+const root = fileURLToPath(new URL('../..', import.meta.url));
 const MINUTES = Number(process.env.AUDIT_MINUTES ?? 10);
 const MODES = process.env.AUDIT_MODE ? [process.env.AUDIT_MODE] : ['silent', 'normal'];
 const REPORT = process.env.AUDIT_REPORT ?? join(root, 'test/e2e/out/network-audit.json');

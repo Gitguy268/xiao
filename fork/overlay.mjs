@@ -8,13 +8,14 @@
 import { cpSync, existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { parse, parseDocument } from 'yaml';
+import { fileURLToPath } from 'node:url';
 
 const [desktop, mode] = process.argv.slice(2);
 if (!desktop || !existsSync(join(desktop, 'surfer.json'))) {
   console.error('usage: node fork/overlay.mjs <zen-browser/desktop checkout> [--engine]');
   process.exit(2);
 }
-const here = new URL('.', import.meta.url).pathname;
+const here = fileURLToPath(new URL('.', import.meta.url));
 const root = join(here, '..');
 const SITE = 'https://gitguy268.github.io/xiao';
 const { version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));

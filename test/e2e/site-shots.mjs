@@ -14,8 +14,9 @@ import http from 'node:http';
 import { tmpdir } from 'node:os';
 import { extname, join } from 'node:path';
 import { Marionette } from './marionette.mjs';
+import { fileURLToPath } from 'node:url';
 
-const root = new URL('../..', import.meta.url).pathname;
+const root = fileURLToPath(new URL('../..', import.meta.url));
 const dist = join(root, 'site/dist');
 const out = process.argv[2] ?? join(root, 'test/e2e/out/site');
 const zen = process.env.ZEN ?? '/Applications/Zen.app/Contents/MacOS/zen';

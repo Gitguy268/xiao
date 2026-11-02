@@ -22,8 +22,9 @@ import { join, posix, relative } from 'node:path';
 import { build } from 'esbuild';
 import { checkPack } from '../core/lib/packs.mjs';
 import { zip } from './zip.mjs';
+import { fileURLToPath } from 'node:url';
 
-const root = new URL('..', import.meta.url).pathname;
+const root = fileURLToPath(new URL('..', import.meta.url));
 const at = (...p) => join(root, ...p);
 const TEXTAREA = process.env.TEXTAREA ?? join(homedir(), 'textarea/textarea-master-claude');
 const CONVERT = process.env.CONVERT ?? join(homedir(), 'convert-gitguy268/dist');

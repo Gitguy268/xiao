@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node --test test/",
+    "test": "node --test \"test/*.test.mjs\"",
     "e2e": "node test/e2e/run.mjs",
     "e2e:upgrade": "node test/e2e/upgrade.mjs",
     "e2e:new": "node test/e2e/new-features.mjs",

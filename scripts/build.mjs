@@ -15,8 +15,9 @@ import { adsAndTrackingLists, ENGINE_VERSION, FiltersEngine } from '@ghostery/ad
 import { build } from 'esbuild';
 import { buildUserJs, readPrefs } from './userjs.mjs';
 import { zip } from './zip.mjs';
+import { fileURLToPath } from 'node:url';
 
-const root = new URL('..', import.meta.url).pathname;
+const root = fileURLToPath(new URL('..', import.meta.url));
 const at = (...p) => join(root, ...p);
 const { version } = JSON.parse(readFileSync(at('package.json'), 'utf8'));
 const core = at('dist/core');

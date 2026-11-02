@@ -22,13 +22,13 @@ case $family in
     apt-get install -y -qq --no-install-recommends curl ca-certificates xz-utils zip unzip procps lsof "$gtk" "$sound" libdbus-glib-1-2 libx11-xcb1 >/dev/null
     ;;
   *fedora*)
-    dnf install -y -q curl ca-certificates xz zip unzip procps-ng lsof tar gzip gtk3 dbus-glib alsa-lib libXtst >/dev/null
+    dnf install -y -q curl ca-certificates xz zip unzip procps-ng util-linux lsof tar gzip gtk3 dbus-glib alsa-lib libXtst >/dev/null
     ;;
   *arch*)
     pacman -Sy --noconfirm --quiet curl xz zip unzip procps-ng lsof gtk3 dbus-glib alsa-lib >/dev/null
     ;;
   *suse*)
-    zypper -q --non-interactive install curl ca-certificates xz zip unzip procps lsof tar gzip libgtk-3-0 libdbus-glib-1-2 libasound2 >/dev/null
+    zypper -q --non-interactive install curl ca-certificates xz zip unzip procps util-linux lsof tar gzip libgtk-3-0 libdbus-glib-1-2 libasound2 >/dev/null
     ;;
   *) echo "no recipe for $family" >&2; exit 2 ;;
 esac
@@ -46,4 +46,4 @@ id xiaotest >/dev/null 2>&1 || useradd -m xiaotest
 cp -R /xiao /home/xiaotest/xiao-copy 2>/dev/null || true
 chown -R xiaotest /home/xiaotest/xiao-copy
 cd /home/xiaotest/xiao-copy
-su xiaotest -c "cd /home/xiaotest/xiao-copy && E2E_OUT=/tmp/xiao-out ONLY='${ONLY:-}' node test/e2e/new-features.mjs"
+su xiaotest -c "cd /home/xiaotest/xiao-copy && E2E_QUIET=0 E2E_OUT=/tmp/xiao-out ONLY='${ONLY:-}' node test/e2e/new-features.mjs"

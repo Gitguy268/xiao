@@ -6,8 +6,9 @@
 //   tokens.css, fonts/, favicon.svg  the shared design tokens, typefaces and mark
 //   demo/                            the real start page (core/start) with a stand-in for Xiao (site/demo/shim.mjs)
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
-const at = (p) => new URL(`../${p}`, import.meta.url).pathname;
+const at = (p) => fileURLToPath(new URL(`../${p}`, import.meta.url));
 mkdirSync(at('site/public/fonts'), { recursive: true });
 cpSync(at('shared/tokens.css'), at('site/public/tokens.css'));
 cpSync(at('core/icons/xiao.svg'), at('site/public/favicon.svg'));

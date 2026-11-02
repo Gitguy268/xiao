@@ -15,8 +15,9 @@ import http from 'node:http';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { Marionette } from './marionette.mjs';
+import { fileURLToPath } from 'node:url';
 
-const root = new URL('../..', import.meta.url).pathname;
+const root = fileURLToPath(new URL('../..', import.meta.url));
 const outFile = process.env.MEMORY_OUT ?? join(root, 'test/e2e/out/memory.json');
 const SETTLE = Number(process.env.MEMORY_SETTLE ?? 60) * 1000;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

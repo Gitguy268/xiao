@@ -93,6 +93,7 @@ Full builds from Zen's source are set up in [`fork/`](fork/README.md).
 - **Windows** is tested only by CI, and has no Xiao Search (SearXNG doesn't support it). Its Start menu shortcut has Xiao's icon, but the taskbar shows Zen's while Xiao runs.
 - **Downloads need a writable app folder.** Features you add are stored in Xiao's own copy of Zen, the only folder Firefox's content sandbox lets their pages read. A fork build installed in a system folder can't take them.
 - **The voice organiser is slow in Firefox.** Firefox's WebGPU runs its model about ten times slower than the processor does, so Xiao uses the processor: about a minute or two per board. Its first use downloads 1.8 GB from Hugging Face.
+- **Writing tools are only as good as a small model.** MiniCPM5 2B on the processor takes about half a minute per note, and its tools can come out alike: "Shorten" may fix a note's grammar and barely shorten it.
 - **The converter is single-threaded** in Xiao, so long videos convert more slowly than on its website.
 - **Filter lists** come with the release and then, when Xiao starts, at most once a day, from the repository's `engine` release on GitHub. Until that release exists, Xiao keeps the engine it was installed with.
 

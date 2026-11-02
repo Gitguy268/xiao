@@ -339,7 +339,7 @@ if [ -f "$PROFILE/xiao-zero" ]; then
   TOR_BIN= PY=
 fi
 if [ -n "\$TOR_BIN" ] && [ -f "\$DATA/torrc" ] && ! running tor.pid tor; then
-  "\$TOR_BIN" -f "\$DATA/torrc" --quiet &
+  LD_LIBRARY_PATH="\$(dirname "\$TOR_BIN")" "\$TOR_BIN" -f "\$DATA/torrc" --quiet & # Linux's bundle keeps its libraries beside it
   PIDS="\$PIDS \$!"
 fi
 if [ -n "\$PY" ] && [ -x "\$PY" ] && ! running searxng.pid python; then

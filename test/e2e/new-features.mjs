@@ -15,8 +15,9 @@ import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { Marionette } from './marionette.mjs';
 import { zip } from '../../scripts/zip.mjs';
+import { fileURLToPath } from 'node:url';
 
-const root = new URL('../..', import.meta.url).pathname;
+const root = fileURLToPath(new URL('../..', import.meta.url));
 const out = process.env.E2E_OUT ?? join(root, 'test/e2e/out');
 const ONLY = process.env.ONLY;
 const want = (name) => !ONLY || ONLY.split(',').includes(name);
@@ -582,6 +583,42 @@ try {
       return { before, version, after };
     });
     check('in silent mode the Download DRM button fetches Widevine, and only then', silentDrm.before === false && silentDrm.after === false && /^\d+\.\d+/.test(silentDrm.version), JSON.stringify(silentDrm));
+  }
+
+  // From the real public release, with no mirror. Only when asked for by name.
+  if (ONLY?.split(',').includes('public')) {
+    const pages = { pdf: 'resource://xiao-pdf/index.html', convert: 'resource://xiao-convert/index.html', library: 'resource://xiao-library/index.html', 'notes-ai': 'resource://xiao-notes-ai/organise.html' };
+    for (const id of (process.env.PACKS ?? 'pdf,library,convert,notes-ai').split(',')) {
+      const started = Date.now();
+      await xiao((Xiao, id) => Xiao.setFeature({ id, on: true }), id);
+      const p = await until(`${id} to download`, async () => {
+        const list = await xiao(async (Xiao) => Xiao.packs.list());
+        const me = list.find((x) => x.id === id);
+        return (me.error || me.installed) && me;
+      }, 25 * 60_000);
+      check(`${id} downloads from the public release (${p.size}, ${Math.round((Date.now() - started) / 1000)} s)`, p.installed && !p.error, p.error ?? '');
+      if (!p.installed) continue;
+      const h = await open(pages[id]);
+      await sleep(4000);
+      const look = await m.content(h, () => ({ title: document.title, url: document.documentURI, text: document.body?.innerText?.length ?? 0, shown: /error|failed|could not/i.test(document.body?.innerText ?? '') ? document.body.innerText.slice(0, 200) : '' }));
+      check(`${id} opens with no error on the page`, look.text > 0 && !look.shown && !/neterror|about:/.test(look.url), JSON.stringify(look));
+      await closeTab();
+    }
+    if ((process.env.PACKS ?? 'notes-ai').includes('notes-ai')) {
+      const TEXT = 'I has went to the the shop yesterday and buyed three apple, because we was out of apples at home and my sister she really wanted to make a apple pie for the party on saturday evening.';
+      await xiao(async (Xiao) => {
+        await Xiao.setFeature({ id: 'assist', on: true });
+        await Xiao.setFeature({ id: 'noteWriting', on: true });
+      });
+      for (const tool of (process.env.TOOLS ?? 'fix,improve,shorten,summarize,casual').split(',')) {
+        const said = await xiao(async (Xiao, tool, text) => {
+          const start = Date.now();
+          const out = await Xiao.rewriteNote({ tool, text }).catch((e) => `error: ${e.message}`);
+          return { out, seconds: Math.round((Date.now() - start) / 1000) };
+        }, tool, TEXT);
+        check(`writing tool "${tool}" really changes the text, on the real model`, !said.out.startsWith('error') && said.out.trim() !== TEXT, JSON.stringify(said));
+      }
+    }
   }
 
   if (want('updates')) {

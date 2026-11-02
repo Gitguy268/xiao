@@ -20,8 +20,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Marionette } from './marionette.mjs';
 import { merge, readPrefs } from '../../scripts/userjs.mjs';
+import { fileURLToPath } from 'node:url';
 
-const root = new URL('../..', import.meta.url).pathname;
+const root = fileURLToPath(new URL('../..', import.meta.url));
 const out = process.env.E2E_OUT ?? join(root, 'test/e2e/out');
 const WIN = process.platform === 'win32';
 const WANT_TOR = process.env.E2E_TOR !== '0';
@@ -271,6 +272,13 @@ try {
   if (WANT_TOR) {
     const ipOf = (handle) => m.content(handle, () => JSON.parse(document.body.textContent));
     const torTab = await openTab('https://check.torproject.org/api/ip', { tor: true });
+    const torLog = () => {
+      try {
+        return readFileSync(join(data, 'tor.log'), 'utf8').slice(-800);
+      } catch {
+        return 'no tor.log';
+      }
+    };
     const viaTor = await until('tor to bootstrap', async () => {
       const uri = await loaded(torTab).catch(() => null); // a request can hang while tor builds circuits
       if (!uri || uri.startsWith('about:neterror')) {
@@ -278,7 +286,7 @@ try {
         return false;
       }
       return ipOf(torTab);
-    }, 180_000);
+    }, 180_000).catch((e) => { throw new Error(`${e.message}; tor.log: ${torLog()}`); });
     check('Tor tab goes through Tor', viaTor.IsTor === true, viaTor.IP);
     await screenshots();
     const torStart = await openTab(START, { tor: true });
@@ -536,7 +544,7 @@ try {
 
   // Packs, from a local mirror of the release files (named by SHA-256).
   if (!existsSync(MIRROR)) {
-    check('packs (run npm run packs first)', false, `no ${MIRROR}`);
+    console.log(`SKIP packs and what needs them: no ${MIRROR} (npm run packs)`);
   } else {
     await m.chrome((url) => Services.prefs.setStringPref('xiao.packs.mirror', url), `http://127.0.0.1:${port}/mirror/`);
     const install = async (id, ms) => {
