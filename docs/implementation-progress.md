@@ -134,7 +134,7 @@ Later answers to those open spikes:
 | `npm test` | 106 / 106 |
 | `npm run e2e` with Tor 16.0 | 125 / 125 |
 | `npm run e2e:new` on macOS | all pass; the Send transfer is skipped there (macOS firewall) |
-| CI: Debian 12 and 13, Ubuntu 22.04 and 24.04, Fedora, Arch, openSUSE Tumbleweed (x86_64) | 65 / 65 each, Send transfer included; WebGL noise skipped, as containers have no WebGL |
+| CI: Debian 12 and 13, Ubuntu 22.04 and 24.04, Fedora, Arch, openSUSE Tumbleweed (x86_64) | 76 / 76 each, Send transfer and update with rollback included; WebGL noise skipped, as containers have no WebGL |
 | CI: `npm run e2e` on Windows, Linux, macOS | 40 / 40, 40 / 40, 41 / 41, with Tor; packs sections skipped, as CI has no mirror |
 | Real downloads from the public release, no mirror (macOS) | PDF, Library, converter and AI models download and open; all five writing tools change text on the real model |
 | `npm run e2e:upgrade` | passes |
