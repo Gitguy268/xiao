@@ -17,6 +17,10 @@ A calm, private browser built on Zen: ad and tracker blocking built into the bro
 
 </div>
 
+<!-- live-links -->
+**Live:** [gitguy268.github.io/xiao](https://gitguy268.github.io/xiao/) · [xiao-lilac.vercel.app](https://xiao-lilac.vercel.app)
+<!-- /live-links -->
+
 ## What it does
 
 | | |
