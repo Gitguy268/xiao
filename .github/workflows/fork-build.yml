@@ -61,7 +61,7 @@ jobs:
         run: |
           ./mach package
           mv obj-*/dist/xiao-*.tar.* "$GITHUB_WORKSPACE/xiao.linux-x86_64.tar.xz"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: xiao.linux-x86_64
           path: xiao.linux-x86_64.tar.xz
