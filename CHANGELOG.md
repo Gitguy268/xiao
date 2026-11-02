@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0 (unreleased)
+## 0.5.0 (2 November 2026)
 
 - **Silent mode** (Features, off by default): Xiao connects to nothing by itself, only the pages and downloads you ask for. Tor and Xiao Search stay stopped, and updates, filters and DRM wait for a button. The cost is said beside the switch: certificate and phishing lists go out of date. An idle test logs every connection the browser makes, and in silent mode it finds none.
 - **Quieter in normal mode too:** the hourly filter timer is gone (once at launch, at most daily), and Tor is only checked while you use it.
@@ -19,7 +19,7 @@
 - **Automatic updates**, signed with Xiao's own key, installed at the next start, and undone by themselves if that start fails.
 - **Linux:** with no Zen to copy, including Flatpak-only computers, the installer downloads Zen's own tarball, and a missing library names the package to install.
 
-## 0.4.0 (unreleased)
+## 0.4.0
 
 - **The Library** (Features → Library, an optional download built from OpenFinder, GPL-3.0-or-later): one searchable place for your downloads, the folders you give it, your notes, collections and closed tabs. It runs in its own tab with Xiao's look and reaches files only through Xiao, one folder at a time. Private windows and Tor tabs never reach it, and never add to it.
   - **Downloads** are remembered with the name they came with, so a file stays findable after a rename. "Remember my downloads" can be switched off.
@@ -41,7 +41,7 @@
 - **Ask about this page** shows the passages that answer at once; the local AI's written answer follows when it is ready.
 - **Export and import** (start page settings): spaces with their tabs, folders, splits and containers; collections and saved searches; settings, in one JSON file you save. Tor and private tabs, folder paths and passwords in addresses are left out. An import shows every address before it adds anything, and never downloads a feature.
 
-## 0.3.0 (unreleased)
+## 0.3.0
 
 - **Search goes to SearXNG by default:** searx.ononoki.org, then priv.au, then Brave Search. A search the first one refuses (blocked, rate-limited, down or unreachable) is loaded again on the next with the same words. The address bar uses the start page's choice too.
 - **Features, all off until you turn them on** (start page → Features). The big ones are downloaded only then, pinned by SHA-256, and turning them off deletes the download:

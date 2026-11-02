@@ -133,9 +133,12 @@ Later answers to those open spikes:
 |---|---|
 | `npm test` | 106 / 106 |
 | `npm run e2e` with Tor 16.0 | 125 / 125 |
-| `npm run e2e:new` | all pass on macOS; the Send transfer is skipped there (macOS firewall), and CI's Linux job must prove it |
+| `npm run e2e:new` on macOS | all pass; the Send transfer is skipped there (macOS firewall) |
+| CI: Debian 12 and 13, Ubuntu 22.04 and 24.04, Fedora, Arch, openSUSE Tumbleweed (x86_64) | 65 / 65 each, Send transfer included; WebGL noise skipped, as containers have no WebGL |
+| CI: `npm run e2e` on Windows, Linux, macOS | 40 / 40, 40 / 40, 41 / 41, with Tor; packs sections skipped, as CI has no mirror |
+| Real downloads from the public release, no mirror (macOS) | PDF, Library, converter and AI models download and open; all five writing tools change text on the real model |
 | `npm run e2e:upgrade` | passes |
 | `npm run e2e:audit`, 10 minutes each | silent: 0 requests, 0 sockets; normal: inside its list |
 | Cover Your Tracks | [docs/privacy-results.md](privacy-results.md) |
 
-Open: the AI run (`AI=1`, about 3 GB) for writing tools on the real model; camera scanning on the Send page and the blank-camera video choice aren't tested or built; Widevine played on macOS only.
+Open: camera scanning on the Send page isn't tested; choosing a video for the blank camera isn't built; Widevine has played on macOS only; containers don't test host sandboxing; Windows packs and Library are untested.
