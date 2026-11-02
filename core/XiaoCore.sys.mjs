@@ -8,6 +8,8 @@
 // start page and the toolbar panel all live here.
 import { Archive, CHOICES as ARCHIVE_HOURS } from './Archive.mjs';
 import { Bangs } from './Bangs.mjs';
+import { Clipboard, CLIPBOARD_URL } from './Clipboard.mjs';
+import { Send } from './Send.mjs';
 import { Assist, ASSIST_URL, HOST_URL as ASSIST_HOST_URL } from './Assist.mjs';
 import { Blocker } from './Blocker.mjs';
 import { BOARD_URL, Boards } from './Boards.mjs';
@@ -27,9 +29,10 @@ import { Updater } from './Updater.mjs';
 import { everyTab } from './tabs.mjs';
 import { ZenFilesSection } from './ZenLibrarySection.mjs';
 import { parseOwnBangs } from './lib/bangs.mjs';
+import { rewriteMessages } from './lib/write.mjs';
 import { mod } from './mod.mjs';
 
-export { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL };
+export { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, CLIPBOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL };
 
 const STORE = () => PathUtils.join(PathUtils.profileDir, 'xiao.json');
 
@@ -100,6 +103,8 @@ export const Xiao = {
     this.boards = new Boards(this);
     this.quickWindow = new QuickWindow();
     this.updater = new Updater(this);
+    this.send = new Send();
+    this.clipboard = new Clipboard(this);
     this.searchUrl = Services.prefs.getStringPref('xiao.search.url', '');
     setDefaults();
     this.tor.start();
@@ -107,7 +112,7 @@ export const Xiao = {
       parent: { esModuleURI: 'resource://xiao/actors/XiaoParent.sys.mjs' },
       child: {
         esModuleURI: 'resource://xiao/actors/XiaoChild.sys.mjs',
-        events: { DOMWindowCreated: {}, DOMDocElementInserted: {}, DOMContentLoaded: {}, pagehide: {} },
+        events: { DOMWindowCreated: {}, DOMDocElementInserted: {}, DOMContentLoaded: {}, pagehide: {}, copy: { mozSystemGroup: true }, cut: { mozSystemGroup: true } },
       },
       allFrames: true,
       messageManagerGroups: ['browsers'],
@@ -119,6 +124,7 @@ export const Xiao = {
     this.ready = this.store.load()
       .then(() => {
         this.shield.publish();
+        this.clipboard.start().catch((e) => console.error('Xiao: clipboard', e));
         return this.blocker.start();
       })
       .catch((e) => console.error('Xiao: blocking did not start', e));
@@ -168,7 +174,7 @@ export const Xiao = {
   // noise, which costs nothing, needs nothing downloaded and has a per-site switch.
   get features() {
     // libraryDownloads only matters while the Library is on; it starts on with it.
-    return { updates: true, shield: true, fakeCamera: false, sticky: false, perSite: false, tabSleep: 0, libraryDownloads: true, autoArchive: 0, bangs: true, assist: false, boards: false, quickWindow: false, ...this.store.features, silent: this.silent.on };
+    return { updates: true, shield: true, fakeCamera: false, sendDevice: false, noteWriting: false, clipboard: false, reader: false, sticky: false, perSite: false, tabSleep: 0, libraryDownloads: true, autoArchive: 0, bangs: true, assist: false, boards: false, quickWindow: false, ...this.store.features, silent: this.silent.on };
   },
 
   async featureState() {
@@ -208,8 +214,11 @@ export const Xiao = {
     } else if (id === 'quickWindow') {
       this.store.features = { ...this.store.features, quickWindow: !!on };
       this.quickWindow.set(!!on);
-    } else if (id === 'updates') {
-      this.store.features = { ...this.store.features, updates: !!on };
+    } else if (id === 'updates' || id === 'sendDevice' || id === 'noteWriting' || id === 'reader') {
+      this.store.features = { ...this.store.features, [id]: !!on };
+    } else if (id === 'clipboard') {
+      this.store.features = { ...this.store.features, clipboard: !!on };
+      await this.clipboard.set(!!on);
     } else if (id === 'shield' || id === 'fakeCamera') {
       this.store.features = { ...this.store.features, [id]: !!on };
       this.shield.publish();
@@ -321,6 +330,11 @@ export const Xiao = {
     if (from === 'assist-host') return this.assist.host(name, data);
     if (from === 'assist') return this.assistPage(name, data ?? {}, browsingContext?.id);
     if (from === 'board') return this.boardPage(name, data ?? {});
+    if (from === 'clipboard') return this.clipboard.page(name, data);
+    if (from === 'send') {
+      if (!this.features.sendDevice) throw new Error('Send to a device is off (start page → Features).');
+      if (name === 'send.begin') return void this.send.begin(browsingContext.id);
+    }
     if (name === 'notes.list') return this.notes.list();
     if (name === 'notes.save') return this.notes.save(data ?? {});
     if (from !== 'start') throw new Error(`unknown call ${name}`);
@@ -340,6 +354,7 @@ export const Xiao = {
     }
     if (name === 'bang') return this.bangs.resolve(data?.text);
     if (name === 'bang.run') return void await this.bangs.run(data?.action, browsingContext.topChromeWindow);
+    if (name === 'drm.install') return this.silent.installDrm();
     if (name === 'updates.check') return this.updater.check();
     if (name === 'filters.update') return { changed: await this.blocker.update({ asked: true }) };
     if (name === 'get') {
@@ -376,6 +391,12 @@ export const Xiao = {
   },
 
   // The Assist page's calls (resource://xiao/assist/), about the tab it was opened for.
+  // The sticky note's rewrite tools, on the same local model as Assist.
+  async rewriteNote({ tool, text }) {
+    if (!this.features.noteWriting) throw new Error('Writing tools are off (start page → Features).');
+    return this.assist.run(rewriteMessages(tool, text));
+  },
+
   // The board page's calls (resource://xiao/board/), while Boards is on.
   async boardPage(name, data) {
     if (!this.features.boards) throw new Error('Boards is off (start page → Features).');

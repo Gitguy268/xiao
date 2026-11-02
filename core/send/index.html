@@ -1,0 +1,50 @@
+<!doctype html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Send to a device</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="send.css">
+  <script src="send.js" type="module"></script>
+</head>
+<body>
+  <main>
+    <h1>Send to a device</h1>
+    <p class="lede">Straight to a phone or computer on the same Wi-Fi, with no server in between. The other device needs Xiao or <a href="https://github.com/Gitguy268/textarea">textarea</a> open.</p>
+    <p class="warn">While this page is open, sites in your other tabs could see this computer's address on your local network. Close this page when you are done.</p>
+
+    <section aria-labelledby="send-title">
+      <h2 id="send-title">Send a note</h2>
+      <label>Note <select id="note"></select></label>
+      <p><button id="make" class="primary" type="button">Show pairing code</button></p>
+      <div id="send-steps" hidden>
+        <p>1. On the other device, choose Receive and scan this, or paste the code below.</p>
+        <div id="offer-qr" class="qr" role="img" aria-label="Pairing code as a QR code"></div>
+        <textarea id="offer-code" rows="3" readonly aria-label="Pairing code"></textarea>
+        <p>2. Scan or paste the code it shows you.</p>
+        <textarea id="answer-code" rows="3" aria-label="The other device's code"></textarea>
+        <p class="actions"><button id="connect" class="primary" type="button">Send</button> <button id="scan-answer" type="button">Scan with camera</button></p>
+      </div>
+    </section>
+
+    <section aria-labelledby="receive-title">
+      <h2 id="receive-title">Receive a note</h2>
+      <label>The other device's code <textarea id="incoming" rows="3"></textarea></label>
+      <p class="actions"><button id="answer" class="primary" type="button">Answer</button> <button id="scan-offer" type="button">Scan with camera</button></p>
+      <div id="receive-steps" hidden>
+        <p>Show this to the other device.</p>
+        <div id="answer-qr" class="qr" role="img" aria-label="Your reply as a QR code"></div>
+        <textarea id="answer-out" rows="3" readonly aria-label="Your reply"></textarea>
+      </div>
+      <p id="offered" hidden><span id="offered-what"></span> <button id="accept" class="primary" type="button">Keep it</button> <button id="decline" type="button">No thanks</button></p>
+    </section>
+
+    <video id="camera" hidden playsinline muted aria-label="Camera"></video>
+    <p id="status" role="status"></p>
+  </main>
+</body>
+</html>

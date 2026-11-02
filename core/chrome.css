@@ -199,12 +199,11 @@ menupopup, panel, tooltip, toolbarbutton, label, description, input, button,
 /* Liquid glass (start page settings). Gecko blurs what is behind a pane but
  * can't bend it, so the depth comes from translucency and edge highlights. */
 :root[xiao-glass] {
-  --zen-themed-toolbar-bg-transparent: transparent;
   --xiao-glass: color-mix(in srgb, Canvas 58%, transparent);
   --xiao-glass-edge: color-mix(in srgb, white 45%, transparent);
+  --zen-dialog-background: var(--xiao-glass);
   --panel-background: var(--xiao-glass);
   --arrowpanel-background: var(--xiao-glass);
-  --urlbar-box-bgcolor: var(--xiao-glass);
 }
 :root[xiao-glass] #xiao-sticky-panel,
 :root[xiao-glass] panel:not(#xiao-none) {
@@ -219,3 +218,9 @@ menupopup, panel, tooltip, toolbarbutton, label, description, input, button,
 @media (prefers-reduced-transparency: reduce) {
   :root[xiao-glass] { --xiao-glass: Canvas; }
 }
+
+.xiao-sticky-tags:empty, [hidden] { display: none; }
+.xiao-sticky-tags { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 0; }
+.xiao-sticky-tag { font-size: 11px; padding: 1px 8px; border-radius: 999px; }
+.xiao-sticky-writing { display: flex; gap: 6px; align-items: center; padding-top: 4px; }
+.xiao-sticky-writing select { flex: 1; min-width: 0; }

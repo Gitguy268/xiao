@@ -40,7 +40,7 @@
 }
 :root[data-theme="dark"] #desktop { filter: brightness(0.45); }
 
-body { background: #2f6fc4; color: var(--page-ink); font: var(--ui); }
+body { grid-template-rows: 1fr auto; background: #2f6fc4; color: var(--page-ink); font: var(--ui); }
 .pool, h1 { display: none; }
 .bar { display: none; }
 main {

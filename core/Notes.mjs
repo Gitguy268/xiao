@@ -9,8 +9,9 @@
 // the reader picks. The folder is the only copy, so there is nothing to sync:
 // point it at the folder textarea's Folder sync uses, and both apps read and
 // write the same files (textarea notices Xiao's edits by their mtime).
+import { WRITE_TOOLS } from './lib/write.mjs';
 import { lazy } from './mod.mjs';
-import { nameFor, safeName, siteName, splitNote } from './lib/notes.mjs';
+import { nameFor, safeName, siteName, splitNote, allTags, tagsOf } from './lib/notes.mjs';
 
 const customizable = lazy('browser/components/customizableui/CustomizableUI.sys.mjs', 'CustomizableUI');
 
@@ -140,6 +141,40 @@ export class Notes {
     panel.openPopup(anchor?.checkVisibility?.() ? anchor : null, 'bottomleft topleft');
   }
 
+  // Rewrite the note with the local AI, keeping the old text one click away.
+  writingRow(el, paper, win) {
+    const row = el('div', { class: 'xiao-sticky-writing' });
+    const pick = el('select', { 'aria-label': 'Rewrite this note' });
+    pick.append(el('option', { value: '' }, 'Rewrite…'), ...WRITE_TOOLS.map((t) => el('option', { value: t.id }, t.label)));
+    const undo = el('button', { type: 'button', hidden: 'true' }, 'Undo');
+    let before = null;
+    const setText = (text) => {
+      paper.textContent = text;
+      paper.dispatchEvent(new win.InputEvent('input'));
+    };
+    pick.addEventListener('change', async () => {
+      if (!pick.value) return;
+      const tool = pick.value;
+      pick.disabled = true;
+      before = paper.innerText;
+      try {
+        setText(await this.xiao.rewriteNote({ tool, text: before }));
+        undo.removeAttribute('hidden');
+      } catch (e) {
+        paper.title = e.message;
+      } finally {
+        pick.disabled = false;
+        pick.value = '';
+      }
+    });
+    undo.addEventListener('click', () => {
+      setText(before);
+      undo.setAttribute('hidden', 'true');
+    });
+    row.append(pick, undo);
+    return row;
+  }
+
   async fill(container) {
     const doc = container.ownerDocument;
     const win = doc.defaultView;
@@ -181,7 +216,9 @@ export class Notes {
       row.append(mic);
     }
     row.append(dot);
-    box.append(paper, row);
+    const tags = el('div', { class: 'xiao-sticky-tags' });
+    box.append(paper, tags, row);
+    if (this.xiao.features.noteWriting && await this.xiao.assist.model()) box.append(this.writingRow(el, paper, win));
     container.replaceChildren(box);
 
     let timer = null;
@@ -203,7 +240,20 @@ export class Notes {
       }
     };
     this.flush = () => timer && save();
+    // Each tag in any note jumps to the next note that has it.
+    const drawTags = () => {
+      tags.replaceChildren(...allTags(notes).map((tag) => {
+        const chip = el('button', { type: 'button', class: 'xiao-sticky-tag' }, tag);
+        chip.addEventListener('click', () => {
+          const next = notes.findIndex((n, i) => i > at && tagsOf(n.text).includes(tag));
+          const found = next >= 0 ? next : notes.findIndex((n) => tagsOf(n.text).includes(tag));
+          if (found >= 0) go(found);
+        });
+        return chip;
+      }));
+    };
     const show = () => {
+      drawTags();
       paper.textContent = notes[at].text;
       count.textContent = site && at === 0 ? 'This site' : `${at + 1} of ${notes.length}`;
       prev.disabled = at === 0;

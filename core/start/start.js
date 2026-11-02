@@ -306,6 +306,14 @@ function wireFeatures() {
         : u.state === 'none' ? 'This copy of Xiao does not update itself.'
           : 'Could not check right now. Try again later.';
   });
+  $('drm-install').addEventListener('click', async () => {
+    $('drm-note').textContent = 'Downloading…';
+    try {
+      $('drm-note').textContent = `Widevine ${await ask('drm.install')} is ready.`;
+    } catch {
+      $('drm-note').textContent = 'Could not download it. Check your connection and try again.';
+    }
+  });
   $('filters-update').addEventListener('click', async () => {
     $('filters-note').textContent = 'Asking…';
     const { changed } = await ask('filters.update');

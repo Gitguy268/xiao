@@ -41,7 +41,7 @@ await build({
   logLevel: 'warning',
 });
 
-for (const p of ['start', 'assist', 'board', 'icons', 'locales', 'chrome.css', 'packs.json', 'bangs.json']) cpSync(at('core', p), join(core, p), { recursive: true });
+for (const p of ['start', 'assist', 'board', 'send', 'clipboard', 'reader', 'icons', 'locales', 'chrome.css', 'packs.json', 'bangs.json']) cpSync(at('core', p), join(core, p), { recursive: true });
 cpSync(at('core/lib/bangs.mjs'), join(core, 'lib/bangs.mjs'));
 cpSync(at('shared/tokens.css'), join(core, 'tokens.css'));
 for (const [from, file] of [

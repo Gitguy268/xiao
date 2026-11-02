@@ -44,6 +44,7 @@ export class Silent {
     if (!this.on) return;
     for (const { name, value } of XIAO_SILENT_PREFS) access.write(name, value);
     this.watch(true);
+    this.watchDrm(true);
     this.flag(true);
   }
 
@@ -84,6 +85,57 @@ export class Silent {
     }
   }
 
+  // DRM in silent mode: Firefox's timer that fetches Widevine is off, so this
+  // fetches it once, when the reader says to.
+  async installDrm() {
+    const { GMPInstallManager } = ChromeUtils.importESModule('resource://gre/modules/GMPInstallManager.sys.mjs');
+    const hosts = ['aus5.mozilla.org', 'content-signature-2.cdn.mozilla.net', 'update.googleapis.com', 'redirector.gvt1.com', 'edgedl.me.gvt1.com'];
+    const was = access.read('media.gmp-manager.updateEnabled');
+    Services.prefs.setBoolPref('media.gmp-manager.updateEnabled', true);
+    const manager = new GMPInstallManager();
+    try {
+      return await this.asking(hosts, async () => {
+        const { addons } = await manager.checkForAddons();
+        const widevine = addons.find((a) => a.id === 'gmp-widevinecdm' && a.isValid);
+        if (!widevine) throw new Error('Widevine is not offered for this computer');
+        await manager.installAddon(widevine);
+        return Services.prefs.getStringPref('media.gmp-widevinecdm.version', '');
+      });
+    } finally {
+      manager.uninit?.();
+      if (was === undefined) Services.prefs.clearUserPref('media.gmp-manager.updateEnabled');
+      else access.write('media.gmp-manager.updateEnabled', was);
+    }
+  }
+
+  // A site wants DRM and Widevine isn't here: in silent mode nothing will fetch
+  // it, so say so in that tab, with the button.
+  watchDrm(on) {
+    if (on === !!this.drmWatch) return;
+    this.drmWatch = on;
+    if (on) Services.obs.addObserver(this.drmObserver, 'mediakeys-request');
+    else Services.obs.removeObserver(this.drmObserver, 'mediakeys-request');
+  }
+
+  drmObserver = {
+    observe: (subject, _topic, data) => {
+      let status;
+      try {
+        ({ status } = JSON.parse(data));
+      } catch {
+        return;
+      }
+      if (status !== 'cdm-not-installed') return;
+      const win = subject.top?.browsingContext?.topChromeWindow ?? Services.wm.getMostRecentWindow('navigator:browser');
+      const box = win?.gBrowser?.getNotificationBox?.();
+      if (!box || box.getNotificationWithValue?.('xiao-drm')) return;
+      box.appendNotification('xiao-drm', {
+        label: 'This site needs DRM to play. Silent mode has not fetched it.',
+        priority: box.PRIORITY_INFO_MEDIUM,
+      }, [{ label: 'Download DRM', callback: () => void this.installDrm().catch((e) => console.warn('Xiao: DRM', e)) }]);
+    },
+  };
+
   async set(on) {
     if (on === this.on) return;
     if (on) Services.prefs.setStringPref(SAVED, JSON.stringify(engage(XIAO_SILENT_PREFS, access)));
@@ -93,6 +145,7 @@ export class Silent {
     }
     Services.prefs.setBoolPref(ON, on);
     this.watch(on);
+    this.watchDrm(on);
     await this.flag(on);
   }
 

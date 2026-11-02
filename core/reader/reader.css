@@ -1,0 +1,17 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+html, body { height: 100%; }
+body { margin: 0; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); font: var(--step--1) / 1.4 var(--sans); }
+header { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--rule); }
+.spacer { flex: 1; }
+#title { font: italic 400 var(--step-0) / 1.2 var(--serif); }
+.pick { cursor: pointer; padding: 8px 14px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); }
+.pick input { position: absolute; opacity: 0; width: 1px; }
+.pick:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
+label { display: inline-flex; gap: 6px; align-items: center; }
+select { font: inherit; color: var(--ink); background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 8px; padding: 4px 8px; max-width: 16em; }
+button { font: inherit; color: var(--ink); background: var(--fill); border: 1px solid var(--rule); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+#status { margin: 16px; color: var(--ink-soft); }
+iframe { flex: 1; width: 100%; border: 0; background: #fff; }
+[hidden] { display: none !important; }

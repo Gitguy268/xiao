@@ -1,0 +1,20 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+body { margin: 0; background: var(--paper); color: var(--ink); font: var(--step-0) / 1.5 var(--sans); }
+main { width: min(640px, 100% - 32px); margin: 40px auto; }
+h1 { margin: 0 0 8px; font: italic 400 var(--step-3) / 1.1 var(--serif); }
+h2 { margin: 28px 0 10px; font: italic 400 var(--step-2) / 1.1 var(--serif); }
+a { color: inherit; }
+.lede, .warn, label { color: var(--ink-soft); font-size: var(--step--1); }
+.warn { padding: 10px 14px; border: 1px solid var(--rule); border-radius: 10px; }
+label { display: grid; gap: 6px; margin-bottom: 12px; }
+select, textarea { font: 400 var(--step--1) / 1.4 var(--sans); color: var(--ink); background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; width: 100%; box-sizing: border-box; overflow-wrap: anywhere; }
+button { font: 500 var(--step--1) / 1 var(--sans); color: var(--ink); background: var(--fill); border: 1px solid var(--rule); border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.qr svg { width: min(300px, 100%); height: auto; background: #fff; padding: 8px; border-radius: 8px; }
+#camera { width: min(300px, 100%); border-radius: 8px; }
+#status { min-height: 1.5em; color: var(--accent-text); }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }

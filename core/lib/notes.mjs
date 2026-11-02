@@ -33,3 +33,9 @@ export function nameFor(text, taken) {
 
 // The note kept for one website ("Note for this site"): named after its host.
 export const siteName = (host) => (/^[\w.-]{1,100}$/.test(host ?? '') ? `${host}.md` : null);
+
+// #tags in a note, as textarea tints them: a # after a space or line start, then
+// a letter or digit. Headings ("# Title") have a space, so they don't count.
+export const tagsOf = (text) => [...new Set([...String(text ?? '').matchAll(/(?:^|\s)(#[\p{L}\p{N}][\p{L}\p{N}_-]*)/gu)].map((m) => m[1].toLowerCase()))];
+
+export const allTags = (notes) => [...new Set(notes.flatMap((n) => tagsOf(n.text)))].sort();

@@ -134,6 +134,8 @@
       <p>Xiao connects to nothing by itself: only the pages and downloads you ask for. No update checks, new filters, phishing or certificate lists, and Tor and Xiao Search stay stopped. The cost: those lists go out of date, so newly known bad sites and revoked certificates stop being caught, and security fixes wait until you ask for them. Restart Xiao for all of it to apply.</p>
       <div class="sub" id="silent-more">
         <p class="actions"><button type="button" id="filters-update">Update filters now</button> <span id="filters-note" role="status"></span></p>
+        <p class="actions"><button type="button" id="drm-install">Download DRM</button> <span id="drm-note" role="status"></span></p>
+        <p>Silent mode won't fetch Widevine, which sites like Netflix need, until you press this.</p>
       </div>
     </div>
     <div class="feature">
@@ -195,6 +197,22 @@
       <label class="switch"><input type="checkbox" data-feature="pdf"> PDF tools</label>
       <p>Pages per sheet, booklets, page numbers, crop, details, passwords and attachments. Firefox's own viewer already highlights, signs and reorders pages. <span data-size="pdf"></span></p>
       <p class="progress" data-progress="pdf" aria-live="polite"></p>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="sendDevice"> Send to a device</label>
+      <p>Send a note straight to a phone or computer on the same Wi-Fi, paired by scanning a code, with no server in between. Open it from Xiao's button.</p>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="noteWriting"> Writing tools in the sticky note</label>
+      <p>Improve, shorten, summarise or fix a note with the local AI, undoable. Needs Assist on, with its download.</p>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="clipboard"> Clipboard history</label>
+      <p>Keeps the last 50 things you copied from pages in Xiao, on this computer. Never password fields, private windows or Tor tabs. Turning it off deletes the list.</p>
+    </div>
+    <div class="feature">
+      <label class="switch"><input type="checkbox" data-feature="reader"> Reader</label>
+      <p>Read EPUB and PDF books from this computer, one or two pages at a time, with nothing uploaded. <code>!ol</code> searches <a href="https://openlibrary.org">Open Library</a> for more.</p>
     </div>
     <div class="feature">
       <label class="switch"><input type="checkbox" data-feature="quickWindow"> Quick window</label>

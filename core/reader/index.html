@@ -1,0 +1,28 @@
+<!doctype html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reader</title>
+  <link rel="stylesheet" href="../tokens.css">
+  <link rel="stylesheet" href="reader.css">
+  <script src="reader.js" type="module"></script>
+</head>
+<body>
+  <header>
+    <label class="pick">Open a book<input id="file" type="file" accept=".epub,.pdf,application/epub+zip,application/pdf"></label>
+    <span id="title"></span>
+    <span class="spacer"></span>
+    <label>Chapter <select id="chapter" disabled></select></label>
+    <label>Pages <select id="spread"><option value="1">One</option><option value="2">Two</option></select></label>
+    <button id="prev" type="button" aria-label="Previous page" disabled>←</button>
+    <button id="next" type="button" aria-label="Next page" disabled>→</button>
+  </header>
+  <p id="status" role="status">Opens EPUB and PDF files from this computer. Nothing is uploaded.</p>
+  <iframe id="page" title="Book" sandbox="allow-same-origin" hidden></iframe>
+  <iframe id="pdf" title="PDF" hidden></iframe>
+</body>
+</html>

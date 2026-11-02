@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // The parent-process half of the Xiao actor: answers XiaoChild in each frame.
-import { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL, Xiao } from 'resource://xiao/XiaoCore.sys.mjs';
+import { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, CLIPBOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL, Xiao } from 'resource://xiao/XiaoCore.sys.mjs';
 
 export class XiaoParent extends JSWindowActorParent {
   async receiveMessage({ name, data }) {
@@ -20,13 +20,17 @@ export class XiaoParent extends JSWindowActorParent {
     if (name === 'page') {
       const uri = this.manager.documentURI?.spec ?? '';
       const bc = this.browsingContext;
+      const ordinary = !bc.usePrivateBrowsing && bc.originAttributes.userContextId !== Xiao.tor.torId;
       const from = uri.startsWith(Xiao.START_URL) ? 'start' : uri.startsWith(Xiao.ORGANISE_URL) ? 'organise'
+        : Xiao.send.origin && uri.startsWith(Xiao.send.origin) && ordinary ? 'send'
+        : uri.startsWith(CLIPBOARD_URL) && ordinary ? 'clipboard'
         : uri.startsWith(ASSIST_URL) && !bc.usePrivateBrowsing && bc.originAttributes.userContextId !== Xiao.tor.torId ? 'assist'
           : uri.split(/[?#]/)[0] === BOARD_URL && !bc.usePrivateBrowsing && bc.originAttributes.userContextId !== Xiao.tor.torId ? 'board'
           // the model's page, only in the hidden tab Xiao made for it
           : uri.startsWith(ASSIST_HOST_URL) && Xiao.assist.browser && bc.top.embedderElement === Xiao.assist.browser ? 'assist-host' : null;
       if (!from || bc.parent) throw new Error('not a Xiao page');
       if (from === 'assist') this.assistPage = bc.id;
+      if (from === 'send') this.sendPage = bc.id;
       return Xiao.page(data.call, data.arg, this.browsingContext, from);
     }
     // The Library's calls: checked here on every message, from what this
@@ -41,6 +45,7 @@ export class XiaoParent extends JSWindowActorParent {
       });
     }
     if (name === 'library-watch' && this.isLibrary()) Xiao.library.watch(this);
+    if (name === 'copied') Xiao.clipboard.copied(this.browsingContext);
     return undefined;
   }
 
@@ -63,6 +68,7 @@ export class XiaoParent extends JSWindowActorParent {
 
   didDestroy() {
     Xiao.library?.unwatch(this);
+    if (this.sendPage) Xiao.send.end(this.sendPage); // this computer's address goes back to hidden
     // Assist closed or navigated away: an answer still being written is stopped, never delivered later
     if (this.assistPage && Xiao.assistRunBy === this.assistPage) Xiao.assistRun?.abort();
   }

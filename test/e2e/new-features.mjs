@@ -6,7 +6,7 @@
 // the blank camera, bangs, start page styles, download problems and updates.
 //
 //   npm run build && npm run e2e:new
-//   ONLY=updates npm run e2e:new        one section (shield, bangs, styles, packs, updates)
+//   ONLY=updates npm run e2e:new        one section (shield, bangs, styles, packs, extras, drm, updates)
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash, generateKeyPairSync, sign } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -296,17 +296,26 @@ try {
     await line('style retrofind');
     check('terminal: style changes the style and remembers it', await m.content(s, async () => (await window.xiao.call('get')).settings.style === 'retrofind' && document.documentElement.dataset.style === 'retrofind'));
 
-    const glassOn = () => m.chrome(() => Services.wm.getMostRecentWindow('navigator:browser').document.documentElement.hasAttribute('xiao-glass'));
+    const glassOn = () => m.chrome(() => Services.wm.getMostRecentWindow('navigator:browser').document.documentElement.hasAttribute('xiao-glass')
+      && Services.prefs.getBoolPref('zen.theme.acrylic-sidebar') && Services.prefs.getBoolPref('zen.theme.acrylic-urlbar'));
     check('glass toolbars are off until asked for', !(await glassOn()));
     await save('normal', 'auto', true);
     await sleep(600);
     check('the Liquid glass switch dresses the browser window', await glassOn());
+    const chromeShot = async (name) => {
+      await m.send('Marionette:SetContext', { value: 'chrome' });
+      const handle = (await m.send('WebDriver:GetWindowHandle')).value;
+      const { value } = await m.send('WebDriver:TakeScreenshot', { full: false, handle });
+      writeFileSync(join(shots, name), Buffer.from(value, 'base64'));
+    };
+    await chromeShot('window-glass.png');
     await save('glass', 'auto', false);
     await sleep(600);
     check('the Liquid glass style counts as asking for it', await glassOn());
     await save('normal', 'auto', false);
     await sleep(600);
     check('and both can be turned off', !(await glassOn()));
+    await chromeShot('window-plain.png');
     await closeTab();
   }
 
@@ -348,6 +357,191 @@ try {
     check('the start page shows it downloaded', /Downloaded/.test(ui), ui);
     await closeTab();
     await m.chrome(() => Services.prefs.clearUserPref('xiao.packs.mirror'));
+  }
+
+  if (want('extras')) {
+    const hidden = () => m.chrome(() => ['media.peerconnection.ice.no_host', 'media.peerconnection.ice.default_address_only', 'media.peerconnection.ice.obfuscate_host_addresses'].map((p) => Services.prefs.getBoolPref(p)));
+    check('this computer\'s address starts hidden', (await hidden()).every(Boolean), JSON.stringify(await hidden()));
+    await xiao(async (Xiao) => {
+      for (const id of ['sendDevice', 'noteWriting', 'clipboard', 'reader', 'sticky']) await Xiao.setFeature({ id, on: true });
+      await Xiao.notes.save({ name: null, text: '# Trip\nPack the #tent and #boots' });
+    });
+    const openSend = async () => {
+      const h = await m.chrome(async () => {
+        const { Xiao } = ChromeUtils.importESModule('resource://xiao/XiaoCore.sys.mjs');
+        const t = await Xiao.send.open(Services.wm.getMostRecentWindow('navigator:browser'));
+        const { NavigableManager } = mod('remote/shared/NavigableManager.sys.mjs');
+        return NavigableManager.getIdForBrowser(t.linkedBrowser);
+      });
+      await loaded(h);
+      return h;
+    };
+    const a = await openSend();
+    await until('the note list', () => m.content(a, () => document.getElementById('note').options.length > 0));
+    check('a Send page opens this computer\'s address to WebRTC', !(await hidden()).some(Boolean), JSON.stringify(await hidden()));
+    const server = await xiao(async (Xiao) => {
+      const code = async (path) => (await fetch(`http://${Xiao.send.host}${path}`).catch(() => ({ status: 0 }))).status;
+      return { right: await code(`${Xiao.send.prefix}index.html`), wrong: await code('/index.html'), out: await code(`${Xiao.send.prefix}../XiaoCore.sys.mjs`), bound: Xiao.send.host.startsWith('127.0.0.1:') };
+    });
+    check('the local server answers only under its secret path, on this computer', server.right === 200 && server.wrong === 404 && server.out === 404 && server.bound, JSON.stringify(server));
+    const offer = await m.content(a, async () => {
+      document.getElementById('make').click();
+      for (let i = 0; i < 60 && !document.querySelector('#offer-qr svg'); i++) await new Promise((r) => setTimeout(r, 200));
+      return { code: document.getElementById('offer-code').value, qr: !!document.querySelector('#offer-qr svg'), said: document.getElementById('status').textContent };
+    });
+    check('sending shows a pairing code and its QR code', offer.code.startsWith('1o') && offer.qr, `${offer.code.slice(0, 20)} ${offer.said}`);
+    const b = await openSend();
+    await until('the second page', () => m.content(b, () => !!document.getElementById('incoming')));
+    const reply = await m.content(b, async (code) => {
+      document.getElementById('incoming').value = code;
+      document.getElementById('answer').click();
+      for (let i = 0; i < 60 && !document.getElementById('answer-out').value; i++) await new Promise((r) => setTimeout(r, 200));
+      return document.getElementById('answer-out').value;
+    }, offer.code);
+    if (process.env.DEBUG_SEND) {
+      const lines = await m.content(a, async (o, r) => {
+        const { decodeSignal } = await import('./lib/nearby.js');
+        const pick = async (c) => (await decodeSignal(c)).sdp.split('\r\n').filter((l) => /^a=(candidate|setup|ice-ufrag|group)|^c=|^m=/.test(l)).map((l) => l.slice(0, 80));
+        return { offer: await pick(o), reply: await pick(r) };
+      }, offer.code, reply);
+      console.log(JSON.stringify(lines, null, 1));
+    }
+    await m.content(a, (reply) => {
+      document.getElementById('answer-code').value = reply;
+      document.getElementById('connect').click();
+    }, reply);
+    await until('the note to be offered', () => m.content(b, () => !document.getElementById('offered').hidden), 30_000).catch(async (e) => {
+      const said = async (h) => m.content(h, () => document.getElementById('status').textContent);
+      throw new Error(`${e.message}; sender says "${await said(a)}"; receiver says "${await said(b)}"; hidden prefs ${JSON.stringify(await hidden())}`);
+    });
+    const offered = await m.content(b, () => {
+      const said = document.getElementById('offered-what').textContent;
+      document.getElementById('accept').click();
+      return said;
+    });
+    const got = await until('the note to arrive', () => m.content(b, () => /Saved/.test(document.getElementById('status').textContent) && document.getElementById('status').textContent), 30_000);
+    const sender = await until('the sender to finish', () => m.content(a, () => /Sent/.test(document.getElementById('status').textContent) && document.getElementById('status').textContent), 15_000);
+    check('a note goes between two Send pages, after the receiver says yes', /Trip/.test(offered) && !!got && !!sender, `${offered} ${got} ${sender}`);
+    const copies = await xiao(async (Xiao) => (await Xiao.notes.list()).filter((n) => /Pack the #tent/.test(n.text)).length);
+    check('and is saved as a note', copies === 2, copies);
+    await closeTab();
+    await closeTab();
+    await sleep(500);
+    check('closing the Send pages hides the address again', (await hidden()).every(Boolean), JSON.stringify(await hidden()));
+    const closed = await xiao((Xiao) => !Xiao.send.server && Xiao.send.origin === '');
+    check('and stops the page\'s local server', closed);
+
+    const tagInfo = await m.chrome(async () => {
+      const { Xiao } = ChromeUtils.importESModule('resource://xiao/XiaoCore.sys.mjs');
+      Xiao.assist.engine = async () => 'A better note #tent';
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const features = Xiao.features;
+      await Xiao.setFeature({ id: 'assist', on: true });
+      Xiao.assist.model = async () => true;
+      await Xiao.notes.openFrom(w);
+      const panel = w.document.getElementById('xiao-sticky-panel');
+      for (let i = 0; i < 30 && panel.state !== 'open'; i++) await new Promise((r) => w.setTimeout(r, 100));
+      const tags = [...panel.querySelectorAll('.xiao-sticky-tag')].map((c) => c.textContent);
+      const paper = panel.querySelector('.xiao-sticky-text');
+      const before = paper.textContent;
+      const select = panel.querySelector('.xiao-sticky-writing select');
+      select.value = 'improve';
+      select.dispatchEvent(new w.Event('change'));
+      for (let i = 0; i < 30 && paper.textContent === before; i++) await new Promise((r) => w.setTimeout(r, 100));
+      const rewritten = paper.textContent;
+      panel.querySelector('.xiao-sticky-writing button').click();
+      const undone = paper.textContent === before;
+      panel.hidePopup();
+      delete Xiao.assist.engine;
+      delete Xiao.assist.model;
+      await Xiao.setFeature({ id: 'assist', on: false });
+      return { tags, rewritten, undone, features: features.noteWriting };
+    });
+    check('the sticky note lists its #tags', tagInfo.tags.includes('#tent') && tagInfo.tags.includes('#boots'), JSON.stringify(tagInfo.tags));
+    check('a writing tool rewrites the note, and Undo puts it back', tagInfo.rewritten === 'A better note #tent' && tagInfo.undone, JSON.stringify(tagInfo));
+
+    const copyPage = await open(`http://127.0.0.1:${port}/probe`);
+    const copy = (text, password) => m.content(copyPage, (text, password) => {
+      const field = document.createElement('input');
+      field.type = password ? 'password' : 'text';
+      field.value = text;
+      document.body.append(field);
+      field.select();
+      field.dispatchEvent(new ClipboardEvent('copy', { bubbles: true }));
+      field.remove();
+    }, text, password);
+    const setClipboard = (text) => m.chrome((text) => Cc['@mozilla.org/widget/clipboardhelper;1'].getService(Ci.nsIClipboardHelper).copyString(text), text);
+    await setClipboard('a copied line');
+    await copy('a copied line', false);
+    await sleep(400);
+    await setClipboard('hunter2');
+    await copy('hunter2', true);
+    await sleep(400);
+    const clips = await xiao((Xiao) => Xiao.clipboard.clips.map((c) => c.text));
+    check('a copy from a page is remembered', clips.includes('a copied line'), JSON.stringify(clips));
+    check('a copy from a password field is not', !clips.includes('hunter2'), JSON.stringify(clips));
+    await closeTab();
+    const cp = await open('resource://xiao/clipboard/index.html');
+    const listed = await until('the clipboard page', () => m.content(cp, () => document.querySelectorAll('#clips li').length));
+    check('the clipboard page lists it', listed >= 1, listed);
+    await m.content(cp, () => document.getElementById('clear').click());
+    await sleep(400);
+    check('Clear all empties it', (await xiao((Xiao) => Xiao.clipboard.clips.length)) === 0);
+    await closeTab();
+    await xiao((Xiao) => Xiao.setFeature({ id: 'clipboard', on: false }));
+
+    const translate = await m.chrome(() => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      return { panel: typeof w.FullPageTranslationsPanel?.open, pref: Services.prefs.getBoolPref('browser.translations.enable') };
+    });
+    check('Firefox\'s local translation is there for the panel to open', translate.panel === 'function' && translate.pref, JSON.stringify(translate));
+
+    const book = zip([
+      ['mimetype', Buffer.from('application/epub+zip')],
+      ['META-INF/container.xml', Buffer.from('<?xml version="1.0"?><container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/book.opf"/></rootfiles></container>')],
+      ['OEBPS/book.opf', Buffer.from('<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" xmlns:dc="http://purl.org/dc/elements/1.1/"><metadata><dc:title>Test Book</dc:title></metadata><manifest><item id="a" href="a.xhtml" media-type="application/xhtml+xml"/><item id="b" href="b.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="a"/><itemref idref="b"/></spine></package>')],
+      ['OEBPS/a.xhtml', Buffer.from(`<html><head><title>A</title><link rel="stylesheet" href="http://127.0.0.1:${port}/tracker.css"/></head><body><h1>Chapter one</h1><img src="http://127.0.0.1:${port}/tracker.png"/><script>parent.scriptRan = 1</script>${'<p>A long paragraph of the book. </p>'.repeat(400)}</body></html>`)],
+      ['OEBPS/b.xhtml', Buffer.from('<html><head><title>B</title></head><body><h1>Chapter two</h1></body></html>')],
+    ]);
+    seen.length = 0;
+    const r = await open('resource://xiao/reader/index.html');
+    const read = await m.content(r, async (bytes) => {
+      const file = new File([Uint8Array.from(atob(bytes), (c) => c.charCodeAt(0))], 'test.epub', { type: 'application/epub+zip' });
+      await window.xiaoReader.open(file);
+      await new Promise((ok) => setTimeout(ok, 300));
+      const frame = document.getElementById('page');
+      const root = frame.contentDocument.documentElement;
+      const first = root.scrollLeft;
+      window.xiaoReader.turn(1);
+      await new Promise((ok) => setTimeout(ok, 100));
+      const second = root.scrollLeft;
+      const chapterOne = frame.contentDocument.body.textContent.includes('Chapter one');
+      document.getElementById('chapter').value = '1';
+      document.getElementById('chapter').dispatchEvent(new Event('change'));
+      await new Promise((ok) => setTimeout(ok, 500));
+      return { title: document.getElementById('title').textContent, first, second, chapterOne, chapterTwo: frame.contentDocument.body.textContent.includes('Chapter two'),
+        script: window.scriptRan ?? null, sandbox: frame.getAttribute('sandbox') };
+    }, Buffer.from(book).toString('base64'));
+    check('the reader opens an EPUB, with its title and chapters', read.title === 'Test Book' && read.chapterOne && read.chapterTwo, JSON.stringify(read));
+    check('a page turn moves on a screen', read.second > read.first, JSON.stringify(read));
+    check('a book can\'t run scripts', read.script === null && read.sandbox === 'allow-same-origin', JSON.stringify(read));
+    check('and can\'t reach the network', !seen.some((u) => /tracker/.test(u)), seen.join(' '));
+    await closeTab();
+    await xiao(async (Xiao) => {
+      for (const id of ['sendDevice', 'noteWriting', 'reader', 'sticky']) await Xiao.setFeature({ id, on: false });
+    });
+  }
+
+  if (want('drm')) {
+    const silentDrm = await xiao(async (Xiao) => {
+      await Xiao.silent.set(true);
+      const before = Services.prefs.getBoolPref('media.gmp-manager.updateEnabled');
+      const version = await Xiao.silent.installDrm().catch((e) => `error: ${e.message}`);
+      const after = Services.prefs.getBoolPref('media.gmp-manager.updateEnabled');
+      await Xiao.silent.set(false);
+      return { before, version, after };
+    });
+    check('in silent mode the Download DRM button fetches Widevine, and only then', silentDrm.before === false && silentDrm.after === false && /^\d+\.\d+/.test(silentDrm.version), JSON.stringify(silentDrm));
   }
 
   if (want('updates')) {

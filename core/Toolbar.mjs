@@ -58,11 +58,17 @@ export class Toolbar {
 
   // Choosing the Liquid glass style counts as asking for the glass toolbars too.
   glassOn(win) {
-    const { glass, style } = this.xiao.settings();
-    win.document.documentElement.toggleAttribute('xiao-glass', glass || style === 'glass');
+    win.document.documentElement.toggleAttribute('xiao-glass', this.wantsGlass());
   }
 
+  wantsGlass() {
+    const { glass, style } = this.xiao.settings();
+    return glass || style === 'glass';
+  }
+
+  // Zen's own translucent sidebar and address bar do the toolbars; chrome.css does the panels.
   applyGlass() {
+    for (const name of ['zen.theme.acrylic-sidebar', 'zen.theme.acrylic-urlbar']) Services.prefs.setBoolPref(name, this.wantsGlass());
     for (const win of Services.wm.getEnumerator('navigator:browser')) this.glassOn(win);
   }
 
@@ -285,6 +291,18 @@ export class Toolbar {
         browser.reloadWithFlags(Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE);
       });
     }
+    const site = /^https?$/.test(browser.currentURI.scheme);
+    const openPage = (url) => {
+      win.gBrowser.selectedTab = win.gBrowser.addTab(url, { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
+    };
+    if (site) {
+      body.append(el('toolbarseparator'));
+      action(this.xiao.silent.on ? 'Translate: needs its language files, which silent mode won\'t fetch' : 'Translate this page', () => win.FullPageTranslationsPanel?.open(new win.Event('command'), false));
+    }
+    if (this.xiao.features.reader) action('Reader', () => openPage('resource://xiao/reader/index.html'));
+    if (this.xiao.features.clipboard) action('Clipboard history', () => openPage('resource://xiao/clipboard/index.html'));
+    if (this.xiao.features.sendDevice) action('Send to a device', () => this.xiao.send.open(win));
+    action('Notes', () => this.xiao.notes.openFrom(win));
     // The downloaded features, each once it is installed.
     const tools = [
       ['library', 'Library', () => this.xiao.openLibrary(win)],
