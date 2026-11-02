@@ -62,6 +62,7 @@ export class Silent {
       const stop = isBackground({
         system: !!li.triggeringPrincipal?.isSystemPrincipal,
         content: !!li.browsingContext?.isContent,
+        saveAs: li.externalContentPolicyType === Ci.nsIContentPolicy.TYPE_SAVEAS_DOWNLOAD,
         host: channel.URI.host,
         redirectedFrom: li.redirectChain.map((e) => e.principal?.URI?.host).filter(Boolean),
       }, new Set(this.asked.keys()));

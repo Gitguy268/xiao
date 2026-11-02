@@ -30,10 +30,11 @@ export function release(list, saved, prefs) {
 const LOCAL = /^(localhost|127\.\d+\.\d+\.\d+|\[?::1\]?)$/;
 
 // Is this a request the browser is making for itself? A tab's page and whatever
-// that page loads are the reader's; so are the hosts of something they just
-// asked for (a download, "Update filters now"), and wherever those redirect.
-// { system, content, host, redirectedFrom: [host] }; asked: Set of hosts.
-export function isBackground({ system, content, host, redirectedFrom = [] }, asked) {
-  if (!system || content || LOCAL.test(host)) return false;
+// that page loads are the reader's; so is "Save Link As" (saveAs), which comes
+// from the browser but only ever because someone asked; so are the hosts of
+// something they just asked for ("Update filters now"), and wherever those redirect.
+// { system, content, saveAs, host, redirectedFrom: [host] }; asked: Set of hosts.
+export function isBackground({ system, content, saveAs, host, redirectedFrom = [] }, asked) {
+  if (!system || content || saveAs || LOCAL.test(host)) return false;
   return !asked.has(host) && !redirectedFrom.some((h) => asked.has(h));
 }

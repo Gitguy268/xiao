@@ -97,4 +97,4 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - run: docker run --rm -e ONLY=shield,bangs,styles,extras -v "$PWD:/xiao:ro" "${{ matrix.image }}" sh /xiao/test/linux/run.sh
+      - run: docker run --rm -e ONLY=shield,bangs,styles,extras,updates -v "$PWD:/xiao:ro" "${{ matrix.image }}" sh /xiao/test/linux/run.sh

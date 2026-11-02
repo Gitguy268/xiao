@@ -6,7 +6,7 @@
 // the blank camera, bangs, start page styles, download problems and updates.
 //
 //   npm run build && npm run e2e:new
-//   ONLY=updates,bangs npm run e2e:new  some sections (shield, bangs, styles, packs, extras, drm, updates)
+//   ONLY=updates,bangs npm run e2e:new  some sections (shield, bangs, styles, packs, extras, silent, drm, updates)
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash, generateKeyPairSync, sign } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -574,6 +574,26 @@ try {
     });
   }
 
+  if (want('silent')) {
+    await xiao((Xiao) => Xiao.silent.set(true));
+    await sleep(300);
+    const typed = await m.chrome(async (url) => {
+      const { Xiao } = ChromeUtils.importESModule('resource://xiao/XiaoCore.sys.mjs');
+      const { NetUtil } = ChromeUtils.importESModule('resource://gre/modules/NetUtil.sys.mjs');
+      const li = NetUtil.newChannel({ uri: url, loadUsingSystemPrincipal: true, contentPolicyType: Ci.nsIContentPolicy.TYPE_SAVEAS_DOWNLOAD }).QueryInterface(Ci.nsIHttpChannel);
+      const plain = NetUtil.newChannel({ uri: url, loadUsingSystemPrincipal: true }).QueryInterface(Ci.nsIHttpChannel);
+      const run = (ch) => new Promise((ok) => {
+        ch.asyncOpen({ onStartRequest() {}, onDataAvailable(r, s, o, c) { const b = Cc['@mozilla.org/binaryinputstream;1'].createInstance(Ci.nsIBinaryInputStream); b.setInputStream(s); b.readBytes(c); }, onStopRequest(r, status) { ok(Components.isSuccessCode(status)); } });
+      });
+      return { saveAs: await run(li), background: await run(plain), on: Xiao.silent.on };
+    }, 'https://example.org/').catch((e) => ({ error: String(e) }));
+    check('silent mode lets "Save Link As" go out, and still stops the browser\'s own requests', typed.saveAs === true && typed.background === false, JSON.stringify(typed));
+    const page = await open(`http://127.0.0.1:${port}/probe`);
+    check('silent mode still loads a page you ask for', await m.content(page, () => document.title === 'probe'));
+    await closeTab();
+    await xiao((Xiao) => Xiao.silent.set(false));
+  }
+
   if (want('drm')) {
     const silentDrm = await xiao(async (Xiao) => {
       await Xiao.silent.set(true);
@@ -667,9 +687,9 @@ try {
     await quit();
     await launch();
     await ready();
-    const appXiao = readFileSync(join(data, 'zen-app'), 'utf8').trim() && join(home, 'Applications/Xiao.app/Contents/Resources/xiao', marker);
+    const appXiao = process.platform === 'darwin' ? join(home, 'Applications/Xiao.app/Contents/Resources/xiao', marker) : join(data, 'app/xiao', marker);
     const updateLog = () => (existsSync(join(data, 'update.log')) ? readFileSync(join(data, 'update.log'), 'utf8').slice(-600) : 'no update.log');
-    check('the next start installs it', process.platform !== 'darwin' || existsSync(appXiao), existsSync(appXiao) ? '' : updateLog());
+    check('the next start installs it', existsSync(appXiao), existsSync(appXiao) ? '' : updateLog());
     await until('the trying marker to clear', () => !existsSync(join(data, 'update/trying')), 30_000);
     check('a good start clears the marker', !existsSync(join(data, 'update/trying')));
     check('the old kit is kept for a rollback', existsSync(join(data, 'kit-previous/install.sh')));

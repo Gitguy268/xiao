@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2 (2 November 2026)
+
+- Silent mode no longer cancels "Save Link As" and "Save Page As", which it had treated as the browser's own requests.
+
 ## 0.5.1 (2 November 2026)
 
 - The first update delivered by Xiao itself, confirming that updating from 0.5.0 works from the public release.

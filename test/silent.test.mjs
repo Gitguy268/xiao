@@ -48,6 +48,16 @@ test('only what the reader asked for gets through, redirects included', () => {
   assert.equal(isBackground({ ...r, host: 'objects.githubusercontent.com', redirectedFrom: ['evil.example'] }, new Set(['github.com'])), true);
 });
 
+test('only the browser\'s own requests count as background', () => {
+  const own = { system: true, content: false, host: 'example.org' };
+  assert.equal(isBackground(own, new Set()), true);
+  assert.equal(isBackground({ ...own, content: true }, new Set()), false);
+  assert.equal(isBackground({ ...own, saveAs: true }, new Set()), false);
+  assert.equal(isBackground({ ...own, host: '127.0.0.1' }, new Set()), false);
+  assert.equal(isBackground(own, new Set(['example.org'])), false);
+  assert.equal(isBackground({ ...own, host: 'cdn.example', redirectedFrom: ['example.org'] }, new Set(['example.org'])), false);
+});
+
 test('silent prefs are never in user.js, so off really is off', () => {
   const inUserJs = buildUserJs('balanced');
   const only = ['network.captive-portal-service.enabled', 'services.settings.poll_interval', 'media.gmp-manager.updateEnabled', 'dom.push.enabled'];
