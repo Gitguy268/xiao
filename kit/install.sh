@@ -125,7 +125,7 @@ if [ "$OS" = Linux ] && { [ -z "$ZEN" ] || [ "$ZEN" = "$DATA/zen/zen" ]; }; then
       *debian*|*ubuntu*) hint="sudo apt install libgtk-3-0 libdbus-glib-1-2 libasound2 libx11-xcb1" ;;
       *fedora*|*rhel*) hint="sudo dnf install gtk3 dbus-glib alsa-lib libXtst" ;;
       *arch*) hint="sudo pacman -S gtk3 dbus-glib alsa-lib" ;;
-      *suse*) hint="sudo zypper install libgtk-3-0 libdbus-glib-1-2 libasound2" ;;
+      *suse*) hint="sudo zypper install libgtk-3-0 libdbus-glib-1-2 libasound2 libX11-xcb1" ;;
       *) hint="Install them with your package manager" ;;
     esac
     die "Zen needs libraries this computer doesn't have: $missing. $hint, and run this again."

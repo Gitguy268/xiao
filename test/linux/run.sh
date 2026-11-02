@@ -29,7 +29,7 @@ case $family in
     pacman -Sy --noconfirm --quiet curl xz zip unzip procps-ng lsof gtk3 dbus-glib alsa-lib >/dev/null
     ;;
   *suse*)
-    zypper -q --non-interactive install curl ca-certificates xz zip unzip procps util-linux lsof tar gzip libgtk-3-0 libdbus-glib-1-2 libasound2 >/dev/null
+    zypper -q --non-interactive install curl ca-certificates xz zip unzip procps util-linux lsof tar gzip libgtk-3-0 libdbus-glib-1-2 libasound2 libX11-xcb1 >/dev/null
     ;;
   *) echo "no recipe for $family" >&2; exit 2 ;;
 esac

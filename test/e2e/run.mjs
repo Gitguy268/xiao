@@ -333,7 +333,7 @@ try {
 
     // "New Tor circuit for this site" (toolbar panel): the next load of the site uses another exit.
     const exits = [viaTor.IP];
-    for (let i = 0; i < 3 && exits.at(-1) === viaTor.IP; i++) {
+    for (let i = 0; i < 8 && exits.at(-1) === viaTor.IP; i++) { // tor may pick the same exit again
       await m.chrome(() => ChromeUtils.importESModule('resource://xiao/XiaoCore.sys.mjs').Xiao.tor.newCircuit('check.torproject.org'));
       await m.content(torTab, () => location.reload());
       await sleep(1000);
@@ -493,10 +493,13 @@ try {
     const wait = (ms) => new Promise((r) => w.setTimeout(r, ms));
     let view;
     const show = async () => {
-      CustomizableUI.getWidget('xiao-notes-button').forWindow(w).node.doCommand(); // the button's own click path
-      for (let i = 0; i < 30 && !w.document.getElementById('xiao-sticky-panel'); i++) await wait(100);
-      view = w.document.getElementById('xiao-sticky-panel');
-      for (let i = 0; i < 30 && view.state !== 'open'; i++) await wait(100);
+      // A slow machine can roll a panel up as it opens, so this has two tries.
+      for (let tries = 0; tries < 2 && view?.state !== 'open'; tries++) {
+        CustomizableUI.getWidget('xiao-notes-button').forWindow(w).node.doCommand(); // the button's own click path
+        for (let i = 0; i < 30 && !w.document.getElementById('xiao-sticky-panel'); i++) await wait(100);
+        view = w.document.getElementById('xiao-sticky-panel');
+        for (let i = 0; i < 30 && view.state !== 'open'; i++) await wait(100);
+      }
     };
     const type = async (text) => {
       const paper = view.querySelector('.xiao-sticky-text');
@@ -2064,7 +2067,14 @@ try {
     if (WIN) launcher.kill(); else process.kill(-launcher.pid);
   } catch {}
   if (MAC) execFileSync('chflags', ['-R', 'nouchg', home], { stdio: 'ignore' }); // the locked-file check's flag, if a run stopped before removing it
-  if (!process.env.E2E_KEEP) rmSync(home, { recursive: true, force: true, maxRetries: 5 });
+  // Windows can hold files in a closing app for a while; a leftover temp folder isn't a failure.
+  if (!process.env.E2E_KEEP) {
+    try {
+      rmSync(home, { recursive: true, force: true, maxRetries: 10, retryDelay: 1000 });
+    } catch (e) {
+      console.log(`could not remove ${home}: ${e.message}`);
+    }
+  }
 }
 
 const failed = results.filter((r) => !r.ok);

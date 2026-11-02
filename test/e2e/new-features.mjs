@@ -145,7 +145,8 @@ try {
     const b = await probe('localhost');
     console.log('     ', JSON.stringify(a), '\n     ', JSON.stringify(b));
     const same = (x, y, keys) => keys.every((k) => x[k] === y[k]);
-    const FIELDS = ['audio', 'copyAudio', 'canvasData', 'canvasPixels', 'webgl'];
+    const FIELDS = ['audio', 'copyAudio', 'canvasData', 'canvasPixels', ...(a.webgl ? ['webgl'] : [])];
+    if (!a.webgl) console.log('SKIP webgl: this computer has no WebGL to measure');
     check('a site reads the same values twice in a session', same(a, a2, [...FIELDS, 'cores']), JSON.stringify(FIELDS.filter((k) => a[k] !== a2[k])));
     for (const k of FIELDS) check(`${k} differs between two sites`, a[k] !== b[k], `${a[k]} / ${b[k]}`);
     check('the core count is never more than the real one', a.cores >= 2 && a.cores <= 16 && b.cores >= 2, `${a.cores}, ${b.cores}`);

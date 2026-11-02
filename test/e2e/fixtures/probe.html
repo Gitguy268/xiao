@@ -24,12 +24,14 @@ window.probe = async () => {
   r.canvasData = await hash(new TextEncoder().encode(c.toDataURL()));
   r.canvasPixels = await hash(x.getImageData(0, 0, 200, 60).data.buffer);
   r.canvasRed = x.getImageData(160, 20, 1, 1).data[0];
-  const g = document.createElement('canvas').getContext('webgl');
-  g.clearColor(0.2, 0.4, 0.6, 1);
-  g.clear(g.COLOR_BUFFER_BIT);
-  const p = new Uint8Array(64);
-  g.readPixels(0, 0, 4, 4, g.RGBA, g.UNSIGNED_BYTE, p);
-  r.webgl = await hash(p.buffer);
+  const g = document.createElement('canvas').getContext('webgl'); // none without a graphics card
+  if (g) {
+    g.clearColor(0.2, 0.4, 0.6, 1);
+    g.clear(g.COLOR_BUFFER_BIT);
+    const p = new Uint8Array(64);
+    g.readPixels(0, 0, 4, 4, g.RGBA, g.UNSIGNED_BYTE, p);
+    r.webgl = await hash(p.buffer);
+  }
   r.audio = await window.audioHash();
   const buf = await render();
   const copy = new Float32Array(4410);
