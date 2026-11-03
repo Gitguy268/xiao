@@ -38,6 +38,6 @@
   "dependencies": {
     "@ghostery/adblocker": "^2.20.1",
     "@ghostery/adblocker-content": "^2.20.1",
-    "@ghostery/adblocker-extended-selectors": "^2.20.1"
+    "@ghostery/adblocker-extended-selectors": "^2.20.3"
   }
 }
