@@ -29,7 +29,7 @@ jobs:
           $errors = $null
           [System.Management.Automation.Language.Parser]::ParseFile("$PWD/kit/install.ps1", [ref]$null, [ref]$errors) | Out-Null
           if ($errors) { $errors; exit 1 }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: xiao-kit
           path: dist/xiao-kit.zip
@@ -74,7 +74,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: e2e-screenshots-${{ matrix.os }}
