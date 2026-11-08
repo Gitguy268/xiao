@@ -59,6 +59,8 @@ function render() {
 function count() {
   for (const id of [...ticked]) if (!all.tabs.some((t) => t.id === id)) ticked.delete(id);
   $('count').textContent = `${ticked.size} ticked, ${shown.length} shown of ${all.tabs.length}`;
+  // with nothing ticked, Group means every tab shown, by site: the button says so
+  document.querySelector('[data-act="group"]').textContent = ticked.size ? 'Group' : 'Group shown by site';
   $('all').checked = shown.length > 0 && shown.filter((t) => !t.pinned && !t.essential).every((t) => ticked.has(t.id));
 }
 

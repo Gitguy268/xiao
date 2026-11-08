@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1 (8 November 2026)
+
+- The PDF tools button on about:pdf in a private window brings the normal window it opens in to the front.
+- Muted sites are muted again in tabs restored before Xiao had read its settings.
+- On the All tabs page, Group with nothing ticked says "Group shown by site", and a grouping that makes no folders keeps the last "Undo tab groups".
+
 ## 0.6.0 (8 November 2026)
 
 - **Built on Zen 1.24.1b (Firefox 159.0.1).** New from Zen and Firefox: import of spaces and profiles from Arc and Dia (and Xiao's start page has a button for it), Boost focus and sharing, Paste & Search, tabs added and removed from the Library, a sign for tabs you can't see, grain in the theme picker, shortcuts at about:keyboard (the start page's link goes there), and Firefox's **about:pdf**.
