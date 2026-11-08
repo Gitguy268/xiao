@@ -2,85 +2,46 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// about:pdf-tools, Xiao's PDF tools page, next to Firefox's own about:pdf
-// (Firefox 159, so Zen 1.24): about:pdf opens a PDF in Firefox's viewer, which
-// reorders, merges, signs and annotates; about:pdf-tools adds what the viewer
-// doesn't do (booklets, pages per sheet, page numbers, passwords, attachments,
-// keeping or turning some pages) and the PDFs downloaded lately. XiaoChild
-// puts a link to it on about:pdf.
+// Xiao's PDF tools page, next to Firefox's own about:pdf (Firefox 159, so
+// Zen 1.24). about:pdf opens a PDF in Firefox's viewer, which reorders,
+// merges, signs and annotates. Xiao's page adds what the viewer doesn't do
+// (booklets, pages per sheet, page numbers, passwords, attachments, keeping
+// or turning some pages) and the PDFs downloaded lately. XiaoChild puts a
+// button to it on about:pdf.
 //
-// The address stays about:pdf-tools while the page underneath is one of two:
+// The page is one of two:
 // - the PDF tools pack's page (resource://xiao-pdf/index.html) when that pack
 //   is downloaded and switched on;
 // - otherwise a small page built into Xiao (resource://xiao/pdf/index.html)
 //   that offers the download and the viewer.
-// Either page keeps the principal of its resource:// address, the same as
-// Xiao's start page, so it never runs with the browser's own privileges.
-// Web pages can't link to it (no URI_SAFE_FOR_UNTRUSTED_CONTENT); typing it,
-// about:pdf, the Xiao panel, bangs and the command bar open it.
+// It has no about: address of its own: a page with an about: principal may
+// not load resource:// files, and giving it a resource:// principal under an
+// about: address makes Firefox drop the load. Web pages can't open
+// resource:// addresses; about:pdf, the Xiao panel, !pdf and the command bar do.
 import { mod } from './mod.mjs';
 
-export const PDF_ABOUT = 'about:pdf-tools';
 export const FIREFOX_PDF = 'about:pdf';
 export const PDF_HOME_URL = 'resource://xiao/pdf/index.html';
 export const PDF_PACK_URL = 'resource://xiao-pdf/index.html';
-const CONTRACT = '@mozilla.org/network/protocol/about;1?what=pdf-tools';
-const PROCESS_SCRIPT = 'resource://xiao/pdf/process.js';
-const CID = Components.ID('{5b0b7c38-1d1e-4d0e-9c55-5f1f2b0e8a61}');
 const res = () => Services.io.getProtocolHandler('resource').QueryInterface(Ci.nsIResProtocolHandler);
-const registrar = () => Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
 const TEMP = () => PathUtils.join(PathUtils.tempDir, 'xiao-pdf');
 const MAX = 200 * 1024 * 1024; // the largest PDF handed over in one piece
 
 export class AboutPdf {
   constructor(xiao) {
     this.xiao = xiao;
-    this.handoffs = new Map(); // browsing context id → { name, bytes }, waiting for that about:pdf-tools tab
+    this.handoffs = new Map(); // browsing context id → { name, bytes }, waiting for that tools tab
+    IOUtils.remove(TEMP(), { recursive: true, ignoreAbsent: true }).catch(() => {}); // last session's viewer copies
   }
 
-  // The page under about:pdf-tools right now.
+  // Xiao's page right now: the tools when served, else the page that offers them.
   target() {
     return res().hasSubstitution('xiao-pdf') ? PDF_PACK_URL : PDF_HOME_URL;
   }
 
-  register() {
-    if (registrar().isContractIDRegistered(CONTRACT)) return;
-    const about = this;
-    this.factory = {
-      createInstance(iid) {
-        return about.module.QueryInterface(iid);
-      },
-      QueryInterface: ChromeUtils.generateQI(['nsIFactory']),
-    };
-    this.module = {
-      newChannel(uri, loadInfo) {
-        const channel = Services.io.newChannelFromURIWithLoadInfo(Services.io.newURI(about.target()), loadInfo);
-        channel.originalURI = uri;
-        return channel;
-      },
-      getURIFlags() {
-        return Ci.nsIAboutModule.ALLOW_SCRIPT | Ci.nsIAboutModule.URI_MUST_LOAD_IN_CHILD | Ci.nsIAboutModule.HIDE_FROM_ABOUTABOUT;
-      },
-      getChromeURI() {
-        return Services.io.newURI(about.target());
-      },
-      QueryInterface: ChromeUtils.generateQI(['nsIAboutModule']),
-    };
-    registrar().registerFactory(CID, 'Xiao about:pdf-tools', CONTRACT, this.factory);
-    this.publish();
-    Services.ppmm.loadProcessScript(PROCESS_SCRIPT, true); // the same module in every content process
-    IOUtils.remove(TEMP(), { recursive: true, ignoreAbsent: true }).catch(() => {}); // last session's viewer copies
-  }
-
-  // The content processes read which page is under the address from here.
-  publish() {
-    Services.ppmm.sharedData.set('xiao:pdfTarget', this.target());
-  }
-
-  unregister() {
-    Services.ppmm.removeDelayedProcessScript(PROCESS_SCRIPT);
-    if (this.factory) registrar().unregisterFactory(CID, this.factory);
-    this.factory = null;
+  isPage(uri) {
+    const bare = String(uri).split(/[?#]/)[0];
+    return bare === PDF_HOME_URL || bare === PDF_PACK_URL;
   }
 
   // Firefox's about:pdf where this Zen has it (Firefox 159 and later), else Xiao's page.
@@ -91,9 +52,9 @@ export class AboutPdf {
     return tab;
   }
 
-  // Opens about:pdf-tools in a new tab of win. bytes, when given, wait there for the page to ask.
+  // Opens Xiao's PDF tools in a new tab of win. bytes, when given, wait there for the page to ask.
   open(win, handoff) {
-    const tab = win.gBrowser.addTab(PDF_ABOUT, { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
+    const tab = win.gBrowser.addTab(this.target(), { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
     win.gBrowser.selectedTab = tab;
     if (handoff) this.handoffs.set(tab.linkedBrowser.browsingContext.id, handoff);
     return tab;
@@ -119,7 +80,7 @@ export class AboutPdf {
       }
       bytes = await this.fetchAs(uri, browser.contentPrincipal);
     } else {
-      throw new Error('Save the PDF first, then open it in about:pdf-tools.');
+      throw new Error('Save the PDF first, then open it in Xiao\'s PDF tools.');
     }
     return this.open(win, { name: /\.pdf$/i.test(name) ? name : `${name}.pdf`, bytes });
   }
@@ -158,11 +119,11 @@ export class AboutPdf {
     return found;
   }
 
-  // The page's calls (XiaoParent: only a top-level about:pdf-tools, never in a Tor tab or a private window).
+  // The page's calls (XiaoParent: only Xiao's PDF page at the top of a tab, never in a Tor tab or a private window).
   async page(name, data, browsingContext) {
     if (name === 'pdf.state') {
       const p = (await this.xiao.packs.list()).find((x) => x.id === 'pdf');
-      return { pack: this.target() === PDF_PACK_URL, installed: !!p?.installed, on: !!p?.on, size: p?.size ?? '', busy: p?.done !== undefined && !p?.installed, error: p?.error ?? '' };
+      return { pack: this.target() === PDF_PACK_URL, url: this.target(), installed: !!p?.installed, on: !!p?.on, size: p?.size ?? '', busy: p?.done !== undefined && !p?.installed, error: p?.error ?? '' };
     }
     if (name === 'pdf.get') return void await this.xiao.setFeature({ id: 'pdf', on: true });
     if (name === 'pdf.recent') return this.recent();

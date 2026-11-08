@@ -2,11 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// about:pdf-tools with the PDF tools pack: pick a PDF (a file, a drop, one
+// Xiao's PDF tools page: pick a PDF (a file, a drop, one
 // downloaded lately or one handed over from the viewer), pick a tool, get the
-// new file back as a download. window.xiao is there only when the page is
-// opened as about:pdf-tools; opened by its resource:// address it still works, with
-// no recent list and no viewer button.
+// new file back as a download.
 import { pageCount, TOOLS } from './tools.mjs';
 
 const $ = (id) => document.getElementById(id);

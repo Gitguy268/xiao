@@ -138,6 +138,12 @@ const torAlive = () => pidAlive('tor.pid');
 let m;
 try {
   m = await Marionette.connect(2828, 90_000);
+  // Downloads stay in the throwaway home: macOS gives Firefox the real ~/Downloads whatever HOME says.
+  await m.chrome((dir) => {
+    Services.prefs.setStringPref('browser.download.dir', dir);
+    Services.prefs.setIntPref('browser.download.folderList', 2);
+    Services.prefs.setBoolPref('browser.download.useDownloadDir', true);
+  }, join(home, 'Downloads')).catch(() => {}); // before Xiao is up, Marionette may need a moment
 
   const openTab = async (url, { tor = false } = {}) => m.chrome(async (url, tor) => {
     const { ContextualIdentityService } = mod('toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs');

@@ -72,6 +72,7 @@ const port = server.address().port;
 
 // --- throwaway home ---
 const home = mkdtempSync(join(process.env.RUNNER_TEMP ?? tmpdir(), 'xiao-new-'));
+mkdirSync(join(home, 'Downloads'));
 const { publicKey, privateKey } = generateKeyPairSync('ed25519');
 const rawKey = publicKey.export({ type: 'spki', format: 'der' }).subarray(-32).toString('base64');
 const env = {
@@ -87,6 +88,12 @@ let launcher;
 const launch = async () => {
   launcher = spawn(join(data, 'xiao-launch'), ['--marionette', '--remote-allow-system-access', '--headless'], { env, stdio: 'ignore', detached: true });
   m = await Marionette.connect(2828, 120_000);
+  // Downloads stay in the throwaway home: macOS gives Firefox the real ~/Downloads whatever HOME says.
+  await m.chrome((dir) => {
+    Services.prefs.setStringPref('browser.download.dir', dir);
+    Services.prefs.setIntPref('browser.download.folderList', 2);
+    Services.prefs.setBoolPref('browser.download.useDownloadDir', true);
+  }, join(home, 'Downloads')).catch(() => {}); // before Xiao is up, Marionette may need a moment
 };
 const quit = async () => {
   try { await m.send('Marionette:Quit'); } catch {}
@@ -384,23 +391,33 @@ try {
     }), 15_000).catch((e) => e.message);
     check('Firefox\'s about:pdf is there, with a button to Xiao\'s PDF tools and no way to reach Xiao from the page', firefox?.dropzone && /More PDF tools/.test(firefox.label) && firefox.bridge === 'undefined', JSON.stringify(firefox));
     await m.content(h, () => document.querySelector('#xiao-pdf-tools moz-button').click());
-    const went = await until('about:pdf-tools to open', () => m.chrome(() => Services.wm.getMostRecentWindow('navigator:browser').gBrowser.selectedBrowser.currentURI.spec === 'about:pdf-tools'), 10_000).catch(() => false);
-    check('the button opens about:pdf-tools', went === true);
+    const went = await until('the PDF tools to open', () => m.chrome(() => Services.wm.getMostRecentWindow('navigator:browser').gBrowser.selectedBrowser.currentURI.spec === 'resource://xiao/pdf/index.html'), 10_000).catch(() => false);
+    check('the button opens Xiao\'s PDF tools', went === true);
     await closeTab();
     await closeTab();
-    // without the pack: Xiao's own page, under the about:pdf-tools address
-    h = await open('about:pdf-tools');
+    // without the pack: Xiao's page that offers the download
+    h = await m.chrome(() => {
+      const { Xiao } = ChromeUtils.importESModule('resource://xiao/XiaoCore.sys.mjs');
+      const tab = Xiao.aboutPdf.open(Services.wm.getMostRecentWindow('navigator:browser'));
+      const { NavigableManager } = mod('remote/shared/NavigableManager.sys.mjs');
+      return NavigableManager.getIdForBrowser(tab.linkedBrowser);
+    });
+    await loaded(h);
     const bare = await m.content(h, async () => {
       await new Promise((r) => setTimeout(r, 800));
       return { uri: document.documentURI, title: document.title, get: !!document.getElementById('get'), bridge: typeof window.xiao?.call, origin: window.origin, size: document.getElementById('size')?.textContent };
     });
-    check('about:pdf-tools opens Xiao\'s own page before the PDF tools are downloaded, at its about: address, as an ordinary page', bare.uri === 'about:pdf-tools' && bare.title === 'PDF tools' && bare.get && bare.bridge === 'function' && bare.origin === 'resource://xiao', JSON.stringify(bare));
+    const plain = await m.chrome(() => {
+      const p = Services.wm.getMostRecentWindow('navigator:browser').gBrowser.selectedBrowser.contentPrincipal;
+      return { origin: p.origin, system: p.isSystemPrincipal, content: p.isContentPrincipal };
+    });
+    check('before the download, Xiao\'s PDF page offers it, as an ordinary page', bare.uri === 'resource://xiao/pdf/index.html' && bare.title === 'PDF tools' && bare.get && bare.bridge === 'function' && bare.size !== 'a few hundred KB' && !plain.system && plain.content, JSON.stringify({ ...bare, ...plain }));
     // the download from the page, then the page turns into the tools by itself
     await m.chrome((u) => Services.prefs.setStringPref('xiao.packs.mirror', u), `http://127.0.0.1:${port}/mirror/`);
     mirrorMode = 'ok';
     await m.content(h, () => document.getElementById('get').click());
-    const tools = await until('about:pdf-tools to become the tools', () => m.content(h, () => !!document.getElementById('work') && document.documentURI === 'about:pdf-tools' && window.origin), 60_000).catch((e) => e.message);
-    check('"Get the PDF tools" downloads them and about:pdf-tools reloads into them', tools === 'resource://xiao-pdf', String(tools));
+    const tools = await until('the page to become the tools', () => m.content(h, () => !!document.getElementById('work') && document.documentURI === 'resource://xiao-pdf/index.html' && document.title), 60_000).catch((e) => e.message);
+    check('"Get the PDF tools" downloads them and the page turns into them', tools === 'PDF tools', String(tools));
     await closeTab();
     // a PDF handed over, then merged with a second one picked in the page
     const [two, three] = [await pdfOf(2), await pdfOf(3)];
@@ -413,9 +430,9 @@ try {
     }, two);
     await loaded(h);
     const handed = await until('the handed-over PDF', () => m.content(h, () => document.getElementById('file-info').textContent), 15_000).catch((e) => e.message);
-    check('a PDF handed to about:pdf-tools shows its name and page count', /^2 pages/.test(handed), handed);
+    check('a PDF handed to the PDF tools shows its name and page count', /^2 pages/.test(handed), handed);
     const merged = await m.content(h, async (b64) => {
-      const doc = window.wrappedJSObject.document;
+      const doc = window.wrappedJSObject?.document ?? document;
       document.querySelector('[value="merge"]').click();
       const dt = new DataTransfer();
       dt.items.add(new File([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'three.pdf', { type: 'application/pdf' }));
@@ -436,9 +453,9 @@ try {
     check('Merge gives back one PDF with every page of both', /^Done/.test(merged) && file && (await pages(file.b64)) === 5, `${merged} ${file ? await pages(file.b64) : 'no file'}`);
     await closeTab();
     // downloaded lately, and the viewer
-    h = await open('about:pdf-tools');
+    h = await open('resource://xiao-pdf/index.html');
     const recent = await until('the recent list', () => m.content(h, () => [...document.querySelectorAll('#recent button')].map((b) => b.textContent)), 10_000).catch(() => []);
-    check('about:pdf-tools lists the PDF just downloaded', recent.some((n) => /\(merge\)\.pdf$/.test(n)), JSON.stringify(recent));
+    check('the PDF tools list the PDF just downloaded', recent.some((n) => /\(merge\)\.pdf$/.test(n)), JSON.stringify(recent));
     const viewer = await m.content(h, async () => {
       document.querySelector('#recent button').click();
       for (let i = 0; i < 20 && !/pages/.test(document.getElementById('file-info').textContent); i++) await new Promise((r) => setTimeout(r, 250));
@@ -459,15 +476,15 @@ try {
     });
     await loaded(h);
     const back = await until('the PDF from the viewer', () => m.content(h, () => document.getElementById('file-info').textContent), 15_000).catch((e) => e.message);
-    check('"More tools for this PDF" brings the viewer\'s PDF over to about:pdf-tools', /^5 pages/.test(back), back);
+    check('"More tools for this PDF" brings the viewer\'s PDF over to the PDF tools', /^5 pages/.test(back), back);
     await closeTab();
     await closeTab();
-    // a web page can't take a tab to about:pdf-tools
+    // a web page can't take a tab to Xiao's PDF page
     h = await open(`http://127.0.0.1:${port}/probe`);
-    await m.content(h, () => { try { location.href = 'about:pdf-tools'; } catch {} });
+    await m.content(h, () => { try { location.href = 'resource://xiao-pdf/index.html'; } catch {} });
     await sleep(1500);
     const stayed = await m.content(h, () => document.documentURI);
-    check('a web page can\'t open about:pdf-tools', stayed !== 'about:pdf-tools', stayed);
+    check('a web page can\'t open Xiao\'s PDF page', !stayed.startsWith('resource:'), stayed);
     await closeTab();
     const bang = await xiao((Xiao) => Xiao.bangs.resolve('!pdf'));
     check('!pdf opens about:pdf', bang?.action === 'pdf', JSON.stringify(bang));

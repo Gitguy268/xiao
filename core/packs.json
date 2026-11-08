@@ -307,10 +307,10 @@
   "licence": "MPL-2.0; pdf-lib MIT",
   "files": [
    {
-    "path": "pdf-1d9404b2.zip",
-    "url": "https://github.com/Gitguy268/xiao/releases/download/packs/pdf-1d9404b2.zip",
-    "sha256": "1d9404b24830e4211780532adf6bef3bac90001a32334839c4777da8198af213",
-    "size": 325031,
+    "path": "pdf-1ac2bc46.zip",
+    "url": "https://github.com/Gitguy268/xiao/releases/download/packs/pdf-1ac2bc46.zip",
+    "sha256": "1ac2bc46d438919bf8e7017e9bf9cba338fc9956e8a2c819f3b5a35d4653bc9c",
+    "size": 324954,
     "unzip": true
    }
   ]

@@ -152,6 +152,7 @@ async function init() {
     if (r) $('portable-note').textContent = `Saved ${r.saved}: ${r.spaces.length} spaces, ${r.urls.length} addresses, ${r.collections.length} collections.`;
   });
   $('import').addEventListener('click', showImport);
+  $('import-browser').addEventListener('click', () => ask('import.browser'));
   wireImport();
   $('settings-form').search.addEventListener('change', (e) => {
     $('custom-row').hidden = e.target.value !== 'custom';

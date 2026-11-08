@@ -20,7 +20,7 @@ const ASSIST_URL = 'resource://xiao/assist/index.html';
 const ASSIST_HOST_URL = 'resource://xiao-notes-ai/assist-host.html';
 const BOARD_URL = 'resource://xiao/board/index.html';
 const CLIPBOARD_URL = 'resource://xiao/clipboard/index.html';
-const PDF_ABOUT = 'about:pdf-tools';
+const PDF_PAGES = ['resource://xiao/pdf/index.html', 'resource://xiao-pdf/index.html'];
 const USER_SHEET = Ci.nsIStyleSheetService.USER_SHEET;
 const sss = Cc['@mozilla.org/content/style-sheet-service;1'].getService(Ci.nsIStyleSheetService);
 const cssUri = (css) => Services.io.newURI(`data:text/css;charset=utf-8,${encodeURIComponent(css)}`);
@@ -37,7 +37,7 @@ export class XiaoChild extends JSWindowActorChild {
         case 'DOMWindowCreated':
           this.shield();
           if (this.inTor()) this.removeWebRTC();
-          if (([START_URL, ORGANISE_URL, ASSIST_URL, ASSIST_HOST_URL, BOARD_URL, CLIPBOARD_URL, Services.cpmm.sharedData.get('xiao:sendOrigin')].filter(Boolean).some((u) => uri.startsWith(u)) || uri.split(/[?#]/)[0] === PDF_ABOUT) && !this.browsingContext.parent) this.exposeApi();
+          if (([START_URL, ORGANISE_URL, ASSIST_URL, ASSIST_HOST_URL, BOARD_URL, CLIPBOARD_URL, Services.cpmm.sharedData.get('xiao:sendOrigin')].filter(Boolean).some((u) => uri.startsWith(u)) || PDF_PAGES.includes(uri.split(/[?#]/)[0])) && !this.browsingContext.parent) this.exposeApi();
           if (uri.split(/[?#]/)[0] === LIBRARY_URL && !this.browsingContext.parent) this.exposeLibrary();
           break;
         case 'DOMDocElementInserted':
@@ -190,7 +190,7 @@ export class XiaoChild extends JSWindowActorChild {
   }
 
   // Firefox's about:pdf opens PDFs in its viewer; a button under its drop
-  // zone opens Xiao's about:pdf-tools. The page itself can't reach Xiao: the
+  // zone opens Xiao's PDF tools. The page itself can't reach Xiao: the
   // click is heard here, and the parent checks it came from about:pdf.
   pdfToolsLink() {
     const doc = this.document;

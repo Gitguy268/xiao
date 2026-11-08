@@ -5,13 +5,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <!-- shown as about:pdf-tools: relative addresses still mean this pack's folder -->
-  <base href="resource://xiao-pdf/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PDF tools</title>
   <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="pdf.css">
-  <script src="pdf.bundle.js" type="module"></script>
+  <script src="pdf.bundle.js" defer></script>
 </head>
 <body>
   <main>
@@ -56,8 +54,8 @@
 
       <form id="options" class="options">
         <div data-for="merge"><label>PDFs to add after this one, in this order <input name="files" type="file" accept="application/pdf,.pdf" multiple></label></div>
-        <div data-for="extract"><label>Pages to keep, e.g. 1-3, 5 <input name="pages" type="text" required></label></div>
-        <div data-for="remove"><label>Pages to remove, e.g. 2, 7- <input name="pages" type="text" required></label></div>
+        <div data-for="extract"><label>Pages to keep, e.g. 1-3, 5 <input name="pages" type="text"></label></div>
+        <div data-for="remove"><label>Pages to remove, e.g. 2, 7- <input name="pages" type="text"></label></div>
         <div data-for="rotate">
           <label>Pages, or leave empty for all <input name="pages" type="text"></label>
           <label>Turn <select name="angle"><option value="90">a quarter, clockwise</option><option value="180">upside down</option><option value="270">a quarter, anticlockwise</option></select></label>

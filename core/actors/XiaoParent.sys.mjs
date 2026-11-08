@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // The parent-process half of the Xiao actor: answers XiaoChild in each frame.
-import { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, CLIPBOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL, PDF_ABOUT, Xiao } from 'resource://xiao/XiaoCore.sys.mjs';
+import { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, CLIPBOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL, Xiao } from 'resource://xiao/XiaoCore.sys.mjs';
 
 export class XiaoParent extends JSWindowActorParent {
   async receiveMessage({ name, data }) {
@@ -24,7 +24,7 @@ export class XiaoParent extends JSWindowActorParent {
       const from = uri.startsWith(Xiao.START_URL) ? 'start' : uri.startsWith(Xiao.ORGANISE_URL) ? 'organise'
         : Xiao.send.origin && uri.startsWith(Xiao.send.origin) && ordinary ? 'send'
         : uri.startsWith(CLIPBOARD_URL) && ordinary ? 'clipboard'
-        : uri.split(/[?#]/)[0] === PDF_ABOUT && ordinary ? 'pdf'
+        : Xiao.aboutPdf.isPage(uri) && ordinary ? 'pdf'
         : uri.startsWith(ASSIST_URL) && !bc.usePrivateBrowsing && bc.originAttributes.userContextId !== Xiao.tor.torId ? 'assist'
           : uri.split(/[?#]/)[0] === BOARD_URL && !bc.usePrivateBrowsing && bc.originAttributes.userContextId !== Xiao.tor.torId ? 'board'
           // the model's page, only in the hidden tab Xiao made for it

@@ -6,7 +6,7 @@
 // folder) loads this module at startup, in the kit's copy of Zen and in the
 // fork alike. There is no extension to disable: blocking, Tor routing, the
 // start page and the toolbar panel all live here.
-import { AboutPdf, PDF_ABOUT } from './AboutPdf.mjs';
+import { AboutPdf } from './AboutPdf.mjs';
 import { Archive, CHOICES as ARCHIVE_HOURS } from './Archive.mjs';
 import { Bangs } from './Bangs.mjs';
 import { Clipboard, CLIPBOARD_URL } from './Clipboard.mjs';
@@ -33,7 +33,7 @@ import { parseOwnBangs } from './lib/bangs.mjs';
 import { rewriteMessages } from './lib/write.mjs';
 import { mod } from './mod.mjs';
 
-export { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, CLIPBOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL, PDF_ABOUT };
+export { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, CLIPBOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL };
 
 const STORE = () => PathUtils.join(PathUtils.profileDir, 'xiao.json');
 
@@ -107,7 +107,6 @@ export const Xiao = {
     this.send = new Send();
     this.clipboard = new Clipboard(this);
     this.aboutPdf = new AboutPdf(this);
-    this.aboutPdf.register();
     this.searchUrl = Services.prefs.getStringPref('xiao.search.url', '');
     setDefaults();
     this.tor.start();
@@ -136,7 +135,6 @@ export const Xiao = {
   },
 
   observe(subject, topic, data) {
-    if (topic === 'xiao-pack-installed') this.aboutPdf.publish(); // about:pdf-tools turns into the tools
     if (topic === 'xiao-pack-installed' && data === 'library') {
       this.syncLibrary();
       for (const win of Services.wm.getEnumerator('navigator:browser')) this.zenFiles.attach(win);
@@ -262,7 +260,6 @@ export const Xiao = {
       if (this.packOn(id)) this.packs.map(id);
       else this.packs.unmap(id);
     }
-    this.aboutPdf?.publish();
   },
 
   // The Library's download hook runs only while its pack is there (or downloading).
@@ -349,6 +346,8 @@ export const Xiao = {
     if (name === 'export') return this.portable.export(browsingContext.topChromeWindow);
     if (name === 'import.pick') return this.portable.pick(browsingContext.topChromeWindow);
     if (name === 'import.apply') return this.portable.apply(browsingContext.topChromeWindow);
+    // Zen's importer (Zen 1.24 reads Arc's and Dia's spaces and profiles); it reads files on this computer only
+    if (name === 'import.browser') return void mod('browser/components/migration/MigrationUtils.sys.mjs').MigrationUtils.showMigrationWizard(browsingContext.topChromeWindow, {});
     if (name === 'feature') {
       await this.setFeature(data ?? {});
       return this.featureState();

@@ -105,7 +105,9 @@ for (const dir of MODELS) {
 const bundled = await build({
   entryPoints: [at('packs/pdf/pdf.js')],
   bundle: true,
-  format: 'esm',
+  // a classic script: under about:pdf-tools the page's principal is about:pdf-tools,
+  // and a module script from resource:// would count as cross-origin
+  format: 'iife',
   target: 'firefox140',
   write: false,
   minify: true,

@@ -2,15 +2,16 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// about:pdf-tools before the PDF tools are downloaded (or while they are switched
+// Xiao's PDF page before the PDF tools are downloaded (or while they are switched
 // off): offers the download, then reloads into the tools once they are served.
+(() => {
 const $ = (id) => document.getElementById(id);
 const call = (name, data) => window.xiao.call(name, data);
 const say = (text) => { $('status').textContent = text; };
 
 async function refresh() {
   const s = await call('pdf.state');
-  if (s.pack) return void location.reload(); // about:pdf-tools now maps to the tools
+  if (s.pack) return void location.replace(s.url); // the tools are served now
   $('size').textContent = s.size || $('size').textContent;
   $('get').disabled = s.busy;
   $('get').textContent = s.installed && !s.on ? 'Switch the PDF tools on' : 'Get the PDF tools';
@@ -41,3 +42,4 @@ document.querySelector('.drop').addEventListener('drop', (e) => {
 });
 
 refresh().catch((e) => say(e.message));
+})();

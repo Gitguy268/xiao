@@ -5,6 +5,7 @@
 // Xiao's one toolbar button and its panel (blocked count, the per-site
 // switch, Tor), plus chrome.css in every browser window: Xiao's typefaces on
 // Zen's UI, and no extensions button while there are no extensions.
+import { linkMarkdown, quoteMarkdown } from './lib/markdown-link.mjs';
 import { BOARD_URL } from './Boards.mjs';
 import { linkItem, quoteItem } from './board/model.mjs';
 import { lazy } from './mod.mjs';
@@ -78,6 +79,7 @@ export class Toolbar {
     this.xiao.zenFiles?.attach(win).catch((e) => console.error('Xiao: Files section', e));
     win.gBrowser.tabContainer.addEventListener('TabSelect', () => this.badge(win.gBrowser.selectedBrowser.browserId, win));
     this.addClipItem(win);
+    this.addMarkdownItem(win);
     this.addSummaryItem(win);
     this.addBoardMenu(win);
     // a closed tab's count, and any pause of blocking in it, go with it
@@ -112,6 +114,38 @@ export class Toolbar {
       const url = browser.currentURI.mutate().setUserPass('').setQuery('').setRef('').finalize().spec;
       this.xiao.notes.clip({ text, title: browser.contentTitle, url }).catch((err) => console.error('Xiao: clipping', err));
     });
+  }
+
+  // "Copy as Markdown" (Arc's Super Copy, A30): the link under the pointer,
+  // else the selected words as a quote linking to those words on the page,
+  // else the page. Addresses lose any login; the clipboard is the only place
+  // it goes, so it works in private windows and Tor tabs too.
+  addMarkdownItem(win) {
+    const doc = win.document;
+    const menu = doc.getElementById('contentAreaContextMenu');
+    if (!menu || doc.getElementById('xiao-markdown')) return;
+    const item = doc.createXULElement('menuitem');
+    item.id = 'xiao-markdown';
+    item.setAttribute('label', 'Copy as Markdown');
+    (doc.getElementById('context-copylink') ?? doc.getElementById('context-copy'))?.after(item) ?? menu.append(item);
+    menu.addEventListener('popupshowing', (e) => {
+      if (e.target !== menu) return;
+      const browser = win.gContextMenu?.browser;
+      item.hidden = !browser || !/^(https?|file)$/.test(browser.currentURI.scheme);
+    });
+    item.addEventListener('command', () => {
+      const text = this.markdownFor(win.gContextMenu);
+      if (text) Cc['@mozilla.org/widget/clipboardhelper;1'].getService(Ci.nsIClipboardHelper).copyString(text);
+    });
+  }
+
+  markdownFor(ctx) {
+    const browser = ctx?.browser;
+    if (!browser) return '';
+    const clean = (uri) => uri.mutate().setUserPass('').finalize().spec;
+    if (ctx.onLink && /^(https?|file):/.test(ctx.linkURL ?? '')) return linkMarkdown(ctx.linkTextStr || ctx.linkURL, clean(Services.io.newURI(ctx.linkURL)));
+    const words = ctx.isTextSelected && (ctx.selectionInfo?.fullText || ctx.textSelected);
+    return words ? quoteMarkdown(words, browser.contentTitle, clean(browser.currentURI)) : linkMarkdown(browser.contentTitle, clean(browser.currentURI));
   }
 
   // "Add to Board" in the page's context menu, while Boards is on: the link
@@ -303,7 +337,7 @@ export class Toolbar {
     if (this.xiao.features.clipboard) action('Clipboard history', () => openPage('resource://xiao/clipboard/index.html'));
     if (this.xiao.features.sendDevice) action('Send to a device', () => this.xiao.send.open(win));
     action('Notes', () => this.xiao.notes.openFrom(win));
-    // Firefox's about:pdf (Zen 1.24), which links to Xiao's about:pdf-tools; on a PDF, its own tools.
+    // Firefox's about:pdf (Zen 1.24), which links to Xiao's PDF tools; on a PDF, those tools.
     if (browser.documentContentType === 'application/pdf') {
       action('More tools for this PDF', () => this.xiao.aboutPdf.fromViewer(win).catch((e) => Services.prompt.alert(win, 'PDF tools', e.message)));
     } else {
