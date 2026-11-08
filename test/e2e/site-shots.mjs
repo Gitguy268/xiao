@@ -39,7 +39,7 @@ const base = `http://127.0.0.1:${server.address().port}/xiao/`;
 const profile = mkdtempSync(join(tmpdir(), 'xiao-site-'));
 writeFileSync(join(profile, 'user.js'), 'user_pref("marionette.port", 2829);\nuser_pref("browser.shell.checkDefaultBrowser", false);\n');
 const browser = spawn(zen, ['-profile', profile, '-no-remote', '--marionette', '--remote-allow-system-access', '--headless'], {
-  env: { ...process.env, MOZ_HEADLESS_WIDTH: '1440', MOZ_HEADLESS_HEIGHT: '900' }, stdio: 'ignore',
+  env: { ...process.env, MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1', MOZ_HEADLESS_WIDTH: '1440', MOZ_HEADLESS_HEIGHT: '900' }, stdio: 'ignore',
 });
 const problems = [];
 let m;

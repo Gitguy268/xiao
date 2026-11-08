@@ -53,8 +53,9 @@ async function until(what, fn, timeoutMs) {
 
 // --- throwaway home + install ---
 const home = mkdtempSync(join(process.env.RUNNER_TEMP ?? tmpdir(), 'xiao-e2e-'));
+mkdirSync(join(home, 'Downloads'));
 const env = {
-  ...process.env, HOME: home, APPDATA: join(home, 'AppData'), LOCALAPPDATA: join(home, 'LocalAppData'),
+  ...process.env, MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1', HOME: home, APPDATA: join(home, 'AppData'), LOCALAPPDATA: join(home, 'LocalAppData'),
   MOZ_HEADLESS_WIDTH: '1440', MOZ_HEADLESS_HEIGHT: '900', XIAO_TOR_PORT: process.env.XIAO_TOR_PORT ?? '9170',
 };
 delete env.XDG_DATA_HOME;
@@ -138,6 +139,12 @@ const torAlive = () => pidAlive('tor.pid');
 let m;
 try {
   m = await Marionette.connect(2828, 90_000);
+  // Downloads stay in the throwaway home: macOS gives Firefox the real ~/Downloads whatever HOME says.
+  await m.chrome((dir) => {
+    Services.prefs.setStringPref('browser.download.dir', dir);
+    Services.prefs.setIntPref('browser.download.folderList', 2);
+    Services.prefs.setBoolPref('browser.download.useDownloadDir', true);
+  }, join(home, 'Downloads')).catch(() => {}); // before Xiao is up, Marionette may need a moment
 
   const openTab = async (url, { tor = false } = {}) => m.chrome(async (url, tor) => {
     const { ContextualIdentityService } = mod('toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs');
@@ -168,6 +175,12 @@ try {
       first: w.gBrowser.tabs.map((t) => t.linkedBrowser.currentURI.spec),
     };
   }), 60_000);
+  await m.chrome((dir) => { // again, now that Xiao is up
+    Services.prefs.setStringPref('browser.download.dir', dir);
+    Services.prefs.setIntPref('browser.download.folderList', 2);
+    Services.prefs.setBoolPref('browser.download.useDownloadDir', true);
+  }, join(home, 'Downloads'));
+  check('downloads go to the throwaway home', await m.chrome(() => Services.prefs.getStringPref('browser.download.dir', '')) === join(home, 'Downloads'));
   check('Xiao\'s built-in code is running, with no extension', state.addons.length === 0, `Zen ${state.zen}${state.addons.length ? `, add-ons: ${state.addons}` : ''}`);
   check('new tab is the Xiao start page', state.newtab === START, state.newtab);
   check('Xiao starts on the start page', state.first.includes(START), state.first.join(' '));
@@ -431,12 +444,13 @@ try {
   });
   const keysPane = await until('the shortcuts settings', () => m.chrome(() => {
     const b = Services.wm.getMostRecentWindow('navigator:browser').gBrowser.selectedBrowser;
-    return b.currentURI.spec.startsWith('about:preferences') && b.currentURI.spec;
+    return /^about:(preferences|keyboard)/.test(b.currentURI.spec) && b.currentURI.spec;
   }), 15_000).catch((e) => e.message);
-  check('the start page\'s settings open the keyboard shortcuts list', /^about:preferences#zenCKS$/i.test(keysPane), keysPane);
+  // Zen 1.24 moved its list to about:keyboard; older Zens keep it in Settings
+  check('the start page\'s settings open the keyboard shortcuts list', /^(about:keyboard|about:preferences#zenCKS)$/i.test(keysPane), keysPane);
   await m.chrome(() => { // the settings tab runs in the main process and can never sleep: close it for the checks after this
     const g = Services.wm.getMostRecentWindow('navigator:browser').gBrowser;
-    for (const t of [...g.tabs]) if (t.linkedBrowser.currentURI.spec.startsWith('about:preferences')) g.removeTab(t, { animate: false });
+    for (const t of [...g.tabs]) if (/^about:(preferences|keyboard)/.test(t.linkedBrowser.currentURI.spec)) g.removeTab(t, { animate: false });
   });
 
   if (WANT_SEARCH) {
@@ -573,6 +587,7 @@ try {
       const dt = new DataTransfer();
       dt.items.add(new File([new Uint8Array(bytes)], 'two.pdf', { type: 'application/pdf' }));
       document.getElementById('drop').dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
+      for (let i = 0; i < 25 && !/page/.test(document.getElementById('file-info')?.textContent ?? 'page'); i++) await new Promise((r) => setTimeout(r, 200)); // read in first
       document.querySelector('[value="numbers"]').click();
       document.querySelector('#options [type="submit"]').click();
       for (let i = 0; i < 50 && !/Done|could|password/.test(document.getElementById('status').textContent); i++) await new Promise((r) => setTimeout(r, 200));
@@ -1564,7 +1579,7 @@ try {
       const w = Services.wm.getMostRecentWindow('navigator:browser');
       const wait = (ms) => new Promise((r) => w.setTimeout(r, ms));
       const { ContextualIdentityService } = mod('toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs');
-      const personal = ContextualIdentityService.getPublicIdentities().find((i) => i.userContextId !== Xiao.tor.torId)?.userContextId ?? 0;
+      const personal = (ContextualIdentityService.getPublicIdentities().find((i) => i.userContextId !== Xiao.tor.torId) ?? ContextualIdentityService.create('Personal', 'fingerprint', 'blue')).userContextId; // Zen 1.24 profiles start with no containers
       const add = (href, userContextId = 0) => w.gBrowser.addTab(href, { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(), userContextId });
       const old = add(`${url}/page.html?archive-me`, personal);
       const unsaved = add(`${url}/unsaved.html`);
@@ -1707,7 +1722,7 @@ try {
     await xiaoDo(async (Xiao, mod, url, file) => {
       const w = Services.wm.getMostRecentWindow('navigator:browser');
       const { ContextualIdentityService } = mod('toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs');
-      const personal = ContextualIdentityService.getPublicIdentities().find((i) => i.userContextId !== Xiao.tor.torId).userContextId;
+      const personal = (ContextualIdentityService.getPublicIdentities().find((i) => i.userContextId !== Xiao.tor.torId) ?? ContextualIdentityService.create('Personal', 'fingerprint', 'blue')).userContextId; // Zen 1.24 profiles start with no containers
       const home = w.gZenWorkspaces.activeWorkspace;
       const space = await w.gZenWorkspaces.createAndSaveWorkspace('Export me', undefined, true);
       await w.gZenWorkspaces.changeWorkspaceWithID(space.uuid); // new tabs join the space on screen

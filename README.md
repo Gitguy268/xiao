@@ -11,7 +11,7 @@ A calm, private browser built on Zen: ad and tracker blocking built into the bro
 [![CI](https://github.com/Gitguy268/xiao/actions/workflows/ci.yml/badge.svg)](https://github.com/Gitguy268/xiao/actions/workflows/ci.yml)
 ![Licence: MPL 2.0](https://img.shields.io/badge/licence-MPL--2.0-blue)
 ![Platforms: macOS, Windows, Linux](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)
-![Based on Zen 1.23.3b](https://img.shields.io/badge/Zen-1.23.3b-555)
+![Based on Zen 1.24.1b](https://img.shields.io/badge/Zen-1.24.1b-555)
 
 <img src="docs/tour.gif" width="860" alt="Xiao's start page, then the same page in a Tor tab saying 'This tab goes through Tor.', then Xiao Search's results in Xiao's colours.">
 
@@ -32,8 +32,10 @@ A calm, private browser built on Zen: ad and tracker blocking built into the bro
 | Searches with SearXNG | searx.ononoki.org by default, then priv.au, then Brave Search: a search one of them refuses or can't answer is sent on to the next with the same words. Or pick DuckDuckGo, Mullvad Leta, Startpage, Brave or your own. |
 | Xiao Search | Optional: your own [SearXNG](https://github.com/searxng/searxng), in Xiao's style, on this computer only and running only while Xiao does. |
 | A Library of your files | One searchable place for your downloads, the folders you give it, your notes, collections and closed tabs, in Xiao's own look, built from [OpenFinder](https://github.com/Gitguy268/openfinder). Downloads keep the name they came with, so a renamed file is still found; tidy names are proposed and reviewed, never applied blindly, and every rename can be undone. Private windows and Tor tabs never reach it. |
-| Arc-style helpers | Auto-archive of old tabs (reopened in their own space), Boards of links and quotes, a quick window for links from other apps, `!w`-style site shortcuts, Save to Clippings, a blocking pause for one tab, and Assist: tidy tab titles, tab groups, and "Ask about this page" with the passages that answer. What Zen already does (spaces, split view, Glance, Boosts, routing) is checked to work, not rebuilt: [the ledger](docs/arc-parity.md). |
-| Features you add | All off until you turn them on in the start page's **Features**; the big ones download only then. The Library, a sticky note (shared with [textarea](https://github.com/Gitguy268/textarea) through a folder) with `#tags` and writing tools, Send to a device over your Wi-Fi, clipboard history, an EPUB and PDF reader, a blank camera for sites you choose, sorting your notes into a board by voice with AI on this computer, Boards, a quick window, auto-archive, a file converter, PDF tools and tab sleep. Spaces, collections and settings export to one file and import back, with every address shown first. |
+| Arc- and Dia-style helpers | Auto-archive of old tabs (reopened in their own space), Boards of links and quotes, a quick window for links from other apps, Copy as Markdown (a quote links to its own words on the page), a calendar preview with a Join button, `!top` to open the top results in a folder, a blocking pause for one tab, "Always mute this site", and closing new tabs left empty. **All tabs** lists every tab in every space to search and act on many at once, or takes a command in words ("close all youtube tabs", "move github tabs to Work") and shows the tabs before anything happens. What Zen already does (spaces, split view, Glance, Boosts, routing, Arc and Dia import) is checked to work, not rebuilt: [the ledger](docs/arc-parity.md), with every feature of the Arc/Dia rebuild pack by ID. |
+| Assist | Off until you turn it on. Tidy tab titles, tab groups, and "Ask about this page" with the passages that answer; with the local AI (MiniCPM5 on this computer) an answer that cites them. Mention other tabs or a folder to ask across them, save instructions as Skills (`/kids`), give it a style, and keep answers in a note. Questions asked while it writes wait their turn. Nothing leaves your computer, and nothing it writes can act. |
+| PDF | Firefox's own about:pdf and viewer (reorder, merge, sign, comment), plus Xiao's PDF tools for what the viewer doesn't do: booklets, pages per sheet, page numbers, crop, passwords, attachments, keeping, removing or turning some pages, and the PDFs downloaded lately. |
+| Features you add | All off until you turn them on in the start page's **Features**; the big ones download only then. The Library, a sticky note (shared with [textarea](https://github.com/Gitguy268/textarea) through a folder) with `#tags` and writing tools, Send to a device over your Wi-Fi, clipboard history, an EPUB and PDF reader, a blank camera for sites you choose, sorting your notes into a board by voice with AI on this computer, Boards, a quick window, auto-archive, a file converter, PDF tools and tab sleep. Spaces, collections and settings export to one file and import back, with every address shown first; Zen's importer brings in Arc (macOS, Windows) and Dia (macOS). |
 | Silent mode | A switch: Xiao connects to nothing by itself, only the pages and downloads you ask for. A 10-minute idle test logs every connection and finds none. Its cost is that certificate and phishing lists go out of date and updates wait for your click. [What normal mode connects to](#what-xiao-connects-to). |
 | Varies your fingerprint | Audio, canvas and WebGL readings get tiny noise, and the core count varies, differently on each site and after each restart, the idea Brave calls farbling. Firefox's own protection handles screen size, graphics card and fonts. On by default, with a switch per site. |
 | Bangs | `!gh cats` goes straight to that site's search, from a list of about 13,000 names on this computer, so no search engine sees it. Your own too. |
@@ -59,6 +61,17 @@ A calm, private browser built on Zen: ad and tracker blocking built into the bro
 
 </details>
 
+<details>
+<summary>All tabs and PDF, in pictures</summary>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screens/all-tabs-dark.png"><img src="docs/screens/all-tabs-light.png" width="860" alt="All tabs: the command 'close tabs about yt' has become a plan, 'Close 2 tabs (listed below)?', with Do it and Cancel, above the two matching tabs."></picture>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screens/about-pdf-dark.png"><img src="docs/screens/about-pdf-light.png" width="860" alt="Firefox's about:pdf in Xiao: a drop zone for a PDF, and under it Xiao's button 'More PDF tools in Xiao: booklets, page numbers, passwords…'."></picture>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screens/pdf-tools-dark.png"><img src="docs/screens/pdf-tools-light.png" width="860" alt="Xiao's PDF tools with two.pdf loaded (2 pages): buttons for the viewer, then tools grouped as Pages, Layout and File."></picture>
+
+</details>
+
 ## Install
 
 Xiao comes as a **kit** that makes Xiao's own copy of the [Zen](https://zen-browser.app) you already have, with Xiao's code inside and a profile of its own. Your normal Zen and its profile aren't touched.
@@ -75,7 +88,7 @@ Xiao comes as a **kit** that makes Xiao's own copy of the [Zen](https://zen-brow
 | Option | What it does |
 | --- | --- |
 | `--tor` / `-Tor` | Downloads Tor 16.0 (hash pinned) for Tor tabs. Tor runs only while Xiao is open. |
-| `--search` | Installs Xiao Search: SearXNG at a pinned commit (hash checked) on 127.0.0.1:8890, run only while Xiao is open. Needs [uv](https://docs.astral.sh/uv/) or Python 3.10+. Not on Windows. |
+| `--search` | Installs Xiao Search: SearXNG at a pinned commit (hash checked) on 127.0.0.1:8890, run only while Xiao is open. Needs [uv](https://docs.astral.sh/uv/) or Python 3.10+. Not on Windows. `!top` (instant links) needs it. |
 | `--strict` / `-Strict` | Adds fingerprinting resistance, DNS over HTTPS only, and clears cookies on quit. |
 | `--uninstall` / `-Uninstall` | Removes Xiao's copy of Zen, its profile, Tor, Xiao Search and the launcher. |
 
@@ -99,6 +112,9 @@ Full builds from Zen's source are set up in [`fork/`](fork/README.md).
 - **The voice organiser is slow in Firefox.** Firefox's WebGPU runs its model about ten times slower than the processor does, so Xiao uses the processor: about a minute or two per board. Its first use downloads 1.8 GB from Hugging Face.
 - **Writing tools are only as good as a small model.** MiniCPM5 2B on the processor takes about half a minute per note, and its tools can come out alike: "Shorten" may fix a note's grammar and barely shorten it.
 - **The converter is single-threaded** in Xiao, so long videos convert more slowly than on its website.
+- **Commands in words are rules, not AI.** All tabs understands close, archive, move, mute and group, with a site or word, "older than", or "duplicate". Anything else gets examples back, never a guess.
+- **Instant links need Xiao Search.** Public search engines refuse scripted requests, so `!top` works only with `--search`.
+- **Sharing a Boost or a space** goes through Zen's server, and silent mode blocks it like every other connection Xiao doesn't make for a page.
 - **Filter lists** come with the release and then, when Xiao starts, at most once a day, from the repository's `engine` release on GitHub. Until that release exists, Xiao keeps the engine it was installed with.
 
 ## What Xiao connects to
@@ -108,7 +124,7 @@ Measured with `npm run e2e:audit`: 10 idle minutes on the start page, logging ev
 | Mode | Connects by itself to |
 | --- | --- |
 | Silent mode | Nothing. No request and no socket beyond this computer. |
-| Normal | GitHub, for Xiao's update and filter check at start. Mozilla's Remote Settings, for certificate revocation lists and blocklists. Google's Safe Browsing, for phishing and malware lists. Mozilla, Google and Cisco, for Widevine and the OpenH264 video codec. Your encrypted DNS provider. |
+| Normal | GitHub, for Xiao's update and filter check at start. Your calendar address every 15 minutes, if you set one. Mozilla's Remote Settings, for certificate revocation lists and blocklists. Google's Safe Browsing, for phishing and malware lists. Mozilla, Google and Cisco, for Widevine and the OpenH264 video codec. Your encrypted DNS provider. |
 
 Anything else fails the test. Using your notes makes no connection in either mode.
 

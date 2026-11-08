@@ -2,14 +2,14 @@
 # Browser 16.0, checked against the Tor Browser Developers signing key
 # (EF6E 286D DA85 EA2A 4BA7 DE68 4E2C 6E87 9329 8290) on 2026-11-02.
 # SearXNG (AGPL-3.0, optional --search) is GitHub's archive of the pinned commit,
-# hashed when it was pinned on 2026-10-20.
+# hashed when it was pinned on 2026-11-08.
 b8da251eccbe9e82f3681ee3af3c97fb4291c4a4e153e5b824bde48a1117cd6a  tor-expert-bundle-macos-aarch64-16.0.tar.gz
 5b1860215c26f2d408392d1d79e798a2f81d65eb939510bb94c11f237bd0bfc3  tor-expert-bundle-macos-x86_64-16.0.tar.gz
 cc950ebe9acb80188325c3a2cd8817def7dd7237d6fdcd861bb87b234a0cb2fd  tor-expert-bundle-linux-x86_64-16.0.tar.gz
 bed98744e093a0dc3a22be0eecfdce7a33cb36866d3f15fcf011a35bf3513d0d  tor-expert-bundle-linux-aarch64-16.0.tar.gz
 2ee123e9167318a3742778ff704e75f01d4780f05a14522d451fe011011077c4  tor-expert-bundle-windows-x86_64-16.0.tar.gz
-c8b2defd0c91401f25efc43d10a1d7ed88642705489da51c520ec60fd98eb559  searxng-81371861f67226091d1c4df2e3908a11d3b54eb9.tar.gz
-# Zen 1.23.3b, used only on Linux when no Zen is installed. GitHub's digests for the
+2e044f433fba9fab3d6aa1d932fce5b583315483fc5172232c340b3aebc9c3e3  searxng-ac11e14c5edf995d4d2f066bfb885a614f52a978.tar.gz
+# Zen 1.24.1b, used only on Linux when no Zen is installed. GitHub's digests for the
 # release's own files, recorded on 2026-11-01.
-bb2045d3e21654d40fe841250092eeadfd2c1fc831eefb509222773c8bdca149  zen.linux-x86_64.tar.xz
-1100cb3e857254edba833a293eb50010de66a166465edfcdcc8536dde732dfa7  zen.linux-aarch64.tar.xz
+c592a31fe8faa5ddfe91d6243b50c3107e1831c1247539fe03cc04f0fd5cb9cd  zen.linux-x86_64.tar.xz
+ac0fc39fd2342066027e56a42bdebfea910e9fdc539d02dd7d658e39c38e42dc  zen.linux-aarch64.tar.xz

@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // The parent-process half of the Xiao actor: answers XiaoChild in each frame.
-import { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, CLIPBOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL, Xiao } from 'resource://xiao/XiaoCore.sys.mjs';
+import { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, CLIPBOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL, TABS_URL, Xiao } from 'resource://xiao/XiaoCore.sys.mjs';
 
 export class XiaoParent extends JSWindowActorParent {
   async receiveMessage({ name, data }) {
@@ -24,6 +24,8 @@ export class XiaoParent extends JSWindowActorParent {
       const from = uri.startsWith(Xiao.START_URL) ? 'start' : uri.startsWith(Xiao.ORGANISE_URL) ? 'organise'
         : Xiao.send.origin && uri.startsWith(Xiao.send.origin) && ordinary ? 'send'
         : uri.startsWith(CLIPBOARD_URL) && ordinary ? 'clipboard'
+        : Xiao.aboutPdf.isPage(uri) && ordinary ? 'pdf'
+        : uri.split(/[?#]/)[0] === TABS_URL && ordinary ? 'tabs'
         : uri.startsWith(ASSIST_URL) && !bc.usePrivateBrowsing && bc.originAttributes.userContextId !== Xiao.tor.torId ? 'assist'
           : uri.split(/[?#]/)[0] === BOARD_URL && !bc.usePrivateBrowsing && bc.originAttributes.userContextId !== Xiao.tor.torId ? 'board'
           // the model's page, only in the hidden tab Xiao made for it
@@ -46,6 +48,14 @@ export class XiaoParent extends JSWindowActorParent {
     }
     if (name === 'library-watch' && this.isLibrary()) Xiao.library.watch(this);
     if (name === 'copied') Xiao.clipboard.copied(this.browsingContext);
+    // the button XiaoChild adds to Firefox's about:pdf, at the top of a tab
+    if (name === 'pdf-tools' && (this.manager.documentURI?.spec ?? '').split(/[?#]/)[0] === 'about:pdf' && !this.browsingContext.parent) {
+      // the tools page runs only in normal tabs: from a private window or a Tor tab it opens in a normal window
+      const bc = this.browsingContext;
+      const ordinary = !bc.usePrivateBrowsing && bc.originAttributes.userContextId !== Xiao.tor.torId;
+      const win = ordinary ? bc.topChromeWindow : Xiao.tabCommands.windows()[0];
+      if (win) Xiao.aboutPdf.open(win);
+    }
     return undefined;
   }
 

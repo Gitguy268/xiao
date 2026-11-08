@@ -1,6 +1,6 @@
 {
   "name": "xiao",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "private": true,
   "description": "A hardened Zen browser: built-in ad and tracker blocking, Tor tabs, and a calm start page.",
   "license": "MPL-2.0",

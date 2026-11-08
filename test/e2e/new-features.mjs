@@ -6,13 +6,14 @@
 // the blank camera, bangs, start page styles, download problems and updates.
 //
 //   npm run build && npm run e2e:new
-//   ONLY=updates,bangs npm run e2e:new  some sections (shield, bangs, styles, packs, extras, silent, drm, updates)
+//   ONLY=updates,bangs npm run e2e:new  some sections (shield, bangs, styles, packs, pdf, more, extras, silent, drm, updates)
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash, generateKeyPairSync, sign } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
+import { PDFDocument } from '@cantoo/pdf-lib';
 import { Marionette } from './marionette.mjs';
 import { zip } from '../../scripts/zip.mjs';
 import { fileURLToPath } from 'node:url';
@@ -63,6 +64,15 @@ const server = http.createServer((req, res) => {
     return res.writeHead(200).end(readFileSync(file));
   }
   if (name === 'french') return res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end('<!doctype html><html lang="fr"><title>Bonjour</title><p>Bonjour le monde. Ceci est une page en français pour tester la traduction du navigateur, avec assez de mots.</p>');
+  if (name === 'search') { // Xiao Search's JSON, for instant links
+    return res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ results: [
+      { url: `http://127.0.0.1:${port}/article?r1`, title: 'R1' }, { url: `http://127.0.0.1:${port}/article?r2`, title: 'R2' }, { url: 'javascript:alert(1)', title: 'bad' }] }));
+  }
+  if (name === 'article') {
+    const topic = new URL(req.url, 'http://x').search.slice(1) || 'plain';
+    return res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(`<!doctype html><title>Article ${topic}</title><h1>Article ${topic}</h1>
+      ${topic === 'ferry' ? '<p>Ferries leave the harbour every hour in summer.</p>' : '<p>The lighthouse on the island was built in 1874 and painted red.</p>'}<p>Topic ${topic} is discussed here at length.</p>`);
+  }
   if (name.startsWith('own')) return res.writeHead(200, { 'content-type': 'text/html' }).end('<!doctype html><title>own bang</title>');
   res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(PROBE);
 });
@@ -71,10 +81,11 @@ const port = server.address().port;
 
 // --- throwaway home ---
 const home = mkdtempSync(join(process.env.RUNNER_TEMP ?? tmpdir(), 'xiao-new-'));
+mkdirSync(join(home, 'Downloads'));
 const { publicKey, privateKey } = generateKeyPairSync('ed25519');
 const rawKey = publicKey.export({ type: 'spki', format: 'der' }).subarray(-32).toString('base64');
 const env = {
-  ...process.env, HOME: home, MOZ_HEADLESS_WIDTH: '1280', MOZ_HEADLESS_HEIGHT: '800',
+  ...process.env, MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1', HOME: home, MOZ_HEADLESS_WIDTH: '1280', MOZ_HEADLESS_HEIGHT: '800',
   XIAO_UPDATE_TEST_KEY: rawKey, XIAO_UPDATE_TEST_URL: `http://127.0.0.1:${port}/updates.json`,
 };
 delete env.XDG_DATA_HOME;
@@ -86,6 +97,12 @@ let launcher;
 const launch = async () => {
   launcher = spawn(join(data, 'xiao-launch'), ['--marionette', '--remote-allow-system-access', '--headless'], { env, stdio: 'ignore', detached: true });
   m = await Marionette.connect(2828, 120_000);
+  // Downloads stay in the throwaway home: macOS gives Firefox the real ~/Downloads whatever HOME says.
+  await m.chrome((dir) => {
+    Services.prefs.setStringPref('browser.download.dir', dir);
+    Services.prefs.setIntPref('browser.download.folderList', 2);
+    Services.prefs.setBoolPref('browser.download.useDownloadDir', true);
+  }, join(home, 'Downloads')).catch(() => {}); // before Xiao is up, Marionette may need a moment
 };
 const quit = async () => {
   try { await m.send('Marionette:Quit'); } catch {}
@@ -125,6 +142,16 @@ const closeTab = () => m.chrome(() => {
   const w = Services.wm.getMostRecentWindow('navigator:browser');
   w.gBrowser.removeTab(w.gBrowser.selectedTab);
 });
+// <name>-light.png and <name>-dark.png in test/e2e/out (E2E_OUT), for the README
+const shoot = async (handle, name) => {
+  mkdirSync(out, { recursive: true });
+  for (const [theme, override] of [['light', 1], ['dark', 0]]) {
+    await m.chrome((o) => Services.prefs.setIntPref('layout.css.prefers-color-scheme.content-override', o), override);
+    await sleep(600);
+    writeFileSync(join(out, `${name}-${theme}.png`), await m.screenshot(handle));
+  }
+  await m.chrome(() => Services.prefs.clearUserPref('layout.css.prefers-color-scheme.content-override'));
+};
 const probe = async (host) => {
   const h = await open(`http://${host}:${port}/probe`);
   const r = await m.content(h, () => window.probe());
@@ -136,6 +163,12 @@ let failedToRun = null;
 try {
   await launch();
   await ready();
+  await m.chrome((dir) => { // again, now that Xiao is up
+    Services.prefs.setStringPref('browser.download.dir', dir);
+    Services.prefs.setIntPref('browser.download.folderList', 2);
+    Services.prefs.setBoolPref('browser.download.useDownloadDir', true);
+  }, join(home, 'Downloads'));
+  check('downloads go to the throwaway home', await m.chrome(() => Services.prefs.getStringPref('browser.download.dir', '')) === join(home, 'Downloads'));
 
   if (want('shield')) {
     const sites = await xiao((Xiao) => Xiao.features.shield);
@@ -360,6 +393,291 @@ try {
     check('the start page shows it downloaded', /Downloaded/.test(ui), ui);
     await closeTab();
     await m.chrome(() => Services.prefs.clearUserPref('xiao.packs.mirror'));
+  }
+
+  if (want('pdf')) {
+    const pdfOf = async (n) => {
+      const doc = await PDFDocument.create();
+      for (let i = 0; i < n; i++) doc.addPage([300, 400]).drawText(`page ${i + 1}`, { x: 20, y: 200 });
+      return Buffer.from(await doc.save()).toString('base64');
+    };
+    const pages = async (b64) => (await PDFDocument.load(Buffer.from(b64, 'base64'))).getPageCount();
+    await xiao(async (Xiao) => {
+      await Xiao.setFeature({ id: 'pdf', on: false });
+      await Xiao.setFeature({ id: 'pdf', on: true, remove: true }).catch(() => {});
+      await Xiao.packs.remove('pdf').catch(() => {});
+      await Xiao.servePacks();
+    });
+    // Firefox's about:pdf (Zen 1.24) carries a button to Xiao's tools
+    let h = await open('about:pdf');
+    const firefox = await until('Xiao\'s button on about:pdf', () => m.content(h, () => {
+      const b = document.querySelector('#xiao-pdf-tools moz-button');
+      return b && { label: b.getAttribute('label'), bridge: typeof window.xiao, dropzone: !!document.getElementById('dropzone') };
+    }), 15_000).catch((e) => e.message);
+    check('Firefox\'s about:pdf is there, with a button to Xiao\'s PDF tools and no way to reach Xiao from the page', firefox?.dropzone && /More PDF tools/.test(firefox.label) && firefox.bridge === 'undefined', JSON.stringify(firefox));
+    await shoot(h, 'about-pdf');
+    await m.content(h, () => document.querySelector('#xiao-pdf-tools moz-button').click());
+    const went = await until('the PDF tools to open', () => m.chrome(() => Services.wm.getMostRecentWindow('navigator:browser').gBrowser.selectedBrowser.currentURI.spec === 'resource://xiao/pdf/index.html'), 10_000).catch(() => false);
+    check('the button opens Xiao\'s PDF tools', went === true);
+    await closeTab();
+    await closeTab();
+    // without the pack: Xiao's page that offers the download
+    h = await m.chrome(() => {
+      const { Xiao } = ChromeUtils.importESModule('resource://xiao/XiaoCore.sys.mjs');
+      const tab = Xiao.aboutPdf.open(Services.wm.getMostRecentWindow('navigator:browser'));
+      const { NavigableManager } = mod('remote/shared/NavigableManager.sys.mjs');
+      return NavigableManager.getIdForBrowser(tab.linkedBrowser);
+    });
+    await loaded(h);
+    const bare = await m.content(h, async () => {
+      await new Promise((r) => setTimeout(r, 800));
+      return { uri: document.documentURI, title: document.title, get: !!document.getElementById('get'), bridge: typeof window.xiao?.call, origin: window.origin, size: document.getElementById('size')?.textContent };
+    });
+    const plain = await m.chrome(() => {
+      const p = Services.wm.getMostRecentWindow('navigator:browser').gBrowser.selectedBrowser.contentPrincipal;
+      return { origin: p.origin, system: p.isSystemPrincipal, content: p.isContentPrincipal };
+    });
+    check('before the download, Xiao\'s PDF page offers it, as an ordinary page', bare.uri === 'resource://xiao/pdf/index.html' && bare.title === 'PDF tools' && bare.get && bare.bridge === 'function' && bare.size !== 'a few hundred KB' && !plain.system && plain.content, JSON.stringify({ ...bare, ...plain }));
+    // a PDF dropped here opens in Firefox's viewer (its bytes cross the JSON-only bridge as base64)
+    const viewed = await m.content(h, async (b64) => {
+      await window.xiao.call('pdf.view', { name: 'dropped.pdf', base64: b64 });
+      return true;
+    }, await pdfOf(1)).catch((e) => e.message);
+    const droppedIn = await until('the viewer tab', () => m.chrome(() => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const b = w.gBrowser.selectedBrowser;
+      if (b.documentContentType !== 'application/pdf') return false;
+      const spec = b.currentURI.spec;
+      w.gBrowser.removeTab(w.gBrowser.selectedTab);
+      return spec;
+    }), 15_000).catch(() => '');
+    check('a dropped PDF opens in Firefox\'s viewer from a temporary copy', viewed === true && /^file:.*dropped\.pdf$/.test(droppedIn), `${viewed} ${droppedIn}`);
+    await m.chrome(() => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const t = [...w.gBrowser.tabs].find((x) => x.linkedBrowser.currentURI.spec === 'resource://xiao/pdf/index.html');
+      if (t) w.gBrowser.selectedTab = t;
+    });
+    // the download from the page, then the page turns into the tools by itself
+    await m.chrome((u) => Services.prefs.setStringPref('xiao.packs.mirror', u), `http://127.0.0.1:${port}/mirror/`);
+    mirrorMode = 'ok';
+    await m.content(h, () => document.getElementById('get').click());
+    const tools = await until('the page to become the tools', () => m.content(h, () => !!document.getElementById('work') && document.documentURI === 'resource://xiao-pdf/index.html' && document.title), 60_000).catch((e) => e.message);
+    check('"Get the PDF tools" downloads them and the page turns into them', tools === 'PDF tools', String(tools));
+    await closeTab();
+    // a PDF handed over, then merged with a second one picked in the page
+    const [two, three] = [await pdfOf(2), await pdfOf(3)];
+    h = await m.chrome(async (b64) => {
+      const { Xiao } = ChromeUtils.importESModule('resource://xiao/XiaoCore.sys.mjs');
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const tab = Xiao.aboutPdf.open(w, { name: 'two.pdf', bytes: Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)) });
+      const { NavigableManager } = mod('remote/shared/NavigableManager.sys.mjs');
+      return NavigableManager.getIdForBrowser(tab.linkedBrowser);
+    }, two);
+    await loaded(h);
+    const handed = await until('the handed-over PDF', () => m.content(h, () => document.getElementById('file-info').textContent), 15_000).catch((e) => e.message);
+    check('a PDF handed to the PDF tools shows its name and page count', /^2 pages/.test(handed), handed);
+    await shoot(h, 'pdf-tools');
+    const merged = await m.content(h, async (b64) => {
+      const doc = window.wrappedJSObject?.document ?? document;
+      document.querySelector('[value="merge"]').click();
+      const dt = new DataTransfer();
+      dt.items.add(new File([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'three.pdf', { type: 'application/pdf' }));
+      doc.querySelector('[data-for="merge"] input').files = dt.files;
+      document.querySelector('#options button[type="submit"]').click();
+      for (let i = 0; i < 40 && !/^Done|error/i.test(document.getElementById('status').textContent); i++) await new Promise((r) => setTimeout(r, 250));
+      return document.getElementById('status').textContent;
+    }, three);
+    const file = await until('the merged download', () => m.chrome(async () => {
+      const { Downloads } = mod('toolkit/components/downloads/Downloads.sys.mjs');
+      const d = (await (await Downloads.getList(Downloads.PUBLIC)).getAll()).find((x) => x.succeeded && /\(merge\)\.pdf$/.test(x.target.path));
+      if (!d) return null;
+      const bytes = await IOUtils.read(d.target.path);
+      let bin = '';
+      for (const b of bytes) bin += String.fromCharCode(b);
+      return { path: d.target.path, b64: btoa(bin) };
+    }), 20_000).catch(() => null);
+    check('Merge gives back one PDF with every page of both', /^Done/.test(merged) && file && (await pages(file.b64)) === 5, `${merged} ${file ? await pages(file.b64) : 'no file'}`);
+    await closeTab();
+    // downloaded lately, and the viewer
+    h = await open('resource://xiao-pdf/index.html');
+    const recent = await until('the recent list', () => m.content(h, () => [...document.querySelectorAll('#recent button')].map((b) => b.textContent)), 10_000).catch(() => []);
+    check('the PDF tools list the PDF just downloaded', recent.some((n) => /\(merge\)\.pdf$/.test(n)), JSON.stringify(recent));
+    const viewer = await m.content(h, async () => {
+      document.querySelector('#recent button').click();
+      for (let i = 0; i < 20 && !/pages/.test(document.getElementById('file-info').textContent); i++) await new Promise((r) => setTimeout(r, 250));
+      document.getElementById('view').click();
+      return document.getElementById('file-info').textContent;
+    });
+    const shown = await until('the viewer tab', () => m.chrome(() => {
+      const b = Services.wm.getMostRecentWindow('navigator:browser').gBrowser.selectedBrowser;
+      return b.documentContentType === 'application/pdf' && b.currentURI.spec;
+    }), 15_000).catch(() => '');
+    check('a recent PDF loads into the page and opens in Firefox\'s viewer from there', /^5 pages/.test(viewer) && /^file:.*\(merge\)\.pdf$/.test(shown), `${viewer} ${shown}`);
+    // and back: "More tools for this PDF" from the viewer
+    h = await m.chrome(async () => {
+      const { Xiao } = ChromeUtils.importESModule('resource://xiao/XiaoCore.sys.mjs');
+      const tab = await Xiao.aboutPdf.fromViewer(Services.wm.getMostRecentWindow('navigator:browser'));
+      const { NavigableManager } = mod('remote/shared/NavigableManager.sys.mjs');
+      return NavigableManager.getIdForBrowser(tab.linkedBrowser);
+    });
+    await loaded(h);
+    const back = await until('the PDF from the viewer', () => m.content(h, () => document.getElementById('file-info').textContent), 15_000).catch((e) => e.message);
+    check('"More tools for this PDF" brings the viewer\'s PDF over to the PDF tools', /^5 pages/.test(back), back);
+    await closeTab();
+    await closeTab();
+    // a web page can't take a tab to Xiao's PDF page
+    h = await open(`http://127.0.0.1:${port}/probe`);
+    await m.content(h, () => { try { location.href = 'resource://xiao-pdf/index.html'; } catch {} });
+    await sleep(1500);
+    const stayed = await m.content(h, () => document.documentURI);
+    check('a web page can\'t open Xiao\'s PDF page', !stayed.startsWith('resource:'), stayed);
+    await closeTab();
+    const bang = await xiao((Xiao) => Xiao.bangs.resolve('!pdf'));
+    check('!pdf opens about:pdf', bang?.action === 'pdf', JSON.stringify(bang));
+    await m.chrome(() => Services.prefs.clearUserPref('xiao.packs.mirror'));
+  }
+
+  if (want('more')) {
+    const url = (q) => `http://127.0.0.1:${port}/article?${q}`;
+    const browserIdOf = (h) => m.chrome((h) => {
+      const { NavigableManager } = mod('remote/shared/NavigableManager.sys.mjs');
+      return NavigableManager.getBrowserById(h)?.browserId;
+    }, h);
+    // Copy as Markdown
+    let h = await open(url('md'));
+    const md = await xiao((Xiao) => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const browser = w.gBrowser.selectedBrowser;
+      return {
+        item: !!w.document.getElementById('xiao-markdown'),
+        page: Xiao.toolbar.markdownFor({ browser }),
+        quote: Xiao.toolbar.markdownFor({ browser, isTextSelected: true, selectionInfo: { fullText: 'painted red' } }),
+        link: Xiao.toolbar.markdownFor({ browser, onLink: true, linkURL: 'https://user:pw@example.org/a_(b)', linkTextStr: 'A [b]' }),
+      };
+    });
+    check('Copy as Markdown: the page, a quote linking to its words, and a link without its login', md.item && md.page === `[Article md](${url('md')})`
+      && md.quote.endsWith(`— [Article md](${url('md')}#:~:text=painted%20red)`) && md.link === '[A \\[b\\]](https://example.org/a_%28b%29)', JSON.stringify(md));
+    // site mute
+    const muted = await xiao(async (Xiao, second) => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const first = w.gBrowser.selectedTab;
+      Xiao.siteMute.set(first.linkedBrowser.currentURI, true);
+      const a = first.muted;
+      const t = w.gBrowser.addTab(second, { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
+      await new Promise((r) => setTimeout(r, 2500));
+      const b = t.muted;
+      Xiao.siteMute.set(first.linkedBrowser.currentURI, false);
+      const after = [first.muted, t.muted];
+      w.gBrowser.removeTab(t);
+      return { a, b, after, saved: [...Xiao.store.muted] };
+    }, url('again'));
+    check('"Always mute this site" mutes its tabs, new ones too, and unmutes only what it muted', muted.a && muted.b && !muted.after[0] && !muted.after[1] && muted.saved.length === 0, JSON.stringify(muted));
+    await closeTab();
+    // empty new tabs
+    const cleanup = await xiao(async (Xiao, start, page) => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      await Xiao.setFeature({ id: 'newTabCleanup', value: 5 });
+      const empty = w.gBrowser.addTab(start, { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
+      const used = w.gBrowser.addTab(page, { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
+      await new Promise((r) => setTimeout(r, 2000));
+      for (const t of [empty, used]) t.updateLastAccessed(Date.now() - 10 * 60_000);
+      const closed = Xiao.closeEmptyTabs(5);
+      const out = { closed, emptyGone: !empty.isConnected, usedKept: used.isConnected };
+      if (used.isConnected) w.gBrowser.removeTab(used);
+      await Xiao.setFeature({ id: 'newTabCleanup', value: 0 });
+      return out;
+    }, START, url('used'));
+    check('new tabs left empty close after the chosen time; a tab with a page stays', cleanup.emptyGone && cleanup.usedKept && cleanup.closed >= 1, JSON.stringify(cleanup));
+    // All tabs: a command becomes a plan, and only the confirmed plan acts
+    for (const q of ['yt1', 'yt2', 'keep']) await tab(url(q));
+    await sleep(2500);
+    h = await open('resource://xiao/tabs/index.html');
+    const planned = await m.content(h, async () => {
+      const p = await window.xiao.call('tabs.plan', { text: 'close tabs about yt' });
+      return { n: p.ids?.length, titles: (p.tabs ?? []).map((t) => t.title).sort(), error: p.error };
+    });
+    check('"close tabs about yt" plans the two matching tabs, and nothing closes yet', planned.n === 2 && planned.titles.join() === 'Article yt1,Article yt2', JSON.stringify(planned));
+    await m.content(h, async () => {
+      document.getElementById('command').value = 'close tabs about yt';
+      document.getElementById('command-form').requestSubmit();
+      for (let i = 0; i < 20 && document.getElementById('plan').hidden; i++) await new Promise((r) => setTimeout(r, 200));
+    });
+    await shoot(h, 'all-tabs');
+    const ran = await m.content(h, async () => {
+      const text = document.getElementById('plan-text').textContent;
+      document.getElementById('plan-go').click();
+      for (let i = 0; i < 20 && !/Done/.test(document.getElementById('status').textContent); i++) await new Promise((r) => setTimeout(r, 200));
+      return { text, status: document.getElementById('status').textContent, left: (await window.xiao.call('tabs.list')).tabs.map((t) => t.title) };
+    });
+    check('confirming the plan closes exactly those tabs', /Close 2 tabs/.test(ran.text) && /Done: 2/.test(ran.status) && !ran.left.some((t) => /yt/.test(t)) && ran.left.includes('Article keep'), JSON.stringify(ran));
+    const moved = await xiao(async (Xiao) => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const space = await w.gZenWorkspaces.createAndSaveWorkspace('Work', undefined, true);
+      const plan = Xiao.tabCommands.plan('move tabs about keep to work');
+      const r = await Xiao.tabCommands.run(plan);
+      const tab = [...w.gZenWorkspaces.allStoredTabs].find((t) => t.label === 'Article keep');
+      return { done: r.done, inWork: tab?.getAttribute('zen-workspace-id') === space.uuid, nope: Xiao.tabCommands.plan('move tabs about keep to nowhere').error };
+    });
+    check('"move … to Work" moves the tab to that space; an unknown space is named in the error', moved.done === 1 && moved.inWork && /nowhere/.test(moved.nope), JSON.stringify(moved));
+    await closeTab();
+    // Assist: another tab mentioned, a skill, the reader's style
+    const ha = await open(url('lighthouse'));
+    const hb = await open(url('ferry'));
+    const [a, b] = [await browserIdOf(ha), await browserIdOf(hb)];
+    const across = await xiao(async (Xiao, a, b) => {
+      await Xiao.setFeature({ id: 'assist', on: true }).catch(() => {});
+      const mentions = Xiao.assist.mentionable(a);
+      const ev = await Xiao.assist.evidence(a, 'when do ferries leave the harbour', [b]);
+      const skill = await Xiao.assist.newSkill('Kids', 'Explain it to a ten-year-old.');
+      const skills = await Xiao.assist.skills();
+      const dup = await Xiao.assist.newSkill('Kids', 'again').catch((e) => e.message);
+      await Xiao.setFeature({ id: 'assist', on: false });
+      return { mentioned: mentions.tabs.some((t) => t.id === b), titles: ev.titles, top: ev.evidence[0], skill, skills: skills.map((s) => s.name), dup };
+    }, a, b);
+    check('Assist reads a mentioned tab too, and each passage keeps its page', across.mentioned && across.titles.length === 2 && across.top?.source === 1 && /Ferries/.test(across.top.text), JSON.stringify(across));
+    check('a skill is saved as a note "Skill Kids.md" and runs as /kids; a second with the same name is refused', across.skill === 'kids' && across.skills.includes('kids') && /already/.test(across.dup), JSON.stringify(across));
+    await closeTab();
+    await closeTab();
+    // Instant links, from Xiao Search's JSON only
+    const instant = await xiao(async (Xiao, base) => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const saved = Xiao.searchUrl;
+      Xiao.searchUrl = '';
+      const without = await Xiao.instantLinks.open(w, 'lighthouse').catch((e) => e.message);
+      Xiao.searchUrl = base;
+      const { opened, folder, tabs } = await Xiao.instantLinks.open(w, 'lighthouse');
+      const urls = tabs.map((t) => t.linkedBrowser.currentURI.spec);
+      Xiao.searchUrl = saved;
+      for (const t of tabs) {
+        w.gBrowser.unpinTab(t);
+        w.gBrowser.removeTab(t);
+      }
+      return { without, opened, folder, urls };
+    }, `http://127.0.0.1:${port}`);
+    check('!top opens the top results in a folder named after the search, and without Xiao Search it says what it needs', instant.opened === 2 && instant.folder === 'lighthouse' && /Xiao Search/.test(instant.without), JSON.stringify(instant));
+    // calendar preview from an .ics file
+    const ics = join(home, 'work.ics');
+    const soon = new Date(Date.now() + 12 * 60_000);
+    const stamp = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
+    writeFileSync(ics, ['BEGIN:VCALENDAR', 'BEGIN:VEVENT', 'SUMMARY:Standup', `DTSTART:${stamp(soon)}`, `DTEND:${stamp(new Date(soon.getTime() + 900_000))}`, 'LOCATION:https://meet.google.com/abc-defg-hij', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n'));
+    const cal = await xiao(async (Xiao, ics) => {
+      const bad = await Xiao.setFeature({ id: 'calendar', value: 'http://insecure.example/c.ics' }).catch((e) => e.message);
+      await Xiao.setFeature({ id: 'calendar', value: ics });
+      await Xiao.calendar.refresh();
+      const next = Xiao.calendar.next();
+      await Xiao.setFeature({ id: 'calendar', value: '' });
+      return { bad, next, off: Xiao.calendar.next().on };
+    }, ics);
+    const e0 = cal.next.events[0];
+    check('the calendar preview shows the next meeting with a countdown and its Join link; http addresses are refused', e0?.title === 'Standup' && /^in 1[12] min$/.test(e0.when) && e0.join === 'https://meet.google.com/abc-defg-hij' && /https/.test(cal.bad) && cal.off === false, JSON.stringify(cal));
+    // Zen's importer, from the start page
+    const importer = await m.chrome(() => ({
+      keys: mod('browser/components/migration/MigrationUtils.sys.mjs').MigrationUtils.availableMigratorKeys,
+      wizard: typeof mod('browser/components/migration/MigrationUtils.sys.mjs').MigrationUtils.showMigrationWizard,
+    }));
+    // Zen's Arc importer is for macOS and Windows, its Dia importer for macOS only
+    const wants = { darwin: ['arc', 'dia'], win32: ['arc'] }[process.platform] ?? [];
+    check(`Zen's importer is there for the start page's import button${wants.length ? `, with ${wants.join(' and ')}` : ''}`, wants.every((k) => importer.keys.includes(k)) && importer.wizard === 'function', JSON.stringify(importer));
   }
 
   if (want('extras')) {

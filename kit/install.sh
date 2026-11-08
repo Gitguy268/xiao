@@ -17,8 +17,8 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 TOR_VERSION=16.0
 TOR_PORT=${XIAO_TOR_PORT:-9160} # XIAO_TOR_PORT: tests only, so a test install can run beside a real one
 SEARCH_PORT=${XIAO_SEARCH_PORT:-8890}
-SEARXNG=81371861f67226091d1c4df2e3908a11d3b54eb9
-ZEN_VERSION=1.23.3b # the Zen this kit was tested on, used when no Zen is installed
+SEARXNG=ac11e14c5edf995d4d2f066bfb885a614f52a978
+ZEN_VERSION=1.24.1b # the Zen this kit was tested on, used when no Zen is installed
 
 STRICT=0 TOR=0 SEARCH=0 UNINSTALL=0 UPDATE=0 ZEN=${ZEN:-}
 while [ $# -gt 0 ]; do
@@ -244,7 +244,7 @@ general:
   enable_metrics: false
 search:
   autocomplete: ""
-  formats: [html]
+  formats: [html, json] # json: Instant links (!top) read results on this computer
 server:
   bind_address: "127.0.0.1"
   port: $SEARCH_PORT

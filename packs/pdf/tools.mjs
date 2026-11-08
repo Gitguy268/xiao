@@ -8,7 +8,7 @@
 // follows PDFCraft's (AGPL-3.0, ideas only, no code). Built on @cantoo/pdf-lib
 // (MIT), pdf-lib with encryption. Each tool takes the file's bytes and its
 // options and gives back the new file's bytes; nothing leaves the page.
-import { PDFDocument, StandardFonts, rgb } from '@cantoo/pdf-lib';
+import { degrees, PDFDocument, StandardFonts, rgb } from '@cantoo/pdf-lib';
 
 const A4 = [595.28, 841.89];
 const MM = 72 / 25.4;
@@ -40,7 +40,69 @@ function sheet(out, pages, [w, h], cols, rows) {
   });
 }
 
+// "1-3, 5, 8-" → zero-based page indexes in the order written, for a
+// document of `count` pages. Throws on a page that isn't there.
+export function parseRange(text, count) {
+  const out = [];
+  const parts = String(text ?? '').split(',').map((p) => p.trim()).filter(Boolean);
+  if (!parts.length) throw new Error('Write the pages, e.g. 1-3, 5.');
+  for (const part of parts) {
+    const m = /^(\d*)\s*(-?)\s*(\d*)$/.exec(part);
+    if (!m || (!m[1] && !m[3])) throw new Error(`"${part}" is not a page or a range.`);
+    const from = m[1] ? Number(m[1]) : 1;
+    const to = m[2] ? (m[3] ? Number(m[3]) : count) : from;
+    if (from < 1 || to > count || from > to) throw new Error(`Pages ${part} are not in this ${count}-page PDF.`);
+    for (let i = from; i <= to; i++) out.push(i - 1);
+  }
+  return out;
+}
+
+async function copyInto(out, src, indexes) {
+  for (const page of await out.copyPages(src, indexes)) out.addPage(page);
+}
+
 export const TOOLS = {
+  // This PDF first, then the others in the order chosen.
+  async merge(bytes, { files = [] } = {}) {
+    if (!files.length) throw new Error('Choose the PDFs to add after this one.');
+    const out = await PDFDocument.create();
+    for (const b of [bytes, ...files.map((f) => f.bytes)]) {
+      const src = await open(b);
+      await copyInto(out, src, src.getPageIndices());
+    }
+    return out.save();
+  },
+
+  // A new PDF with only these pages, in the order written.
+  async extract(bytes, { pages } = {}) {
+    const src = await open(bytes);
+    const out = await PDFDocument.create();
+    await copyInto(out, src, parseRange(pages, src.getPageCount()));
+    return out.save();
+  },
+
+  async remove(bytes, { pages } = {}) {
+    const src = await open(bytes);
+    const gone = new Set(parseRange(pages, src.getPageCount()));
+    const keep = src.getPageIndices().filter((i) => !gone.has(i));
+    if (!keep.length) throw new Error('That would remove every page.');
+    const out = await PDFDocument.create();
+    await copyInto(out, src, keep);
+    return out.save();
+  },
+
+  // Turn pages clockwise; every page when no pages are written.
+  async rotate(bytes, { pages = '', angle = 90 } = {}) {
+    const doc = await open(bytes);
+    if (![90, 180, 270].includes(angle)) throw new Error('Turn by 90, 180 or 270 degrees.');
+    const which = String(pages).trim() ? parseRange(pages, doc.getPageCount()) : doc.getPageIndices();
+    for (const i of new Set(which)) {
+      const page = doc.getPage(i);
+      page.setRotation(degrees((page.getRotation().angle + angle) % 360));
+    }
+    return doc.save();
+  },
+
   // 2 or 4 pages on each A4 sheet.
   async nup(bytes, { per = 2 } = {}) {
     const src = await open(bytes);

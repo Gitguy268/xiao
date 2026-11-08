@@ -43,7 +43,7 @@ export function bangUrl(entry, query) {
 
 // Xiao's own bangs and the reader's come first, in that order, then the table.
 // "action" entries open something in Xiao instead of a web address.
-export const ACTIONS = { note: 'notes', notes: 'notes', lib: 'library', library: 'library' };
+export const ACTIONS = { note: 'notes', notes: 'notes', lib: 'library', library: 'library', pdf: 'pdf', tabs: 'tabs', top: 'top' };
 
 export function resolveBang(text, table, own = {}) {
   const bang = parseBang(text);

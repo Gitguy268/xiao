@@ -1,0 +1,1167 @@
+{
+ "source": "arc-dia-rebuild-pack feature-catalog.json, researched 2026-11-07 (feature IDs and titles only)",
+ "checked": "2026-11-08",
+ "note": "Statuses say what Xiao does about each feature. No row claims parity with Arc or Dia: the pack's behaviour descriptions are not observations of Xiao.",
+ "features": [
+  {
+   "feature_id": "A01",
+   "title": "Vertical sidebar and focus behavior",
+   "status": "inherited (verified)",
+   "where": "Zen vertical tabs, compact mode",
+   "check": "test/e2e/run.mjs \"Zen: compact mode, spaces, Essentials…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A02",
+   "title": "Spaces and switching contexts",
+   "status": "inherited (verified)",
+   "where": "Zen spaces",
+   "check": "test/e2e/run.mjs same check",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A03",
+   "title": "Profiles and separate browsing data",
+   "status": "inherited (unverified)",
+   "where": "Firefox profiles; containers verified; Xiao's Tor container",
+   "check": "test/e2e/run.mjs \"a link rule opens matching links in their space and its container\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A04",
+   "title": "Favorites as persistent icon tabs",
+   "status": "inherited (verified)",
+   "where": "Zen Essentials",
+   "check": "test/e2e/run.mjs \"Zen: compact mode, spaces, Essentials…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A05",
+   "title": "Pinned tabs and pinned URL recovery",
+   "status": "inherited (verified)",
+   "where": "Zen pinned tabs, reset to pinned page",
+   "check": "test/e2e/run.mjs same check",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A06",
+   "title": "Nested folders and folder previews",
+   "status": "inherited (verified)",
+   "where": "Zen folders (one level exercised)",
+   "check": "test/e2e/run.mjs \"Zen: folders, split view and Glance\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A07",
+   "title": "Today tabs and auto-archive",
+   "status": "implemented",
+   "where": "core/Archive.mjs auto-archive (opt-in)",
+   "check": "test/e2e/run.mjs \"auto-archive closes an old tab…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A08",
+   "title": "Archive browser and restore",
+   "status": "implemented",
+   "where": "Library Archive view, restore into space and container",
+   "check": "test/e2e/run.mjs \"an archived tab… opens again in its own container\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A09",
+   "title": "Command Bar: navigation, search, and commands",
+   "status": "implemented",
+   "where": "Zen address bar + Xiao actions (core/LibraryUrlbar.mjs)",
+   "check": "test/e2e/run.mjs \"the address bar shows Library files, and Xiao's actions join Zen's\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A10",
+   "title": "Site Search and search-engine selection",
+   "status": "implemented",
+   "where": "bangs (core/Bangs.mjs)",
+   "check": "test/bangs.test.mjs; test/e2e/new-features.mjs bangs",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A11",
+   "title": "Recent-tab switcher and tab shortcuts",
+   "status": "adapted",
+   "where": "Firefox Ctrl+Tab by recent use (look.yaml)",
+   "check": "test/e2e/run.mjs \"Ctrl+Tab goes to the tab used last\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A12",
+   "title": "Split View and saved split layouts",
+   "status": "inherited (verified)",
+   "where": "Zen split view, restored by the session store",
+   "check": "test/e2e/run.mjs \"Zen: a split view comes back after a restart…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A13",
+   "title": "Peek link preview and promotion",
+   "status": "inherited (verified)",
+   "where": "Zen Glance",
+   "check": "test/e2e/run.mjs \"Zen: folders, split view and Glance\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A14",
+   "title": "Little Arc and external-link windows",
+   "status": "adapted",
+   "where": "Quick window (core/QuickWindow.mjs)",
+   "check": "test/e2e/run.mjs \"quick window: a link from another app…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A15",
+   "title": "Air Traffic Control link routing",
+   "status": "inherited (verified)",
+   "where": "Zen space routing (now in Zen's Library)",
+   "check": "test/e2e/run.mjs \"a link rule opens matching links…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A16",
+   "title": "Themes, icons, and sidebar personalization",
+   "status": "inherited (unverified)",
+   "where": "Zen themes, grain (1.24.1b), accent from look.yaml",
+   "check": "none automated",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A17",
+   "title": "Multi-window tab handoff",
+   "status": "inherited (unverified)",
+   "where": "Zen windows and tab moving",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A18",
+   "title": "Video Picture-in-Picture",
+   "status": "inherited (unverified)",
+   "where": "Firefox picture-in-picture",
+   "check": "needs a check by hand",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A19",
+   "title": "Meeting PiP and share-this-tab controls",
+   "status": "inherited (unverified)",
+   "where": "Firefox/Zen WebRTC sharing indicators",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A20",
+   "title": "Audio mini player",
+   "status": "inherited (unverified)",
+   "where": "Zen media controller card",
+   "check": "needs a check by hand (test profiles never mark audio audible)",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A21",
+   "title": "Live calendar preview and join countdown",
+   "status": "adapted",
+   "where": "Calendar preview from an .ics address or file (core/Calendar.mjs, core/lib/ics.mjs); panel and start page, not a sidebar card",
+   "check": "test/ics.test.mjs; test/e2e/new-features.mjs more \"the calendar preview shows the next meeting…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A22",
+   "title": "GitHub Live Folders",
+   "status": "inherited (unverified)",
+   "where": "Zen GitHub live folders",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A23",
+   "title": "Boosts: visual website customization",
+   "status": "inherited (verified)",
+   "where": "Zen Boosts (focus and sharing from 1.24)",
+   "check": "test/e2e/run.mjs \"a Boost hides an element…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A24",
+   "title": "Boosts: custom CSS, JavaScript, and gallery",
+   "status": "inherited (verified)",
+   "where": "Zen Boosts custom CSS",
+   "check": "test/e2e/run.mjs same check",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A25",
+   "title": "Easels: spatial canvas",
+   "status": "adapted",
+   "where": "Boards: notes in topics, not a free canvas (core/Boards.mjs)",
+   "check": "test/e2e/run.mjs \"Boards: links and quotes go into topics…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A26",
+   "title": "Web captures and live capture cards",
+   "status": "deferred",
+   "where": "Firefox Screenshots for static captures; no live capture cards",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A27",
+   "title": "Easel collaboration, sharing, and export",
+   "status": "adapted",
+   "where": "Board export as Markdown or a page that runs nothing",
+   "check": "test/e2e/run.mjs Boards check",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A28",
+   "title": "Arc Notes",
+   "status": "unsupported",
+   "where": "retired by Arc; Xiao's sticky notes cover notes",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A29",
+   "title": "Library: downloads, media, and saved creations",
+   "status": "implemented",
+   "where": "Library pack (OpenFinder) and Zen's Library panel",
+   "check": "test/e2e/run.mjs sections 9–10",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A30",
+   "title": "Super Copy, Markdown links, and Share Quote",
+   "status": "implemented",
+   "where": "Copy as Markdown: link, page, quote with a link to its words (core/lib/markdown-link.mjs); Save to Clippings",
+   "check": "test/markdown-link.test.mjs; test/e2e/new-features.mjs more \"Copy as Markdown…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A31",
+   "title": "Developer Mode and development conveniences",
+   "status": "inherited (unverified)",
+   "where": "Firefox devtools",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A32",
+   "title": "Arc Max: Tidy Tab Titles",
+   "status": "implemented",
+   "where": "Tidy tab titles, rules (core/Assist.mjs)",
+   "check": "test/e2e/run.mjs \"tidy titles shortens titles…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A33",
+   "title": "Arc Max: Tidy Downloads",
+   "status": "implemented",
+   "where": "Tidy file names (core/lib/naming.mjs), optional local AI",
+   "check": "test/e2e/run.mjs section 11",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A34",
+   "title": "Arc Max: 5-Second Previews",
+   "status": "inherited (unverified)",
+   "where": "Firefox Link Preview (Shift+Alt hover; key points need Mozilla's model download) and Zen Glance; Xiao's Summarize Link on the local model",
+   "check": "none automated",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A35",
+   "title": "Arc Max: Ask on Page",
+   "status": "implemented",
+   "where": "Ask about this page (core/Assist.mjs), local model",
+   "check": "test/e2e/run.mjs section 13; AI=1",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A36",
+   "title": "Arc Max: Tidy Tabs",
+   "status": "implemented",
+   "where": "Group tabs by site into Zen folders; also by command on the All tabs page",
+   "check": "test/e2e/run.mjs \"tabs from one site can be grouped…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A37",
+   "title": "Arc Max: Instant Links and Ask ChatGPT",
+   "status": "adapted",
+   "where": "!top: top results of Xiao Search (local SearXNG, JSON) in a Zen folder (core/InstantLinks.mjs); needs --search",
+   "check": "test/instant.test.mjs; test/e2e/new-features.mjs more \"!top opens the top results…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A38",
+   "title": "Space/folder sharing and link bundles",
+   "status": "inherited (unverified)",
+   "where": "Zen Share (share.zen-browser.app, only when you share)",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A39",
+   "title": "TypeTravel coverage gap",
+   "status": "deferred",
+   "where": "no evidence of the behaviour (pack: discovery item)",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "A40",
+   "title": "Historical extras: Reader Mode, previews, membership UI",
+   "status": "inherited (unverified)",
+   "where": "Firefox reader view",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D01",
+   "title": "Intelligent Command Bar and new-tab page",
+   "status": "implemented",
+   "where": "start page + Zen address bar with Xiao's actions and bangs",
+   "check": "test/e2e/run.mjs start page checks",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D02",
+   "title": "Contextual chat beside a page",
+   "status": "implemented",
+   "where": "Assist beside the page (Zen split view)",
+   "check": "test/e2e/run.mjs section 13",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D03",
+   "title": "Tab mentions and context attachment picker",
+   "status": "implemented",
+   "where": "Assist \"Also read…\": other tabs as sources, passages keep their page (core/lib/assist-more.mjs)",
+   "check": "test/assist-more.test.mjs; test/e2e/new-features.mjs more \"Assist reads a mentioned tab too…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D04",
+   "title": "Mention an entire Tab Group",
+   "status": "implemented",
+   "where": "Assist \"Also read…\" a Zen folder's tabs",
+   "check": "test/assist-more.test.mjs",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D05",
+   "title": "Page understanding and structured extraction",
+   "status": "implemented",
+   "where": "page passages via XiaoChild extract (text only)",
+   "check": "test/e2e/run.mjs section 13",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D06",
+   "title": "Ask on Page and selected-content questions",
+   "status": "implemented",
+   "where": "Ask about this page; selection used when there is one",
+   "check": "test/e2e/run.mjs section 13",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D07",
+   "title": "Page, video, PDF, image, and spreadsheet summaries",
+   "status": "adapted",
+   "where": "pages and links summarised on the local model; PDFs through Firefox's viewer text; no video, image or spreadsheet summaries",
+   "check": "test/e2e/run.mjs AI=1",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D08",
+   "title": "Writing assistance, rewrite proposals, and insertion",
+   "status": "implemented",
+   "where": "writing tools in the sticky note, local model",
+   "check": "test/e2e/new-features.mjs public",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D09",
+   "title": "AI form filling",
+   "status": "unsupported",
+   "where": "AI form filling: Xiao's AI never acts on pages",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D10",
+   "title": "Email drafts and calendar-event preparation",
+   "status": "unsupported",
+   "where": "needs mail and calendar accounts; local-first",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D11",
+   "title": "Research, deeper reasoning, and model routing",
+   "status": "unsupported",
+   "where": "one local model; no cloud models to route to",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D12",
+   "title": "Citations, source inspection, and tool activity",
+   "status": "implemented",
+   "where": "cited answers; citations to passages not given are dropped",
+   "check": "test/assist.test.mjs",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D13",
+   "title": "Rich answers, code, tables, charts, and artifacts",
+   "status": "unsupported",
+   "where": "answers are plain text by design: nothing in an answer can act",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D14",
+   "title": "Reports from multiple tools and tabs",
+   "status": "deferred",
+   "where": "multi-tab answers exist (D03); written reports not yet",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D15",
+   "title": "Deck generation",
+   "status": "unsupported",
+   "where": "deck generation: out of scope",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D16",
+   "title": "Reusable Skills and invocation",
+   "status": "implemented",
+   "where": "Skills: notes named \"Skill <name>.md\", run with /name",
+   "check": "test/e2e/new-features.mjs more \"a skill is saved as a note…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D17",
+   "title": "Natural-language Skill builder",
+   "status": "adapted",
+   "where": "New skill form: a name and a sentence become the note; no model rewriting",
+   "check": "test/assist-more.test.mjs",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D18",
+   "title": "Skill discovery, sharing, and gallery",
+   "status": "adapted",
+   "where": "skills are notes, so they sync and share like notes; no gallery",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D19",
+   "title": "Personalization and custom response instructions",
+   "status": "implemented",
+   "where": "Assist \"Your style\": style only, never facts",
+   "check": "test/assist-more.test.mjs",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D20",
+   "title": "Historical Memory and ChatGPT-history import",
+   "status": "unsupported",
+   "where": "retired by Dia; Xiao keeps no memory of chats unless you keep them as a note",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D21",
+   "title": "Search browsing history, chats, and generated files",
+   "status": "implemented",
+   "where": "answers can be kept in the note \"Assist chats\", found by the Library's search",
+   "check": "test/assist-more.test.mjs",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D22",
+   "title": "Voice dictation",
+   "status": "deferred",
+   "where": "Whisper runs in the voice organiser; dictation in Assist not wired yet",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D23",
+   "title": "Queued messages, steering, stop, and resume",
+   "status": "implemented",
+   "where": "questions asked while Assist answers wait in a queue; Cancel drops them too",
+   "check": "none automated",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D24",
+   "title": "Connected-app framework and tool execution",
+   "status": "unsupported",
+   "where": "connected apps: local-first",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D25",
+   "title": "Connected-app capability inventory",
+   "status": "unsupported",
+   "where": "connected apps: local-first",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D26",
+   "title": "Accounts, workspace selection, and connection discovery",
+   "status": "unsupported",
+   "where": "accounts: local-first",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D27",
+   "title": "Proactive suggestions",
+   "status": "unsupported",
+   "where": "proactive suggestions: Xiao doesn't act unasked",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D28",
+   "title": "Morning Brief",
+   "status": "unsupported",
+   "where": "needs accounts and background reading",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D29",
+   "title": "Live Calendar and meeting reminders",
+   "status": "adapted",
+   "where": "calendar preview (A21) from an .ics address or file",
+   "check": "see A21",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D30",
+   "title": "Meeting Tab Groups",
+   "status": "unsupported",
+   "where": "needs calendar accounts",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D31",
+   "title": "Tab Groups, pinned groups, and restore",
+   "status": "inherited (verified)",
+   "where": "Zen folders and pinned folders",
+   "check": "test/e2e/run.mjs folder checks",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D32",
+   "title": "Automatic grouping, names, icons, and link grouping",
+   "status": "adapted",
+   "where": "group by site, rules (A36); no AI names",
+   "check": "test/e2e/run.mjs grouping check",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D33",
+   "title": "Manage tabs and groups through chat",
+   "status": "adapted",
+   "where": "All tabs page: commands in words become a plan you confirm; rules, not a model (core/lib/tabplan.mjs, core/TabCommands.mjs)",
+   "check": "test/tabplan.test.mjs; test/e2e/new-features.mjs more \"close tabs about yt…\", \"move … to Work…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D34",
+   "title": "Profiles, linked data, swiping, and defaults",
+   "status": "inherited (unverified)",
+   "where": "Firefox profiles; Zen 1.24 imports Arc and Dia profiles",
+   "check": "test/e2e/new-features.mjs more \"Zen's Arc and Dia importers…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D35",
+   "title": "Incoming-link rules",
+   "status": "inherited (unverified)",
+   "where": "Zen space routing; Xiao's quick window",
+   "check": "see A15, A14",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D36",
+   "title": "Top tabs, sidebar, Focus Mode, and themes",
+   "status": "inherited (verified)",
+   "where": "Zen compact mode (hides sidebar and top bar)",
+   "check": "test/e2e/run.mjs compact mode check",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D37",
+   "title": "Favorites, named pins, home URLs, and custom labels",
+   "status": "inherited (unverified)",
+   "where": "Zen Essentials, pinned tabs with reset, renamed tabs",
+   "check": "see A04, A05",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D38",
+   "title": "Split View with independent pane controls",
+   "status": "inherited (unverified)",
+   "where": "Zen split view",
+   "check": "see A12",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D39",
+   "title": "Tab search, overflow, recent switcher, and bulk actions",
+   "status": "implemented",
+   "where": "All tabs page: every space, search, tick, close, archive, group, mute, move",
+   "check": "test/e2e/new-features.mjs more",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D40",
+   "title": "GitHub Live Groups and PR stacks",
+   "status": "inherited (unverified)",
+   "where": "Zen GitHub live folders",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D41",
+   "title": "Live Documents and work-activity groups",
+   "status": "unsupported",
+   "where": "needs work accounts",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D42",
+   "title": "Tidy Tabs, cleanup groups, and empty-new-tab cleanup",
+   "status": "implemented",
+   "where": "Close new tabs left empty after 5, 15 or 60 minutes",
+   "check": "test/e2e/new-features.mjs more \"new tabs left empty close…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D43",
+   "title": "Media: PiP, stashing, Spotify controls, and site mute",
+   "status": "implemented",
+   "where": "Always mute this site (core/SiteMute.mjs); Firefox PiP; Zen media card",
+   "check": "test/e2e/new-features.mjs more \"Always mute this site…\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D44",
+   "title": "Meeting screen-share handoff and presentation indicators",
+   "status": "inherited (unverified)",
+   "where": "Firefox/Zen sharing indicators",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D45",
+   "title": "Cross-device sync",
+   "status": "inherited (unverified)",
+   "where": "Zen spaces sync over Firefox Sync, with a Firefox account",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D46",
+   "title": "Arc/Chrome migration and portable export",
+   "status": "implemented",
+   "where": "Xiao export/import (core/lib/portable.mjs) and Zen's Arc/Dia/Chrome importer from the start page",
+   "check": "test/portable.test.mjs; test/e2e/run.mjs import checks",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D47",
+   "title": "Extensions, side panels, and extension synchronization",
+   "status": "inherited (unverified)",
+   "where": "Firefox extensions (sidebar panels), Firefox Sync",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D48",
+   "title": "Privacy settings and AI permission boundaries",
+   "status": "implemented",
+   "where": "AI off until switched on, on this computer only; never Tor tabs or private windows; silent mode",
+   "check": "test/e2e/network-audit.mjs",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D49",
+   "title": "Enterprise identity, SSO, and managed policies",
+   "status": "inherited (unverified)",
+   "where": "Firefox enterprise policies",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "D50",
+   "title": "Plans, usage limits, trial, credits, and billing UI",
+   "status": "unsupported",
+   "where": "Xiao is free; no plans or billing",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "M01",
+   "title": "Search-first mobile launch and query entry",
+   "status": "out of scope",
+   "where": "Arc mobile: Xiao is a desktop browser",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "M02",
+   "title": "Browse for Me answer pages",
+   "status": "out of scope",
+   "where": "Arc mobile: Xiao is a desktop browser",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "M03",
+   "title": "Pinch-to-summarize interaction",
+   "status": "out of scope",
+   "where": "Arc mobile: Xiao is a desktop browser",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "M04",
+   "title": "Call Arc conversational voice search",
+   "status": "out of scope",
+   "where": "Arc mobile: Xiao is a desktop browser",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "M05",
+   "title": "Ads, trackers, and cookie-consent handling",
+   "status": "out of scope",
+   "where": "Arc mobile: Xiao is a desktop browser",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "M06",
+   "title": "Mobile tab switcher, archive, and cleanup",
+   "status": "out of scope",
+   "where": "Arc mobile: Xiao is a desktop browser",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "M07",
+   "title": "Desktop Spaces and mobile synchronization",
+   "status": "out of scope",
+   "where": "Arc mobile: Xiao is a desktop browser",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "M08",
+   "title": "Sharing, exports, and selected-text actions",
+   "status": "out of scope",
+   "where": "Arc mobile: Xiao is a desktop browser",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "M09",
+   "title": "Mobile OS integration, widgets, app links, and handoff",
+   "status": "out of scope",
+   "where": "Arc mobile: Xiao is a desktop browser",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "M10",
+   "title": "Mobile privacy and standard browsing controls",
+   "status": "out of scope",
+   "where": "Arc mobile: Xiao is a desktop browser",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C01",
+   "title": "Browser engine and process boundaries",
+   "status": "inherited (unverified)",
+   "where": "Gecko (Zen 1.24.1b, Firefox 159.0.1), Fission",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C02",
+   "title": "Tab state machine and command service",
+   "status": "adapted",
+   "where": "tab commands share functions with the UI (core/TabCommands.mjs)",
+   "check": "test/e2e/new-features.mjs more",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C03",
+   "title": "Storage partitions, credentials, and private browsing",
+   "status": "inherited (verified)",
+   "where": "Firefox containers, private windows; Xiao's Tor container",
+   "check": "test/e2e/run.mjs Tor checks",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C04",
+   "title": "Security, site permissions, blockers, and AI authorization",
+   "status": "implemented",
+   "where": "Xiao blocker, per-site switch, fingerprint noise, actors that trust nothing a page sends",
+   "check": "test/e2e/run.mjs blocking checks; test/e2e/new-features.mjs shield",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C05",
+   "title": "Navigation and ordinary page controls",
+   "status": "inherited (unverified)",
+   "where": "Firefox",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C06",
+   "title": "History, bookmarks, Find, and local search",
+   "status": "inherited (unverified)",
+   "where": "Firefox history, bookmarks, Find; Xiao's Library search",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C07",
+   "title": "Artifacts, files, exports, and clipboard",
+   "status": "implemented",
+   "where": "PDF tools page, Board export, Copy as Markdown",
+   "check": "test/e2e/new-features.mjs pdf, more",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C08",
+   "title": "Downloads and upload integration",
+   "status": "implemented",
+   "where": "Firefox downloads + Library hook",
+   "check": "test/e2e/run.mjs download journeys",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C09",
+   "title": "Keyboard, pointer, accessibility, and localization",
+   "status": "implemented",
+   "where": "accessible names on Xiao's pages; Zen shortcuts in about:keyboard",
+   "check": "test/e2e/run.mjs \"the start page's settings open the keyboard shortcuts list\"",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C10",
+   "title": "Operating-system integration and windows",
+   "status": "inherited (unverified)",
+   "where": "Firefox/Zen",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C11",
+   "title": "Media, calls, capture, casting, and device permissions",
+   "status": "inherited (verified)",
+   "where": "Firefox permissions; Xiao's blank camera",
+   "check": "test/e2e/new-features.mjs extras",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C12",
+   "title": "Provider integrations and background refresh",
+   "status": "adapted",
+   "where": "only Xiao Search (local) and calendar addresses you set",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C13",
+   "title": "Persistence, synchronization, backup, and deletion",
+   "status": "implemented",
+   "where": "xiao.json, notes as files, Library database with upgrade/rollback",
+   "check": "test/e2e/run.mjs database checks",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C14",
+   "title": "Developer tools and extension compatibility",
+   "status": "inherited (unverified)",
+   "where": "Firefox devtools and WebExtensions",
+   "check": "",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C15",
+   "title": "AI runtime, grounding, tool gateway, and evaluation",
+   "status": "implemented",
+   "where": "local model host, grounded and cited, model output never acts",
+   "check": "test/assist.test.mjs; AI=1",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  },
+  {
+   "feature_id": "C16",
+   "title": "Settings, account lifecycle, updates, and diagnostics",
+   "status": "implemented",
+   "where": "start page settings, signed updates with rollback",
+   "check": "test/e2e/new-features.mjs updates",
+   "target_platform": "macOS (Linux and Windows through the kit)",
+   "target_reference_version": "Zen 1.24.1b / Firefox 159.0.1",
+   "parity_claimed": false
+  }
+ ]
+}

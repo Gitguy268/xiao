@@ -142,3 +142,14 @@ Later answers to those open spikes:
 | Cover Your Tracks | [docs/privacy-results.md](privacy-results.md) |
 
 Open: camera scanning on the Send page isn't tested; choosing a video for the blank camera isn't built; Widevine has played on macOS only; containers don't test host sandboxing; Windows packs and Library are untested.
+
+# Xiao 0.6 (branch `xiao-0.6`, plan `~/.claude/plans/update-https-github-com-gitguy268-xiao-t-wise-fountain.md`)
+
+State on 2026-11-08:
+- **Versions:** Zen 1.24.1b (Fx 159.0.1), ghostery 2.20.3, astro 7.4.7, SearXNG ac11e14 (JSON format on for `!top`), GitHub Actions at current majors (free-disk-space v2: `preinstalled-runtimes`, `swap-storage: true`). The fork overlay and Zen's ffprefs pass on the 1.24.1b tag; a full fork compile is still CI's job.
+- **Firefox 159 / Zen 1.24 changes met:** Marionette needs `MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1`; test profiles have no containers; shortcuts moved to about:keyboard; Firefox ships its own **about:pdf**. macOS gives Firefox the real ~/Downloads whatever HOME says, so the harnesses set `browser.download.dir` to the throwaway home.
+- **about:pdf:** Firefox's page, with a "More PDF tools in Xiao" button (XiaoChild `pdfToolsLink` → XiaoParent `pdf-tools`). Xiao's tools keep their resource:// address (core/AboutPdf.mjs): an about: principal may not load resource:// files, and a resource:// result principal under an about: address made Firefox drop the load (tried, 2026-11-08). The pack page is a classic script now (format iife).
+- **New:** Copy as Markdown, site mute, empty new tab cleanup, All tabs page with commands (core/TabCommands.mjs, core/lib/tabplan.mjs), Assist mentions / Skills / style / saved chats / queue (core/lib/assist-more.mjs), `!top` instant links (core/InstantLinks.mjs), calendar preview (core/Calendar.mjs, core/lib/ics.mjs), Arc/Dia import button (Zen's MigrationUtils). Ledger by pack feature ID: docs/arc-parity.md and docs/feature-ledger.json.
+- **Tests:** unit 124/124; `ONLY=pdf` 11/11 and `ONLY=more` 11/11 in e2e:new; full non-Tor e2e 111/113 before the two stale checks were fixed.
+- **Deferred:** dictation in Assist (D22), written reports across tabs (D14), live capture cards (A26). Unverified by hand: media card and PiP (A18/A20), Zen Share (A38).
+- **Release steps left:** upload the new `pdf` and `library` zips to the `packs` release, push `xiao-0.6`, PR, CI green, merge, tag v0.6.0. Ask before touching the real Xiao.app.

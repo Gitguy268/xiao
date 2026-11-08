@@ -6,8 +6,11 @@
 // folder) loads this module at startup, in the kit's copy of Zen and in the
 // fork alike. There is no extension to disable: blocking, Tor routing, the
 // start page and the toolbar panel all live here.
+import { AboutPdf } from './AboutPdf.mjs';
 import { Archive, CHOICES as ARCHIVE_HOURS } from './Archive.mjs';
+import { InstantLinks } from './InstantLinks.mjs';
 import { Bangs } from './Bangs.mjs';
+import { Calendar, checkSource } from './Calendar.mjs';
 import { Clipboard, CLIPBOARD_URL } from './Clipboard.mjs';
 import { Send } from './Send.mjs';
 import { Assist, ASSIST_URL, HOST_URL as ASSIST_HOST_URL } from './Assist.mjs';
@@ -22,8 +25,10 @@ import { QuickWindow } from './QuickWindow.mjs';
 import { Search } from './Search.mjs';
 import { Shield } from './Shield.mjs';
 import { Silent } from './Silent.mjs';
+import { SiteMute } from './SiteMute.mjs';
 import { Tor } from './Tor.mjs';
 import { applyChoices, choicesFromPrefs, setDefaults, START_URL } from './StartPage.mjs';
+import { TabCommands, TABS_URL } from './TabCommands.mjs';
 import { Toolbar } from './Toolbar.mjs';
 import { Updater } from './Updater.mjs';
 import { everyTab } from './tabs.mjs';
@@ -32,7 +37,7 @@ import { parseOwnBangs } from './lib/bangs.mjs';
 import { rewriteMessages } from './lib/write.mjs';
 import { mod } from './mod.mjs';
 
-export { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, CLIPBOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL };
+export { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, CLIPBOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL, TABS_URL };
 
 const STORE = () => PathUtils.join(PathUtils.profileDir, 'xiao.json');
 
@@ -47,6 +52,7 @@ class Store {
   allow = new Set();
   shieldOff = new Set(); // sites where fingerprint noise is off
   cameraSites = new Set(); // sites given the fake camera
+  muted = new Set(); // sites whose tabs start muted
   total = 0;
   engineAt = 0;
   checkedAt = 0;
@@ -54,19 +60,20 @@ class Store {
   settings = {};
   engine = ''; // the search choice last given to the address bar
   features = {}; // the switches in the start page's Features section
+  assistStyle = ''; // the reader's style wishes for Assist's answers
 
   async load() {
     try {
       const saved = await IOUtils.readJSON(STORE());
-      Object.assign(this, saved, { allow: new Set(saved.allow ?? []), shieldOff: new Set(saved.shieldOff ?? []), cameraSites: new Set(saved.cameraSites ?? []) });
+      Object.assign(this, saved, { allow: new Set(saved.allow ?? []), shieldOff: new Set(saved.shieldOff ?? []), cameraSites: new Set(saved.cameraSites ?? []), muted: new Set(saved.muted ?? []) });
     } catch {} // first start
   }
 
   save() {
     this.saving ??= setTimeout(() => {
       this.saving = null;
-      const { allow, shieldOff, cameraSites, total, engineAt, checkedAt, updateAt, settings, engine, features } = this;
-      IOUtils.writeJSON(STORE(), { allow: [...allow], shieldOff: [...shieldOff], cameraSites: [...cameraSites], total, engineAt, checkedAt, updateAt, settings, engine, features }, { tmpPath: `${STORE()}.tmp` })
+      const { allow, shieldOff, cameraSites, muted, total, engineAt, checkedAt, updateAt, settings, engine, features, assistStyle } = this;
+      IOUtils.writeJSON(STORE(), { allow: [...allow], shieldOff: [...shieldOff], cameraSites: [...cameraSites], muted: [...muted], total, engineAt, checkedAt, updateAt, settings, engine, features, assistStyle }, { tmpPath: `${STORE()}.tmp` })
         .catch((e) => console.error('Xiao: could not save', e));
     }, 5_000);
   }
@@ -105,6 +112,11 @@ export const Xiao = {
     this.updater = new Updater(this);
     this.send = new Send();
     this.clipboard = new Clipboard(this);
+    this.aboutPdf = new AboutPdf(this);
+    this.siteMute = new SiteMute(this);
+    this.tabCommands = new TabCommands(this);
+    this.instantLinks = new InstantLinks(this);
+    this.calendar = new Calendar(this);
     this.searchUrl = Services.prefs.getStringPref('xiao.search.url', '');
     setDefaults();
     this.tor.start();
@@ -161,6 +173,7 @@ export const Xiao = {
       this.sleepTabs(this.features.tabSleep);
       this.archive.start(this.features.autoArchive);
       this.quickWindow.set(this.features.quickWindow);
+      this.calendar.start();
       // The download hook loads Firefox's download list: not while Xiao is still starting.
       this.packsReady.then(async () => {
         await this.servePacks();
@@ -174,7 +187,7 @@ export const Xiao = {
   // noise, which costs nothing, needs nothing downloaded and has a per-site switch.
   get features() {
     // libraryDownloads only matters while the Library is on; it starts on with it.
-    return { updates: true, shield: true, fakeCamera: false, sendDevice: false, noteWriting: false, clipboard: false, reader: false, sticky: false, perSite: false, tabSleep: 0, libraryDownloads: true, autoArchive: 0, bangs: true, assist: false, boards: false, quickWindow: false, ...this.store.features, silent: this.silent.on };
+    return { updates: true, shield: true, fakeCamera: false, sendDevice: false, noteWriting: false, clipboard: false, reader: false, sticky: false, perSite: false, tabSleep: 0, newTabCleanup: 0, libraryDownloads: true, autoArchive: 0, bangs: true, assist: false, boards: false, quickWindow: false, calendar: '', assistChats: false, ...this.store.features, silent: this.silent.on };
   },
 
   async featureState() {
@@ -236,6 +249,13 @@ export const Xiao = {
       await this.servePacks();
     } else if (id === 'bangs') {
       this.store.features = { ...this.store.features, bangs: !!on };
+    } else if (id === 'calendar') {
+      this.store.features = { ...this.store.features, calendar: checkSource(value) };
+      this.calendar.start({ asked: true });
+    } else if (id === 'newTabCleanup') {
+      const minutes = [0, 5, 15, 60].includes(value) ? value : 0;
+      this.store.features = { ...this.store.features, newTabCleanup: minutes };
+      this.sleepTabs(this.features.tabSleep);
     } else if (id === 'tabSleep') {
       const minutes = [0, 15, 30, 60, 120].includes(value) ? value : 0;
       this.store.features = { ...this.store.features, tabSleep: minutes };
@@ -272,7 +292,12 @@ export const Xiao = {
   // playing sound are never put to sleep; a sleeping tab reloads when opened.
   sleepTabs(minutes) {
     clearInterval(this.sleepTimer);
-    if (minutes) this.sleepTimer = setInterval(() => this.sweepTabs(minutes), 60_000);
+    if (minutes || this.features.newTabCleanup) {
+      this.sleepTimer = setInterval(() => {
+        this.closeEmptyTabs(this.features.newTabCleanup);
+        if (minutes) this.sweepTabs(minutes);
+      }, 60_000);
+    }
   },
 
   sweepTabs(minutes) {
@@ -283,6 +308,27 @@ export const Xiao = {
         win.gBrowser.discardBrowser(tab);
       }
     }
+  },
+
+  // New tabs left as they opened (Dia's empty-new-tab cleanup, D42): a tab
+  // still on the start page or a new tab page, never navigated, not selected,
+  // not pinned and untouched for N minutes, is closed. Zen's own empty tab
+  // (zen-empty-tab) is Zen's to manage.
+  closeEmptyTabs(minutes) {
+    if (!minutes) return 0;
+    const cutoff = Date.now() - minutes * 60_000;
+    const blank = (spec) => [START_URL, 'about:newtab', 'about:home', 'about:blank'].includes(spec.split(/[?#]/)[0]);
+    let closed = 0;
+    for (const win of Services.wm.getEnumerator('navigator:browser')) {
+      for (const tab of everyTab(win)) {
+        const b = tab.linkedBrowser;
+        if (tab.selected || tab.pinned || tab.hasAttribute('zen-empty-tab') || tab.hasAttribute('zen-essential') || tab.lastAccessed > cutoff) continue;
+        if (!blank(b.currentURI?.spec ?? '') || b.canGoBack || b.canGoForward) continue;
+        win.gBrowser.removeTab(tab, { animate: false });
+        closed++;
+      }
+    }
+    return closed;
   },
 
   // The address bar follows the start page's search choice, set once per
@@ -331,6 +377,8 @@ export const Xiao = {
     if (from === 'assist') return this.assistPage(name, data ?? {}, browsingContext?.id);
     if (from === 'board') return this.boardPage(name, data ?? {});
     if (from === 'clipboard') return this.clipboard.page(name, data);
+    if (from === 'pdf') return this.aboutPdf.page(name, data ?? {}, browsingContext);
+    if (from === 'tabs') return this.tabCommands.page(name, data ?? {});
     if (from === 'send') {
       if (!this.features.sendDevice) throw new Error('Send to a device is off (start page → Features).');
       if (name === 'send.begin') return void this.send.begin(browsingContext.id);
@@ -339,10 +387,16 @@ export const Xiao = {
     if (name === 'notes.save') return this.notes.save(data ?? {});
     if (from !== 'start') throw new Error(`unknown call ${name}`);
     if (name === 'features') return this.featureState();
-    if (name === 'shortcuts') return void browsingContext.topChromeWindow.openPreferences('paneZenCKS'); // Zen's list, rebindable and searchable
+    if (name === 'calendar.next') {
+      if (data?.refresh) await this.calendar.refresh();
+      return this.calendar.next();
+    }
+    if (name === 'shortcuts') return void this.openShortcuts(browsingContext.topChromeWindow);
     if (name === 'export') return this.portable.export(browsingContext.topChromeWindow);
     if (name === 'import.pick') return this.portable.pick(browsingContext.topChromeWindow);
     if (name === 'import.apply') return this.portable.apply(browsingContext.topChromeWindow);
+    // Zen's importer (Zen 1.24 reads Arc's and Dia's spaces and profiles); it reads files on this computer only
+    if (name === 'import.browser') return void mod('browser/components/migration/MigrationUtils.sys.mjs').MigrationUtils.showMigrationWizard(browsingContext.topChromeWindow, {});
     if (name === 'feature') {
       await this.setFeature(data ?? {});
       return this.featureState();
@@ -353,7 +407,7 @@ export const Xiao = {
       return this.featureState();
     }
     if (name === 'bang') return this.bangs.resolve(data?.text);
-    if (name === 'bang.run') return void await this.bangs.run(data?.action, browsingContext.topChromeWindow);
+    if (name === 'bang.run') return void await this.bangs.run(data?.action, browsingContext.topChromeWindow, String(data?.query ?? ''));
     if (name === 'drm.install') return this.silent.installDrm();
     if (name === 'updates.check') return this.updater.check();
     if (name === 'filters.update') return { changed: await this.blocker.update({ asked: true }) };
@@ -417,12 +471,28 @@ export const Xiao = {
       return { on: this.assist.on, model: await this.assist.model(), title: t.label, ...this.assist.status() };
     }
     if (name === 'assist.status') return this.assist.status();
-    if (name === 'assist.evidence') return this.assist.evidence(tab, String(data.question ?? '').slice(0, 500));
+    const extra = Array.isArray(data.tabs) ? data.tabs.filter(Number.isSafeInteger).slice(0, 5) : [];
+    if (name === 'assist.evidence') return this.assist.evidence(tab, String(data.question ?? '').slice(0, 500), extra);
+    if (name === 'assist.mentions') return this.assist.mentionable(tab);
+    if (name === 'assist.skills') return (await this.assist.skills()).map(({ name, prompt }) => ({ name, prompt }));
+    if (name === 'assist.skill.new') return this.assist.newSkill(String(data.name ?? ''), String(data.does ?? ''));
+    if (name === 'assist.style') {
+      if (typeof data.text === 'string') {
+        this.store.assistStyle = data.text.slice(0, 500);
+        this.store.save();
+      }
+      return { text: this.store.assistStyle, chats: !!this.features.assistChats };
+    }
+    if (name === 'assist.chats') {
+      this.store.features = { ...this.store.features, assistChats: !!data.on };
+      this.store.save();
+      return { chats: !!data.on };
+    }
     if (name === 'assist.ask') {
       this.assistRun?.abort();
       this.assistRun = new AbortController();
       this.assistRunBy = page;
-      return this.assist.ask(tab, String(data.question ?? '').slice(0, 500), { signal: this.assistRun.signal });
+      return this.assist.ask(tab, String(data.question ?? '').slice(0, 500), { signal: this.assistRun.signal, extra });
     }
     if (name === 'assist.summarize') {
       this.assistRun?.abort();
@@ -461,6 +531,16 @@ export const Xiao = {
     target.gBrowser.selectedTab = tab;
     target.focus();
     return tab;
+  },
+
+  // Zen 1.24 moved its shortcut list to about:keyboard (Firefox's own, with
+  // Zen's added); older Zens keep it in Settings.
+  openShortcuts(win) {
+    if (Cc['@mozilla.org/network/protocol/about;1?what=keyboard']) {
+      win.gBrowser.selectedTab = win.gBrowser.addTab('about:keyboard', { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
+    } else {
+      win.openPreferences('paneZenCKS');
+    }
   },
 
   openTor(win, url) {

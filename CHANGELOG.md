@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.0 (8 November 2026)
+
+- **Built on Zen 1.24.1b (Firefox 159.0.1).** New from Zen and Firefox: import of spaces and profiles from Arc and Dia (and Xiao's start page has a button for it), Boost focus and sharing, Paste & Search, tabs added and removed from the Library, a sign for tabs you can't see, grain in the theme picker, shortcuts at about:keyboard (the start page's link goes there), and Firefox's **about:pdf**.
+- **PDF:** Firefox's about:pdf opens PDFs in its viewer, which reorders, merges, signs and comments. A button on it opens Xiao's PDF tools, which add keeping, removing and turning some pages, merging, the PDFs downloaded lately, and "More tools for this PDF" from the viewer. Without the PDF tools download, the page offers it.
+- **All tabs** (Xiao's button, command bar, `!tabs`): every tab in every space, to search, tick and close, archive, group, mute or move to a space. Or say it: "close all youtube tabs", "archive tabs older than 3 days", "move github tabs to Work", "close duplicate tabs". The tabs are shown before anything happens; pinned and Essential tabs are never touched.
+- **Assist:** mention other tabs or a Zen folder and ask across them, with every passage keeping its page. **Skills**: saved instructions, run with `/name`, kept as notes. **Your style** for answers (style only). Answers can be kept in a note. A question asked while it writes waits its turn.
+- **Copy as Markdown** in the page and link menus: a link, the page, or a quote that links to its own words.
+- **Calendar preview** (Features): the next meeting from your calendar's .ics address or file, with a countdown and a Join button, on the start page and in Xiao's button.
+- **`!top`**: the top results of Xiao Search in a new folder.
+- **Always mute this site**, and **closing new tabs left empty** (Features).
+- **Every feature of the Arc/Dia rebuild pack** is in [the ledger](docs/arc-parity.md) by ID, with what Xiao does about it ([JSON](docs/feature-ledger.json)).
+- Updated: SearXNG (with JSON results on, for `!top`), Ghostery's adblocker 2.20.3, Astro 7.4.7, and the build's GitHub Actions.
+
 ## 0.5.2 (2 November 2026)
 
 - Silent mode no longer cancels "Save Link As" and "Save Page As", which it had treated as the browser's own requests.
