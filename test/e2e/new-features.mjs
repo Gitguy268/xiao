@@ -142,6 +142,16 @@ const closeTab = () => m.chrome(() => {
   const w = Services.wm.getMostRecentWindow('navigator:browser');
   w.gBrowser.removeTab(w.gBrowser.selectedTab);
 });
+// <name>-light.png and <name>-dark.png in test/e2e/out (E2E_OUT), for the README
+const shoot = async (handle, name) => {
+  mkdirSync(out, { recursive: true });
+  for (const [theme, override] of [['light', 1], ['dark', 0]]) {
+    await m.chrome((o) => Services.prefs.setIntPref('layout.css.prefers-color-scheme.content-override', o), override);
+    await sleep(600);
+    writeFileSync(join(out, `${name}-${theme}.png`), await m.screenshot(handle));
+  }
+  await m.chrome(() => Services.prefs.clearUserPref('layout.css.prefers-color-scheme.content-override'));
+};
 const probe = async (host) => {
   const h = await open(`http://${host}:${port}/probe`);
   const r = await m.content(h, () => window.probe());
@@ -399,6 +409,7 @@ try {
       return b && { label: b.getAttribute('label'), bridge: typeof window.xiao, dropzone: !!document.getElementById('dropzone') };
     }), 15_000).catch((e) => e.message);
     check('Firefox\'s about:pdf is there, with a button to Xiao\'s PDF tools and no way to reach Xiao from the page', firefox?.dropzone && /More PDF tools/.test(firefox.label) && firefox.bridge === 'undefined', JSON.stringify(firefox));
+    await shoot(h, 'about-pdf');
     await m.content(h, () => document.querySelector('#xiao-pdf-tools moz-button').click());
     const went = await until('the PDF tools to open', () => m.chrome(() => Services.wm.getMostRecentWindow('navigator:browser').gBrowser.selectedBrowser.currentURI.spec === 'resource://xiao/pdf/index.html'), 10_000).catch(() => false);
     check('the button opens Xiao\'s PDF tools', went === true);
@@ -440,6 +451,7 @@ try {
     await loaded(h);
     const handed = await until('the handed-over PDF', () => m.content(h, () => document.getElementById('file-info').textContent), 15_000).catch((e) => e.message);
     check('a PDF handed to the PDF tools shows its name and page count', /^2 pages/.test(handed), handed);
+    await shoot(h, 'pdf-tools');
     const merged = await m.content(h, async (b64) => {
       const doc = window.wrappedJSObject?.document ?? document;
       document.querySelector('[value="merge"]').click();
@@ -560,10 +572,13 @@ try {
       return { n: p.ids?.length, titles: (p.tabs ?? []).map((t) => t.title).sort(), error: p.error };
     });
     check('"close tabs about yt" plans the two matching tabs, and nothing closes yet', planned.n === 2 && planned.titles.join() === 'Article yt1,Article yt2', JSON.stringify(planned));
-    const ran = await m.content(h, async () => {
+    await m.content(h, async () => {
       document.getElementById('command').value = 'close tabs about yt';
       document.getElementById('command-form').requestSubmit();
       for (let i = 0; i < 20 && document.getElementById('plan').hidden; i++) await new Promise((r) => setTimeout(r, 200));
+    });
+    await shoot(h, 'all-tabs');
+    const ran = await m.content(h, async () => {
       const text = document.getElementById('plan-text').textContent;
       document.getElementById('plan-go').click();
       for (let i = 0; i < 20 && !/Done/.test(document.getElementById('status').textContent); i++) await new Promise((r) => setTimeout(r, 200));
