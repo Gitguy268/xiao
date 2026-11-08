@@ -23,8 +23,10 @@ import { QuickWindow } from './QuickWindow.mjs';
 import { Search } from './Search.mjs';
 import { Shield } from './Shield.mjs';
 import { Silent } from './Silent.mjs';
+import { SiteMute } from './SiteMute.mjs';
 import { Tor } from './Tor.mjs';
 import { applyChoices, choicesFromPrefs, setDefaults, START_URL } from './StartPage.mjs';
+import { TabCommands, TABS_URL } from './TabCommands.mjs';
 import { Toolbar } from './Toolbar.mjs';
 import { Updater } from './Updater.mjs';
 import { everyTab } from './tabs.mjs';
@@ -33,7 +35,7 @@ import { parseOwnBangs } from './lib/bangs.mjs';
 import { rewriteMessages } from './lib/write.mjs';
 import { mod } from './mod.mjs';
 
-export { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, CLIPBOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL };
+export { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, CLIPBOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL, TABS_URL };
 
 const STORE = () => PathUtils.join(PathUtils.profileDir, 'xiao.json');
 
@@ -48,6 +50,7 @@ class Store {
   allow = new Set();
   shieldOff = new Set(); // sites where fingerprint noise is off
   cameraSites = new Set(); // sites given the fake camera
+  muted = new Set(); // sites whose tabs start muted
   total = 0;
   engineAt = 0;
   checkedAt = 0;
@@ -55,19 +58,20 @@ class Store {
   settings = {};
   engine = ''; // the search choice last given to the address bar
   features = {}; // the switches in the start page's Features section
+  assistStyle = ''; // the reader's style wishes for Assist's answers
 
   async load() {
     try {
       const saved = await IOUtils.readJSON(STORE());
-      Object.assign(this, saved, { allow: new Set(saved.allow ?? []), shieldOff: new Set(saved.shieldOff ?? []), cameraSites: new Set(saved.cameraSites ?? []) });
+      Object.assign(this, saved, { allow: new Set(saved.allow ?? []), shieldOff: new Set(saved.shieldOff ?? []), cameraSites: new Set(saved.cameraSites ?? []), muted: new Set(saved.muted ?? []) });
     } catch {} // first start
   }
 
   save() {
     this.saving ??= setTimeout(() => {
       this.saving = null;
-      const { allow, shieldOff, cameraSites, total, engineAt, checkedAt, updateAt, settings, engine, features } = this;
-      IOUtils.writeJSON(STORE(), { allow: [...allow], shieldOff: [...shieldOff], cameraSites: [...cameraSites], total, engineAt, checkedAt, updateAt, settings, engine, features }, { tmpPath: `${STORE()}.tmp` })
+      const { allow, shieldOff, cameraSites, muted, total, engineAt, checkedAt, updateAt, settings, engine, features, assistStyle } = this;
+      IOUtils.writeJSON(STORE(), { allow: [...allow], shieldOff: [...shieldOff], cameraSites: [...cameraSites], muted: [...muted], total, engineAt, checkedAt, updateAt, settings, engine, features, assistStyle }, { tmpPath: `${STORE()}.tmp` })
         .catch((e) => console.error('Xiao: could not save', e));
     }, 5_000);
   }
@@ -107,6 +111,8 @@ export const Xiao = {
     this.send = new Send();
     this.clipboard = new Clipboard(this);
     this.aboutPdf = new AboutPdf(this);
+    this.siteMute = new SiteMute(this);
+    this.tabCommands = new TabCommands(this);
     this.searchUrl = Services.prefs.getStringPref('xiao.search.url', '');
     setDefaults();
     this.tor.start();
@@ -176,7 +182,7 @@ export const Xiao = {
   // noise, which costs nothing, needs nothing downloaded and has a per-site switch.
   get features() {
     // libraryDownloads only matters while the Library is on; it starts on with it.
-    return { updates: true, shield: true, fakeCamera: false, sendDevice: false, noteWriting: false, clipboard: false, reader: false, sticky: false, perSite: false, tabSleep: 0, libraryDownloads: true, autoArchive: 0, bangs: true, assist: false, boards: false, quickWindow: false, ...this.store.features, silent: this.silent.on };
+    return { updates: true, shield: true, fakeCamera: false, sendDevice: false, noteWriting: false, clipboard: false, reader: false, sticky: false, perSite: false, tabSleep: 0, newTabCleanup: 0, libraryDownloads: true, autoArchive: 0, bangs: true, assist: false, boards: false, quickWindow: false, ...this.store.features, silent: this.silent.on };
   },
 
   async featureState() {
@@ -238,6 +244,10 @@ export const Xiao = {
       await this.servePacks();
     } else if (id === 'bangs') {
       this.store.features = { ...this.store.features, bangs: !!on };
+    } else if (id === 'newTabCleanup') {
+      const minutes = [0, 5, 15, 60].includes(value) ? value : 0;
+      this.store.features = { ...this.store.features, newTabCleanup: minutes };
+      this.sleepTabs(this.features.tabSleep);
     } else if (id === 'tabSleep') {
       const minutes = [0, 15, 30, 60, 120].includes(value) ? value : 0;
       this.store.features = { ...this.store.features, tabSleep: minutes };
@@ -274,10 +284,12 @@ export const Xiao = {
   // playing sound are never put to sleep; a sleeping tab reloads when opened.
   sleepTabs(minutes) {
     clearInterval(this.sleepTimer);
-    if (minutes) this.sleepTimer = setInterval(() => this.sweepTabs(minutes), 60_000);
+    if (minutes || this.features.newTabCleanup) this.sleepTimer = setInterval(() => this.sweepTabs(minutes), 60_000);
   },
 
   sweepTabs(minutes) {
+    this.closeEmptyTabs(this.features.newTabCleanup);
+    if (!minutes) return;
     const cutoff = Date.now() - minutes * 60_000;
     for (const win of Services.wm.getEnumerator('navigator:browser')) {
       for (const tab of everyTab(win)) {
@@ -285,6 +297,27 @@ export const Xiao = {
         win.gBrowser.discardBrowser(tab);
       }
     }
+  },
+
+  // New tabs left as they opened (Dia's empty-new-tab cleanup, D42): a tab
+  // still on the start page or a new tab page, never navigated, not selected,
+  // not pinned and untouched for N minutes, is closed. Zen's own empty tab
+  // (zen-empty-tab) is Zen's to manage.
+  closeEmptyTabs(minutes) {
+    if (!minutes) return 0;
+    const cutoff = Date.now() - minutes * 60_000;
+    const blank = (spec) => [START_URL, 'about:newtab', 'about:home', 'about:blank'].includes(spec.split(/[?#]/)[0]);
+    let closed = 0;
+    for (const win of Services.wm.getEnumerator('navigator:browser')) {
+      for (const tab of everyTab(win)) {
+        const b = tab.linkedBrowser;
+        if (tab.selected || tab.pinned || tab.hasAttribute('zen-empty-tab') || tab.hasAttribute('zen-essential') || tab.lastAccessed > cutoff) continue;
+        if (!blank(b.currentURI?.spec ?? '') || b.canGoBack || b.canGoForward) continue;
+        win.gBrowser.removeTab(tab, { animate: false });
+        closed++;
+      }
+    }
+    return closed;
   },
 
   // The address bar follows the start page's search choice, set once per
@@ -334,6 +367,7 @@ export const Xiao = {
     if (from === 'board') return this.boardPage(name, data ?? {});
     if (from === 'clipboard') return this.clipboard.page(name, data);
     if (from === 'pdf') return this.aboutPdf.page(name, data ?? {}, browsingContext);
+    if (from === 'tabs') return this.tabCommands.page(name, data ?? {});
     if (from === 'send') {
       if (!this.features.sendDevice) throw new Error('Send to a device is off (start page → Features).');
       if (name === 'send.begin') return void this.send.begin(browsingContext.id);
@@ -422,12 +456,28 @@ export const Xiao = {
       return { on: this.assist.on, model: await this.assist.model(), title: t.label, ...this.assist.status() };
     }
     if (name === 'assist.status') return this.assist.status();
-    if (name === 'assist.evidence') return this.assist.evidence(tab, String(data.question ?? '').slice(0, 500));
+    const extra = Array.isArray(data.tabs) ? data.tabs.filter(Number.isSafeInteger).slice(0, 5) : [];
+    if (name === 'assist.evidence') return this.assist.evidence(tab, String(data.question ?? '').slice(0, 500), extra);
+    if (name === 'assist.mentions') return this.assist.mentionable(tab);
+    if (name === 'assist.skills') return (await this.assist.skills()).map(({ name, prompt }) => ({ name, prompt }));
+    if (name === 'assist.skill.new') return this.assist.newSkill(String(data.name ?? ''), String(data.does ?? ''));
+    if (name === 'assist.style') {
+      if (typeof data.text === 'string') {
+        this.store.assistStyle = data.text.slice(0, 500);
+        this.store.save();
+      }
+      return { text: this.store.assistStyle, chats: !!this.features.assistChats };
+    }
+    if (name === 'assist.chats') {
+      this.store.features = { ...this.store.features, assistChats: !!data.on };
+      this.store.save();
+      return { chats: !!data.on };
+    }
     if (name === 'assist.ask') {
       this.assistRun?.abort();
       this.assistRun = new AbortController();
       this.assistRunBy = page;
-      return this.assist.ask(tab, String(data.question ?? '').slice(0, 500), { signal: this.assistRun.signal });
+      return this.assist.ask(tab, String(data.question ?? '').slice(0, 500), { signal: this.assistRun.signal, extra });
     }
     if (name === 'assist.summarize') {
       this.assistRun?.abort();

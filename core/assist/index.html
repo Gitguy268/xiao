@@ -20,10 +20,15 @@
     <form id="ask">
       <label for="question" class="soft">Your question</label>
       <div class="row">
-        <input id="question" autocomplete="off" spellcheck="true" maxlength="500">
+        <input id="question" autocomplete="off" spellcheck="true" maxlength="500" placeholder="Ask, or /skill">
         <button class="primary" id="go">Ask</button>
       </div>
+      <div class="row mentions">
+        <select id="mention" aria-label="Also read another tab or a folder"><option value="">Also read…</option></select>
+        <ul id="chips" class="chips" aria-label="Also reading"></ul>
+      </div>
     </form>
+    <p id="queued" class="soft" hidden></p>
     <p id="status" role="status" aria-live="polite"></p>
     <button id="cancel" hidden>Cancel</button>
     <section id="answer" hidden aria-labelledby="answer-title">
@@ -35,6 +40,23 @@
       <h2 id="evidence-title">Where the page says it</h2>
       <ol id="passages"></ol>
     </section>
+    <details id="skills-box">
+      <summary>Skills</summary>
+      <p class="soft">A skill is saved instructions: type <code>/name</code> and a question. Skills are notes named "Skill …", so you can edit them in your notes.</p>
+      <ul id="skills" class="skills"></ul>
+      <form id="new-skill">
+        <label class="soft">Name <input id="skill-name" maxlength="60" autocomplete="off"></label>
+        <label class="soft">What it should do <textarea id="skill-does" rows="2" maxlength="1000" placeholder="e.g. Explain the page to a ten-year-old, in five sentences."></textarea></label>
+        <button type="submit">Save the skill</button>
+      </form>
+    </details>
+    <details id="style-box">
+      <summary>Your style</summary>
+      <label class="soft" for="style">How answers should read (style only: it never adds facts)</label>
+      <textarea id="style" rows="2" maxlength="500" placeholder="e.g. Answer in Dutch, in short sentences."></textarea>
+      <p><button type="button" id="style-save">Save</button></p>
+      <label class="switch soft"><input type="checkbox" id="chats"> Keep answers in a note, "Assist chats"</label>
+    </details>
     <footer class="soft" id="footer"></footer>
   </main>
 </body>

@@ -80,6 +80,7 @@ export class Toolbar {
     win.gBrowser.tabContainer.addEventListener('TabSelect', () => this.badge(win.gBrowser.selectedBrowser.browserId, win));
     this.addClipItem(win);
     this.addMarkdownItem(win);
+    this.xiao.siteMute.attach(win);
     this.addSummaryItem(win);
     this.addBoardMenu(win);
     // a closed tab's count, and any pause of blocking in it, go with it
@@ -331,12 +332,16 @@ export class Toolbar {
     };
     if (site) {
       body.append(el('toolbarseparator'));
+      const muted = this.xiao.siteMute.isMuted(browser.currentURI);
+      if (!muted && !inTor && !browser.browsingContext.usePrivateBrowsing) action('Always mute this site', () => this.xiao.siteMute.set(browser.currentURI, true));
+      if (muted) action('Stop muting this site', () => this.xiao.siteMute.set(browser.currentURI, false));
       action(this.xiao.silent.on ? 'Translate: needs its language files, which silent mode won\'t fetch' : 'Translate this page', () => win.FullPageTranslationsPanel?.open(new win.Event('command'), false));
     }
     if (this.xiao.features.reader) action('Reader', () => openPage('resource://xiao/reader/index.html'));
     if (this.xiao.features.clipboard) action('Clipboard history', () => openPage('resource://xiao/clipboard/index.html'));
     if (this.xiao.features.sendDevice) action('Send to a device', () => this.xiao.send.open(win));
     action('Notes', () => this.xiao.notes.openFrom(win));
+    if (!browser.browsingContext.usePrivateBrowsing) action('All tabs', () => this.xiao.tabCommands.open(win));
     // Firefox's about:pdf (Zen 1.24), which links to Xiao's PDF tools; on a PDF, those tools.
     if (browser.documentContentType === 'application/pdf') {
       action('More tools for this PDF', () => this.xiao.aboutPdf.fromViewer(win).catch((e) => Services.prompt.alert(win, 'PDF tools', e.message)));

@@ -1,0 +1,41 @@
+<!doctype html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>All tabs</title>
+  <link rel="stylesheet" href="../tokens.css">
+  <link rel="stylesheet" href="../send/send.css">
+  <link rel="stylesheet" href="tabs.css">
+  <script src="tabs.js" type="module"></script>
+</head>
+<body>
+  <main>
+    <h1>All tabs</h1>
+    <p class="lede">Every tab in every space. Search, tick and act on many at once, or say what to do: <i>close all youtube tabs</i>, <i>archive tabs older than 3 days</i>, <i>move github tabs to Work</i>, <i>close duplicate tabs</i>. You see the tabs first; nothing happens until you confirm. Pinned and Essential tabs are never touched; Tor tabs and private windows aren't listed.</p>
+    <form id="command-form" class="command">
+      <label class="visually-hidden" for="command">Search, or say what to do</label>
+      <input id="command" type="search" autocomplete="off" placeholder="Search tabs, or say what to do">
+      <button type="submit">Plan</button>
+    </form>
+    <section id="plan" class="plan" hidden aria-live="polite">
+      <p id="plan-text"></p>
+      <p class="actions"><button id="plan-go" class="primary" type="button">Do it</button> <button id="plan-cancel" type="button">Cancel</button></p>
+    </section>
+    <div class="bulk" role="toolbar" aria-label="With the ticked tabs">
+      <label><input id="all" type="checkbox"> All shown</label>
+      <span id="count"></span>
+      <button type="button" data-act="close">Close</button>
+      <button type="button" data-act="archive">Archive</button>
+      <button type="button" data-act="group">Group</button>
+      <button type="button" data-act="mute">Mute</button>
+      <select id="move-to" aria-label="Move to space"><option value="">Move to space…</option></select>
+    </div>
+    <ul id="tabs" class="tabs"></ul>
+    <p id="status" role="status"></p>
+  </main>
+</body>
+</html>

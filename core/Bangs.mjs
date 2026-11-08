@@ -35,6 +35,7 @@ export class Bangs {
   run(action, win) {
     if (action === 'library') return this.xiao.openLibrary(win);
     if (action === 'pdf') return this.xiao.aboutPdf.hub(win);
+    if (action === 'tabs') return this.xiao.tabCommands.open(win);
     return this.xiao.notes.openFrom(win);
   }
 
@@ -44,7 +45,7 @@ export class Bangs {
       const { UrlbarProvider } = ChromeUtils.importESModule('moz-src:///browser/components/urlbar/UrlbarUtils.sys.mjs');
       const { UrlbarShared } = ChromeUtils.importESModule('chrome://browser/content/urlbar/UrlbarShared.mjs');
       const { UrlbarResult } = ChromeUtils.importESModule('chrome://browser/content/urlbar/UrlbarResult.mjs');
-      const LABEL = { notes: 'Open your notes', library: 'Open the Library', pdf: 'Open about:pdf' };
+      const LABEL = { notes: 'Open your notes', library: 'Open the Library', pdf: 'Open about:pdf', tabs: 'Open all tabs' };
 
       class XiaoBangsProvider extends UrlbarProvider {
         get name() {

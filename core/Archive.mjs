@@ -57,14 +57,7 @@ export class Archive {
     for (const win of Services.wm.getEnumerator('navigator:browser')) {
       for (const tab of everyTab(win)) {
         if (tab.lastAccessed > cutoff || this.keeps(tab, win)) continue;
-        const b = tab.linkedBrowser;
-        await store.addArchive({
-          url: b.currentURI.spec,
-          title: tab.label || b.contentTitle || '',
-          workspace: tab.getAttribute('zen-workspace-id') || null,
-          userContext: tab.userContextId || 0,
-        });
-        win.gBrowser.removeTab(tab, { animate: false, skipPermitUnload: false });
+        await this.archiveTab(tab, win, { checked: true });
         archived++;
       }
     }
@@ -73,6 +66,25 @@ export class Archive {
       this.xiao.library.changed();
     }
     return archived;
+  }
+
+  // Closes one tab into the archive, from the sweep or the tab page; false
+  // when the tab must stay (the reasons in keeps(), but for the selected tab,
+  // which a reader may archive by hand from the tab page).
+  async archiveTab(tab, win, { checked = false } = {}) {
+    if (!checked) {
+      const why = this.keeps(tab, win);
+      if (why && !(why === 'kept in place' && tab.selected && !tab.pinned && !tab.hasAttribute('zen-essential'))) return false;
+    }
+    const b = tab.linkedBrowser;
+    await this.xiao.library.store.addArchive({
+      url: b.currentURI.spec,
+      title: tab.label || b.contentTitle || '',
+      workspace: tab.getAttribute('zen-workspace-id') || null,
+      userContext: tab.userContextId || 0,
+    });
+    win.gBrowser.removeTab(tab, { animate: false, skipPermitUnload: false });
+    return true;
   }
 
   // Opens an archived tab again in a normal window, in its space and container.

@@ -26,7 +26,7 @@ export const LIMITS = { spaces: 50, tabs: 2000, collections: 500, items: 5000, t
 // Settings that go in, and their types. Anything else (the notes folder, the
 // engine's state, counters) is left out.
 const START = { search: 'string', custom: 'string', theme: 'string', links: 'links', newtab: 'string', launch: 'string' };
-const FEATURES = { perSite: 'boolean', tabSleep: 'number', libraryDownloads: 'boolean', autoArchive: 'number', bangs: 'boolean', assist: 'boolean', boards: 'boolean', quickWindow: 'boolean' };
+const FEATURES = { perSite: 'boolean', tabSleep: 'number', newTabCleanup: 'number', libraryDownloads: 'boolean', autoArchive: 'number', bangs: 'boolean', assist: 'boolean', boards: 'boolean', quickWindow: 'boolean' };
 
 const text = (v, max = LIMITS.text) => (typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f‪-‮⁦-⁩]/g, ' ').trim().slice(0, max) : '');
 
@@ -137,13 +137,13 @@ export function parseImport(raw) {
 }
 
 // A switch as the reader knows it from the start page's Features.
-const FEATURE_NAMES = { perSite: 'Sticky note per site', tabSleep: 'Tab sleep', libraryDownloads: 'Remember my downloads', autoArchive: 'Auto-archive',
+const FEATURE_NAMES = { perSite: 'Sticky note per site', tabSleep: 'Tab sleep', newTabCleanup: 'Closing empty new tabs', libraryDownloads: 'Remember my downloads', autoArchive: 'Auto-archive',
   bangs: 'Bangs', assist: 'Assist', boards: 'Boards', quickWindow: 'Quick window' };
 export function describeFeature(id, value) {
   const name = FEATURE_NAMES[id] ?? id;
   if (typeof value === 'boolean') return `${name} ${value ? 'on' : 'off'}`;
   if (!value) return `${name} off`;
-  return `${name} after ${id === 'tabSleep' ? `${value} min` : `${value} h`}`;
+  return `${name} after ${id === 'tabSleep' || id === 'newTabCleanup' ? `${value} min` : `${value} h`}`;
 }
 
 // What the reader sees before anything is imported: every address, and what

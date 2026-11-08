@@ -13,12 +13,14 @@
 // started for the first job and closed two minutes after the last, which
 // gives its memory back. One job at a time; cancelling one closes the hidden
 // tab, so the work really stops. Only what the reader picked goes in: the
-// page they asked about (or its selection), never other tabs or files, and
-// never private windows or Tor tabs. Nothing leaves the computer.
+// page they asked about (or its selection) and any tabs they mention, never
+// other tabs or files, and never private windows or Tor tabs. Nothing leaves
+// the computer.
 //
 // Model output is only ever shown, or offered as a name for the reader to
 // accept in the Library's review: it never acts.
-import { askMessages, groupBySite, nameMessages, passagesOf, rankPassages, readAnswer, readName, summaryMessages, textOfHtml, tidyTitle } from './lib/assist.mjs';
+import { groupBySite, nameMessages, passagesOf, rankPassages, readAnswer, readName, summaryMessages, textOfHtml, tidyTitle } from './lib/assist.mjs';
+import { applySkill, askAcrossMessages, chatEntry, isSkill, newSkillNote, numberAcross, skillFile, skillName, skillPrompt } from './lib/assist-more.mjs';
 import { lazy } from './mod.mjs';
 import { everyTab } from './tabs.mjs';
 
@@ -182,18 +184,77 @@ export class Assist {
   }
 
   // The passages that answer, at once and without the model: the page shows
-  // these while the model writes.
-  async evidence(browserId, question) {
-    const { title, passages, selection } = await this.passages(browserId);
-    return { title, selection, evidence: rankPassages(passages, question) };
+  // these while the model writes. extra: other tabs the reader mentioned
+  // (browserIds, at most five), read the same way and numbered after this page.
+  async evidence(browserId, question, extra = []) {
+    const ids = [browserId, ...new Set(extra.filter((id) => Number.isSafeInteger(id) && id !== browserId))].slice(0, 6);
+    const pages = [];
+    for (const id of ids) {
+      const p = await this.passages(id);
+      pages.push({ title: p.title, url: this.tabFor(id).linkedBrowser.currentURI.spec, passages: p.passages, selection: p.selection });
+    }
+    const { asked, question: q } = applySkill(question, await this.skills());
+    const wanted = asked ?? q;
+    return {
+      title: pages[0].title,
+      selection: pages[0].selection,
+      titles: pages.map((p) => p.title),
+      urls: pages.map((p) => p.url),
+      evidence: rankPassages(numberAcross(pages), wanted, ids.length > 1 ? 8 : 6),
+    };
   }
 
-  async ask(browserId, question, { signal } = {}) {
-    const { title, selection, evidence } = await this.evidence(browserId, question);
-    if (!(await this.model()) && !this.engine) return { title, selection, evidence, answer: null };
-    if (!evidence.length) return { title, selection, evidence, answer: { text: 'The page does not say.', cites: [], said: 'not on page' } };
-    const answer = readAnswer(await this.run(askMessages(question, evidence, title), { signal }), evidence);
-    return { title, selection, evidence, answer };
+  // question may start with "/skill": its note's instructions are added.
+  async ask(browserId, question, { signal, extra = [] } = {}) {
+    const found = await this.evidence(browserId, question, extra);
+    const { title, selection, evidence, titles } = found;
+    if (!(await this.model()) && !this.engine) return { ...found, answer: null };
+    if (!evidence.length) return { ...found, answer: { text: 'The page does not say.', cites: [], said: 'not on page' } };
+    const { question: q } = applySkill(question, await this.skills());
+    const answer = readAnswer(await this.run(askAcrossMessages(q, evidence, titles, this.xiao.store.assistStyle), { signal }), evidence);
+    if (this.xiao.features.assistChats && answer.said !== 'not on page') {
+      this.saveChat({ question, answer: answer.text, titles, urls: found.urls }).catch((e) => console.error('Xiao: Assist chat', e));
+    }
+    return { title, selection, evidence, titles, answer };
+  }
+
+  // --- Skills, mentions and saved chats (0.6) ---
+
+  async skills() {
+    return (await this.xiao.notes.list()).filter((n) => isSkill(n.name))
+      .map((n) => ({ name: skillName(n.name), file: n.name, prompt: skillPrompt(n.text) })).filter((s) => s.prompt);
+  }
+
+  async newSkill(name, does) {
+    const file = skillFile(name);
+    if (!file) throw new Error('A skill needs a name.');
+    if ((await this.skills()).some((s) => s.file.toLowerCase() === file.toLowerCase())) throw new Error('There is a skill with that name already.');
+    await this.xiao.notes.save({ name: file, text: newSkillNote(name, does) });
+    return skillName(file);
+  }
+
+  async saveChat(entry) {
+    const name = 'Assist chats.md';
+    const before = (await this.xiao.notes.list()).find((n) => n.name === name)?.text ?? '# Assist chats\n';
+    await this.xiao.notes.save({ name, text: `${before.trimEnd()}\n\n${chatEntry(entry)}` });
+  }
+
+  // Tabs and Zen folders the reader can mention: normal tabs showing web
+  // pages, never Tor tabs or private windows, and not the page itself.
+  mentionable(browserId) {
+    const tabs = [];
+    const folders = new Map();
+    for (const win of Services.wm.getEnumerator('navigator:browser')) {
+      if (privateBrowsing().isWindowPrivate(win)) continue;
+      for (const tab of everyTab(win)) {
+        const b = tab.linkedBrowser;
+        if (tab.userContextId === this.xiao.tor.torId || !/^https?:/.test(b?.currentURI?.spec ?? '') || b.browserId === browserId) continue;
+        tabs.push({ id: b.browserId, title: tab.label });
+        const folder = tab.group?.label;
+        if (folder) folders.set(folder, [...(folders.get(folder) ?? []), b.browserId]);
+      }
+    }
+    return { tabs, folders: [...folders].map(([label, ids]) => ({ label, ids })) };
   }
 
   // Shows a passage in the page: scrolled to and selected.

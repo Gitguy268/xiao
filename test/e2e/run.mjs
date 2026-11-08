@@ -438,12 +438,13 @@ try {
   });
   const keysPane = await until('the shortcuts settings', () => m.chrome(() => {
     const b = Services.wm.getMostRecentWindow('navigator:browser').gBrowser.selectedBrowser;
-    return b.currentURI.spec.startsWith('about:preferences') && b.currentURI.spec;
+    return /^about:(preferences|keyboard)/.test(b.currentURI.spec) && b.currentURI.spec;
   }), 15_000).catch((e) => e.message);
-  check('the start page\'s settings open the keyboard shortcuts list', /^about:preferences#zenCKS$/i.test(keysPane), keysPane);
+  // Zen 1.24 moved its list to about:keyboard; older Zens keep it in Settings
+  check('the start page\'s settings open the keyboard shortcuts list', /^(about:keyboard|about:preferences#zenCKS)$/i.test(keysPane), keysPane);
   await m.chrome(() => { // the settings tab runs in the main process and can never sleep: close it for the checks after this
     const g = Services.wm.getMostRecentWindow('navigator:browser').gBrowser;
-    for (const t of [...g.tabs]) if (t.linkedBrowser.currentURI.spec.startsWith('about:preferences')) g.removeTab(t, { animate: false });
+    for (const t of [...g.tabs]) if (/^about:(preferences|keyboard)/.test(t.linkedBrowser.currentURI.spec)) g.removeTab(t, { animate: false });
   });
 
   if (WANT_SEARCH) {
@@ -580,6 +581,7 @@ try {
       const dt = new DataTransfer();
       dt.items.add(new File([new Uint8Array(bytes)], 'two.pdf', { type: 'application/pdf' }));
       document.getElementById('drop').dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
+      for (let i = 0; i < 25 && !/page/.test(document.getElementById('file-info')?.textContent ?? 'page'); i++) await new Promise((r) => setTimeout(r, 200)); // read in first
       document.querySelector('[value="numbers"]').click();
       document.querySelector('#options [type="submit"]').click();
       for (let i = 0; i < 50 && !/Done|could|password/.test(document.getElementById('status').textContent); i++) await new Promise((r) => setTimeout(r, 200));
