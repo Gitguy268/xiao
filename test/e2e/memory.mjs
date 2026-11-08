@@ -23,7 +23,7 @@ const SETTLE = Number(process.env.MEMORY_SETTLE ?? 60) * 1000;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const home = mkdtempSync(join(tmpdir(), 'xiao-mem-'));
-const env = { ...process.env, HOME: home, MOZ_HEADLESS_WIDTH: '1440', MOZ_HEADLESS_HEIGHT: '900' };
+const env = { ...process.env, MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1', HOME: home, MOZ_HEADLESS_WIDTH: '1440', MOZ_HEADLESS_HEIGHT: '900' };
 delete env.XDG_DATA_HOME;
 execFileSync('sh', [join(process.env.KIT ?? join(root, 'dist/kit'), 'install.sh'), ...(process.env.ZEN ? ['--zen', process.env.ZEN] : [])], { env, stdio: 'inherit' });
 const data = process.platform === 'darwin' ? join(home, 'Library/Application Support/xiao-kit') : join(home, '.local/share/xiao-kit');

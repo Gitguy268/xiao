@@ -52,7 +52,7 @@ async function audit(mode) {
   const home = mkdtempSync(join(process.env.RUNNER_TEMP ?? tmpdir(), 'xiao-audit-'));
   const removeHome = () => rmSync(home, { recursive: true, force: true });
   cleanup.add(removeHome);
-  const env = { ...process.env, HOME: home, MOZ_HEADLESS_WIDTH: '1280', MOZ_HEADLESS_HEIGHT: '800' };
+  const env = { ...process.env, MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1', HOME: home, MOZ_HEADLESS_WIDTH: '1280', MOZ_HEADLESS_HEIGHT: '800' };
   delete env.XDG_DATA_HOME;
   execFileSync('sh', [join(root, 'dist/kit/install.sh')], { env, stdio: 'ignore' });
   const data = process.platform === 'darwin' ? join(home, 'Library/Application Support/xiao-kit') : join(home, '.local/share/xiao-kit');

@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- shown as about:pdf-tools: relative addresses still mean Xiao's folder -->
+  <base href="resource://xiao/pdf/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF tools</title>
+  <link rel="stylesheet" href="../tokens.css">
+  <link rel="stylesheet" href="../send/send.css">
+  <style>
+    .drop { display: grid; place-items: center; min-height: 100px; padding: 20px; border: 1.5px dashed var(--rule); border-radius: var(--radius); background: var(--paper-raised); cursor: pointer; text-align: center; }
+    .drop:hover, .drop:focus-within { border-color: var(--accent); }
+    .drop input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  </style>
+  <script src="pdf.js" type="module"></script>
+</head>
+<body>
+  <main>
+    <h1>PDF tools</h1>
+    <p class="lede">Booklets, pages per sheet, page numbers, passwords, attachments, and keeping, removing or turning some pages: what Firefox's viewer doesn't do. The PDF tools are a separate download (<span id="size">a few hundred KB</span>) and work on this computer only.</p>
+    <p class="actions"><button id="get" class="primary" type="button">Get the PDF tools</button></p>
+    <p id="status" role="status"></p>
+    <h2>Open a PDF in the viewer</h2>
+    <p class="lede">Firefox's viewer, built into Xiao, highlights, signs, comments, fills in forms, reorders and merges pages without any download.</p>
+    <label class="drop"><input id="file" type="file" accept="application/pdf,.pdf"><span>Choose a PDF, or drop one here</span></label>
+  </main>
+</body>
+</html>

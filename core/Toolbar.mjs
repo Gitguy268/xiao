@@ -303,11 +303,16 @@ export class Toolbar {
     if (this.xiao.features.clipboard) action('Clipboard history', () => openPage('resource://xiao/clipboard/index.html'));
     if (this.xiao.features.sendDevice) action('Send to a device', () => this.xiao.send.open(win));
     action('Notes', () => this.xiao.notes.openFrom(win));
+    // Firefox's about:pdf (Zen 1.24), which links to Xiao's about:pdf-tools; on a PDF, its own tools.
+    if (browser.documentContentType === 'application/pdf') {
+      action('More tools for this PDF', () => this.xiao.aboutPdf.fromViewer(win).catch((e) => Services.prompt.alert(win, 'PDF tools', e.message)));
+    } else {
+      action('PDF', () => this.xiao.aboutPdf.hub(win));
+    }
     // The downloaded features, each once it is installed.
     const tools = [
       ['library', 'Library', () => this.xiao.openLibrary(win)],
       ['convert', 'Convert a file', 'resource://xiao-convert/index.html'],
-      ['pdf', 'PDF tools', 'resource://xiao-pdf/index.html'],
       ['notes-ai', 'Sort my notes by voice', this.xiao.ORGANISE_URL],
     ];
     let first = true;

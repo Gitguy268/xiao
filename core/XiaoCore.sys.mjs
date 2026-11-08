@@ -6,6 +6,7 @@
 // folder) loads this module at startup, in the kit's copy of Zen and in the
 // fork alike. There is no extension to disable: blocking, Tor routing, the
 // start page and the toolbar panel all live here.
+import { AboutPdf, PDF_ABOUT } from './AboutPdf.mjs';
 import { Archive, CHOICES as ARCHIVE_HOURS } from './Archive.mjs';
 import { Bangs } from './Bangs.mjs';
 import { Clipboard, CLIPBOARD_URL } from './Clipboard.mjs';
@@ -32,7 +33,7 @@ import { parseOwnBangs } from './lib/bangs.mjs';
 import { rewriteMessages } from './lib/write.mjs';
 import { mod } from './mod.mjs';
 
-export { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, CLIPBOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL };
+export { ASSIST_HOST_URL, ASSIST_URL, BOARD_URL, CLIPBOARD_URL, LIBRARY_ORIGIN, LIBRARY_URL, PDF_ABOUT };
 
 const STORE = () => PathUtils.join(PathUtils.profileDir, 'xiao.json');
 
@@ -105,6 +106,8 @@ export const Xiao = {
     this.updater = new Updater(this);
     this.send = new Send();
     this.clipboard = new Clipboard(this);
+    this.aboutPdf = new AboutPdf(this);
+    this.aboutPdf.register();
     this.searchUrl = Services.prefs.getStringPref('xiao.search.url', '');
     setDefaults();
     this.tor.start();
@@ -133,6 +136,7 @@ export const Xiao = {
   },
 
   observe(subject, topic, data) {
+    if (topic === 'xiao-pack-installed') this.aboutPdf.publish(); // about:pdf-tools turns into the tools
     if (topic === 'xiao-pack-installed' && data === 'library') {
       this.syncLibrary();
       for (const win of Services.wm.getEnumerator('navigator:browser')) this.zenFiles.attach(win);
@@ -258,6 +262,7 @@ export const Xiao = {
       if (this.packOn(id)) this.packs.map(id);
       else this.packs.unmap(id);
     }
+    this.aboutPdf?.publish();
   },
 
   // The Library's download hook runs only while its pack is there (or downloading).
@@ -331,6 +336,7 @@ export const Xiao = {
     if (from === 'assist') return this.assistPage(name, data ?? {}, browsingContext?.id);
     if (from === 'board') return this.boardPage(name, data ?? {});
     if (from === 'clipboard') return this.clipboard.page(name, data);
+    if (from === 'pdf') return this.aboutPdf.page(name, data ?? {}, browsingContext);
     if (from === 'send') {
       if (!this.features.sendDevice) throw new Error('Send to a device is off (start page → Features).');
       if (name === 'send.begin') return void this.send.begin(browsingContext.id);
@@ -339,7 +345,7 @@ export const Xiao = {
     if (name === 'notes.save') return this.notes.save(data ?? {});
     if (from !== 'start') throw new Error(`unknown call ${name}`);
     if (name === 'features') return this.featureState();
-    if (name === 'shortcuts') return void browsingContext.topChromeWindow.openPreferences('paneZenCKS'); // Zen's list, rebindable and searchable
+    if (name === 'shortcuts') return void this.openShortcuts(browsingContext.topChromeWindow);
     if (name === 'export') return this.portable.export(browsingContext.topChromeWindow);
     if (name === 'import.pick') return this.portable.pick(browsingContext.topChromeWindow);
     if (name === 'import.apply') return this.portable.apply(browsingContext.topChromeWindow);
@@ -461,6 +467,16 @@ export const Xiao = {
     target.gBrowser.selectedTab = tab;
     target.focus();
     return tab;
+  },
+
+  // Zen 1.24 moved its shortcut list to about:keyboard (Firefox's own, with
+  // Zen's added); older Zens keep it in Settings.
+  openShortcuts(win) {
+    if (Cc['@mozilla.org/network/protocol/about;1?what=keyboard']) {
+      win.gBrowser.selectedTab = win.gBrowser.addTab('about:keyboard', { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
+    } else {
+      win.openPreferences('paneZenCKS');
+    }
   },
 
   openTor(win, url) {

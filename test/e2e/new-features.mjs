@@ -6,13 +6,14 @@
 // the blank camera, bangs, start page styles, download problems and updates.
 //
 //   npm run build && npm run e2e:new
-//   ONLY=updates,bangs npm run e2e:new  some sections (shield, bangs, styles, packs, extras, silent, drm, updates)
+//   ONLY=updates,bangs npm run e2e:new  some sections (shield, bangs, styles, packs, pdf, extras, silent, drm, updates)
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash, generateKeyPairSync, sign } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
+import { PDFDocument } from '@cantoo/pdf-lib';
 import { Marionette } from './marionette.mjs';
 import { zip } from '../../scripts/zip.mjs';
 import { fileURLToPath } from 'node:url';
@@ -74,7 +75,7 @@ const home = mkdtempSync(join(process.env.RUNNER_TEMP ?? tmpdir(), 'xiao-new-'))
 const { publicKey, privateKey } = generateKeyPairSync('ed25519');
 const rawKey = publicKey.export({ type: 'spki', format: 'der' }).subarray(-32).toString('base64');
 const env = {
-  ...process.env, HOME: home, MOZ_HEADLESS_WIDTH: '1280', MOZ_HEADLESS_HEIGHT: '800',
+  ...process.env, MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1', HOME: home, MOZ_HEADLESS_WIDTH: '1280', MOZ_HEADLESS_HEIGHT: '800',
   XIAO_UPDATE_TEST_KEY: rawKey, XIAO_UPDATE_TEST_URL: `http://127.0.0.1:${port}/updates.json`,
 };
 delete env.XDG_DATA_HOME;
@@ -359,6 +360,117 @@ try {
     });
     check('the start page shows it downloaded', /Downloaded/.test(ui), ui);
     await closeTab();
+    await m.chrome(() => Services.prefs.clearUserPref('xiao.packs.mirror'));
+  }
+
+  if (want('pdf')) {
+    const pdfOf = async (n) => {
+      const doc = await PDFDocument.create();
+      for (let i = 0; i < n; i++) doc.addPage([300, 400]).drawText(`page ${i + 1}`, { x: 20, y: 200 });
+      return Buffer.from(await doc.save()).toString('base64');
+    };
+    const pages = async (b64) => (await PDFDocument.load(Buffer.from(b64, 'base64'))).getPageCount();
+    await xiao(async (Xiao) => {
+      await Xiao.setFeature({ id: 'pdf', on: false });
+      await Xiao.setFeature({ id: 'pdf', on: true, remove: true }).catch(() => {});
+      await Xiao.packs.remove('pdf').catch(() => {});
+      await Xiao.servePacks();
+    });
+    // Firefox's about:pdf (Zen 1.24) carries a button to Xiao's tools
+    let h = await open('about:pdf');
+    const firefox = await until('Xiao\'s button on about:pdf', () => m.content(h, () => {
+      const b = document.querySelector('#xiao-pdf-tools moz-button');
+      return b && { label: b.getAttribute('label'), bridge: typeof window.xiao, dropzone: !!document.getElementById('dropzone') };
+    }), 15_000).catch((e) => e.message);
+    check('Firefox\'s about:pdf is there, with a button to Xiao\'s PDF tools and no way to reach Xiao from the page', firefox?.dropzone && /More PDF tools/.test(firefox.label) && firefox.bridge === 'undefined', JSON.stringify(firefox));
+    await m.content(h, () => document.querySelector('#xiao-pdf-tools moz-button').click());
+    const went = await until('about:pdf-tools to open', () => m.chrome(() => Services.wm.getMostRecentWindow('navigator:browser').gBrowser.selectedBrowser.currentURI.spec === 'about:pdf-tools'), 10_000).catch(() => false);
+    check('the button opens about:pdf-tools', went === true);
+    await closeTab();
+    await closeTab();
+    // without the pack: Xiao's own page, under the about:pdf-tools address
+    h = await open('about:pdf-tools');
+    const bare = await m.content(h, async () => {
+      await new Promise((r) => setTimeout(r, 800));
+      return { uri: document.documentURI, title: document.title, get: !!document.getElementById('get'), bridge: typeof window.xiao?.call, origin: window.origin, size: document.getElementById('size')?.textContent };
+    });
+    check('about:pdf-tools opens Xiao\'s own page before the PDF tools are downloaded, at its about: address, as an ordinary page', bare.uri === 'about:pdf-tools' && bare.title === 'PDF tools' && bare.get && bare.bridge === 'function' && bare.origin === 'resource://xiao', JSON.stringify(bare));
+    // the download from the page, then the page turns into the tools by itself
+    await m.chrome((u) => Services.prefs.setStringPref('xiao.packs.mirror', u), `http://127.0.0.1:${port}/mirror/`);
+    mirrorMode = 'ok';
+    await m.content(h, () => document.getElementById('get').click());
+    const tools = await until('about:pdf-tools to become the tools', () => m.content(h, () => !!document.getElementById('work') && document.documentURI === 'about:pdf-tools' && window.origin), 60_000).catch((e) => e.message);
+    check('"Get the PDF tools" downloads them and about:pdf-tools reloads into them', tools === 'resource://xiao-pdf', String(tools));
+    await closeTab();
+    // a PDF handed over, then merged with a second one picked in the page
+    const [two, three] = [await pdfOf(2), await pdfOf(3)];
+    h = await m.chrome(async (b64) => {
+      const { Xiao } = ChromeUtils.importESModule('resource://xiao/XiaoCore.sys.mjs');
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const tab = Xiao.aboutPdf.open(w, { name: 'two.pdf', bytes: Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)) });
+      const { NavigableManager } = mod('remote/shared/NavigableManager.sys.mjs');
+      return NavigableManager.getIdForBrowser(tab.linkedBrowser);
+    }, two);
+    await loaded(h);
+    const handed = await until('the handed-over PDF', () => m.content(h, () => document.getElementById('file-info').textContent), 15_000).catch((e) => e.message);
+    check('a PDF handed to about:pdf-tools shows its name and page count', /^2 pages/.test(handed), handed);
+    const merged = await m.content(h, async (b64) => {
+      const doc = window.wrappedJSObject.document;
+      document.querySelector('[value="merge"]').click();
+      const dt = new DataTransfer();
+      dt.items.add(new File([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'three.pdf', { type: 'application/pdf' }));
+      doc.querySelector('[data-for="merge"] input').files = dt.files;
+      document.querySelector('#options button[type="submit"]').click();
+      for (let i = 0; i < 40 && !/^Done|error/i.test(document.getElementById('status').textContent); i++) await new Promise((r) => setTimeout(r, 250));
+      return document.getElementById('status').textContent;
+    }, three);
+    const file = await until('the merged download', () => m.chrome(async () => {
+      const { Downloads } = mod('toolkit/components/downloads/Downloads.sys.mjs');
+      const d = (await (await Downloads.getList(Downloads.PUBLIC)).getAll()).find((x) => x.succeeded && /\(merge\)\.pdf$/.test(x.target.path));
+      if (!d) return null;
+      const bytes = await IOUtils.read(d.target.path);
+      let bin = '';
+      for (const b of bytes) bin += String.fromCharCode(b);
+      return { path: d.target.path, b64: btoa(bin) };
+    }), 20_000).catch(() => null);
+    check('Merge gives back one PDF with every page of both', /^Done/.test(merged) && file && (await pages(file.b64)) === 5, `${merged} ${file ? await pages(file.b64) : 'no file'}`);
+    await closeTab();
+    // downloaded lately, and the viewer
+    h = await open('about:pdf-tools');
+    const recent = await until('the recent list', () => m.content(h, () => [...document.querySelectorAll('#recent button')].map((b) => b.textContent)), 10_000).catch(() => []);
+    check('about:pdf-tools lists the PDF just downloaded', recent.some((n) => /\(merge\)\.pdf$/.test(n)), JSON.stringify(recent));
+    const viewer = await m.content(h, async () => {
+      document.querySelector('#recent button').click();
+      for (let i = 0; i < 20 && !/pages/.test(document.getElementById('file-info').textContent); i++) await new Promise((r) => setTimeout(r, 250));
+      document.getElementById('view').click();
+      return document.getElementById('file-info').textContent;
+    });
+    const shown = await until('the viewer tab', () => m.chrome(() => {
+      const b = Services.wm.getMostRecentWindow('navigator:browser').gBrowser.selectedBrowser;
+      return b.documentContentType === 'application/pdf' && b.currentURI.spec;
+    }), 15_000).catch(() => '');
+    check('a recent PDF loads into the page and opens in Firefox\'s viewer from there', /^5 pages/.test(viewer) && /^file:.*\(merge\)\.pdf$/.test(shown), `${viewer} ${shown}`);
+    // and back: "More tools for this PDF" from the viewer
+    h = await m.chrome(async () => {
+      const { Xiao } = ChromeUtils.importESModule('resource://xiao/XiaoCore.sys.mjs');
+      const tab = await Xiao.aboutPdf.fromViewer(Services.wm.getMostRecentWindow('navigator:browser'));
+      const { NavigableManager } = mod('remote/shared/NavigableManager.sys.mjs');
+      return NavigableManager.getIdForBrowser(tab.linkedBrowser);
+    });
+    await loaded(h);
+    const back = await until('the PDF from the viewer', () => m.content(h, () => document.getElementById('file-info').textContent), 15_000).catch((e) => e.message);
+    check('"More tools for this PDF" brings the viewer\'s PDF over to about:pdf-tools', /^5 pages/.test(back), back);
+    await closeTab();
+    await closeTab();
+    // a web page can't take a tab to about:pdf-tools
+    h = await open(`http://127.0.0.1:${port}/probe`);
+    await m.content(h, () => { try { location.href = 'about:pdf-tools'; } catch {} });
+    await sleep(1500);
+    const stayed = await m.content(h, () => document.documentURI);
+    check('a web page can\'t open about:pdf-tools', stayed !== 'about:pdf-tools', stayed);
+    await closeTab();
+    const bang = await xiao((Xiao) => Xiao.bangs.resolve('!pdf'));
+    check('!pdf opens about:pdf', bang?.action === 'pdf', JSON.stringify(bang));
     await m.chrome(() => Services.prefs.clearUserPref('xiao.packs.mirror'));
   }
 

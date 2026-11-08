@@ -39,6 +39,7 @@ test('an unknown bang is left alone, so it can still be searched for', () => {
 
 test('Xiao\'s own actions need no address; your own bangs win over the list', () => {
   assert.equal(resolveBang('!note', table).action, 'notes');
+  assert.equal(resolveBang('!pdf', table).action, 'pdf');
   assert.equal(resolveBang('!lib', table).action, 'library');
   assert.equal(resolveBang('!gh cats', table, { gh: 'https://mine.example/?q=%s' }).url, 'https://mine.example/?q=cats');
 });

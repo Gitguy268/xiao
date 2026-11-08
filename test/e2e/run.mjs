@@ -54,7 +54,7 @@ async function until(what, fn, timeoutMs) {
 // --- throwaway home + install ---
 const home = mkdtempSync(join(process.env.RUNNER_TEMP ?? tmpdir(), 'xiao-e2e-'));
 const env = {
-  ...process.env, HOME: home, APPDATA: join(home, 'AppData'), LOCALAPPDATA: join(home, 'LocalAppData'),
+  ...process.env, MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1', HOME: home, APPDATA: join(home, 'AppData'), LOCALAPPDATA: join(home, 'LocalAppData'),
   MOZ_HEADLESS_WIDTH: '1440', MOZ_HEADLESS_HEIGHT: '900', XIAO_TOR_PORT: process.env.XIAO_TOR_PORT ?? '9170',
 };
 delete env.XDG_DATA_HOME;
@@ -1564,7 +1564,7 @@ try {
       const w = Services.wm.getMostRecentWindow('navigator:browser');
       const wait = (ms) => new Promise((r) => w.setTimeout(r, ms));
       const { ContextualIdentityService } = mod('toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs');
-      const personal = ContextualIdentityService.getPublicIdentities().find((i) => i.userContextId !== Xiao.tor.torId)?.userContextId ?? 0;
+      const personal = (ContextualIdentityService.getPublicIdentities().find((i) => i.userContextId !== Xiao.tor.torId) ?? ContextualIdentityService.create('Personal', 'fingerprint', 'blue')).userContextId; // Zen 1.24 profiles start with no containers
       const add = (href, userContextId = 0) => w.gBrowser.addTab(href, { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(), userContextId });
       const old = add(`${url}/page.html?archive-me`, personal);
       const unsaved = add(`${url}/unsaved.html`);
@@ -1707,7 +1707,7 @@ try {
     await xiaoDo(async (Xiao, mod, url, file) => {
       const w = Services.wm.getMostRecentWindow('navigator:browser');
       const { ContextualIdentityService } = mod('toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs');
-      const personal = ContextualIdentityService.getPublicIdentities().find((i) => i.userContextId !== Xiao.tor.torId).userContextId;
+      const personal = (ContextualIdentityService.getPublicIdentities().find((i) => i.userContextId !== Xiao.tor.torId) ?? ContextualIdentityService.create('Personal', 'fingerprint', 'blue')).userContextId; // Zen 1.24 profiles start with no containers
       const home = w.gZenWorkspaces.activeWorkspace;
       const space = await w.gZenWorkspaces.createAndSaveWorkspace('Export me', undefined, true);
       await w.gZenWorkspaces.changeWorkspaceWithID(space.uuid); // new tabs join the space on screen

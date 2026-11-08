@@ -39,7 +39,7 @@ if (!kit01) {
 
 const home = join(scratch, 'home');
 mkdirSync(home);
-const env = { ...process.env, HOME: home, MOZ_HEADLESS_WIDTH: '1440', MOZ_HEADLESS_HEIGHT: '900' };
+const env = { ...process.env, MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1', HOME: home, MOZ_HEADLESS_WIDTH: '1440', MOZ_HEADLESS_HEIGHT: '900' };
 delete env.XDG_DATA_HOME;
 const data = MAC ? join(home, 'Library/Application Support/xiao-kit') : join(home, '.local/share/xiao-kit');
 const zenArgs = ['--marionette', '--remote-allow-system-access', '--headless'];

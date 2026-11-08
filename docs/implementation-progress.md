@@ -142,3 +142,12 @@ Later answers to those open spikes:
 | Cover Your Tracks | [docs/privacy-results.md](privacy-results.md) |
 
 Open: camera scanning on the Send page isn't tested; choosing a video for the blank camera isn't built; Widevine has played on macOS only; containers don't test host sandboxing; Windows packs and Library are untested.
+
+# Xiao 0.6 (branch `xiao-0.6`, plan `~/.claude/plans/update-https-github-com-gitguy268-xiao-t-wise-fountain.md`)
+
+State on 2026-11-08, end of the first session:
+- Done: Zen pinned to 1.24.1b (Fx 159), npm updates (ghostery 2.20.3, astro 7.4.7), SearXNG at ac11e14 with a new hash, GitHub Actions at current majors (free-disk-space v2 options renamed), the fork overlay and Zen's ffprefs checked on the 1.24.1b tag.
+- Firefox 159 needs `MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1` for Marionette system access: added to every harness. Zen 1.24 test profiles have no containers: run.mjs creates one.
+- **Firefox 159 has its own about:pdf** (drop/pick a PDF → viewer; no network). Xiao keeps it and adds a "More PDF tools in Xiao" button (XiaoChild `pdfToolsLink`, XiaoParent `pdf-tools`). Xiao's page is `about:pdf-tools` (core/AboutPdf.mjs; pack page when the pdf pack is served, else core/pdf/). The about module must also be registered in content processes (core/pdf/process.js, loaded with loadProcessScript), or it loads as about:blank. New PDF tools: merge, extract, remove, rotate (unit tests pass). Shortcuts link opens about:keyboard.
+- Next: run `ONLY=pdf npm run e2e:new` (after `npm run packs && npm run build`); the last run failed before the process script existed. Check the page under about:pdf-tools gets its CSS/JS (its principal is `about:pdf-tools`, not resource://xiao; if module scripts fail, build pdf.bundle.js as iife). Then the full baseline `E2E_TOR=0 npm run e2e` (92/93 before the container fix), then plan Phases 2 (rest), 4–7.
+- The pdf and library pack hashes changed (library: OpenFinder revision only): both need uploading to the `packs` release before 0.6.0.

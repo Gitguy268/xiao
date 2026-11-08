@@ -20,14 +20,15 @@ jobs:
       CARGO_INCREMENTAL: 0
     steps:
       - name: Free disk space
-        uses: jlumbroso/free-disk-space@v1.3.1
+        uses: jlumbroso/free-disk-space@v2.0.0
         with:
-          tool-cache: false
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+          preinstalled-runtimes: false
+          swap-storage: true
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - uses: mozilla-actions/sccache-action@v0.0.9
+      - uses: mozilla-actions/sccache-action@v0.0.11
       - name: System packages (as Zen's Linux build)
         run: |
           sudo apt-get update
@@ -61,7 +62,7 @@ jobs:
         run: |
           ./mach package
           mv obj-*/dist/xiao-*.tar.* "$GITHUB_WORKSPACE/xiao.linux-x86_64.tar.xz"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: xiao.linux-x86_64
           path: xiao.linux-x86_64.tar.xz

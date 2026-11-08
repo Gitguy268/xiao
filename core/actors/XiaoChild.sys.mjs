@@ -20,6 +20,7 @@ const ASSIST_URL = 'resource://xiao/assist/index.html';
 const ASSIST_HOST_URL = 'resource://xiao-notes-ai/assist-host.html';
 const BOARD_URL = 'resource://xiao/board/index.html';
 const CLIPBOARD_URL = 'resource://xiao/clipboard/index.html';
+const PDF_ABOUT = 'about:pdf-tools';
 const USER_SHEET = Ci.nsIStyleSheetService.USER_SHEET;
 const sss = Cc['@mozilla.org/content/style-sheet-service;1'].getService(Ci.nsIStyleSheetService);
 const cssUri = (css) => Services.io.newURI(`data:text/css;charset=utf-8,${encodeURIComponent(css)}`);
@@ -36,7 +37,7 @@ export class XiaoChild extends JSWindowActorChild {
         case 'DOMWindowCreated':
           this.shield();
           if (this.inTor()) this.removeWebRTC();
-          if ([START_URL, ORGANISE_URL, ASSIST_URL, ASSIST_HOST_URL, BOARD_URL, CLIPBOARD_URL, Services.cpmm.sharedData.get('xiao:sendOrigin')].filter(Boolean).some((u) => uri.startsWith(u)) && !this.browsingContext.parent) this.exposeApi();
+          if (([START_URL, ORGANISE_URL, ASSIST_URL, ASSIST_HOST_URL, BOARD_URL, CLIPBOARD_URL, Services.cpmm.sharedData.get('xiao:sendOrigin')].filter(Boolean).some((u) => uri.startsWith(u)) || uri.split(/[?#]/)[0] === PDF_ABOUT) && !this.browsingContext.parent) this.exposeApi();
           if (uri.split(/[?#]/)[0] === LIBRARY_URL && !this.browsingContext.parent) this.exposeLibrary();
           break;
         case 'DOMDocElementInserted':
@@ -47,6 +48,7 @@ export class XiaoChild extends JSWindowActorChild {
         case 'DOMContentLoaded':
           // The start answer can arrive after the page has loaded.
           this.started?.then((active) => active && this.document?.documentURI === uri && this.watchDom());
+          if (uri.split(/[?#]/)[0] === 'about:pdf' && !this.browsingContext.parent) this.pdfToolsLink();
           break;
         case 'copy':
         case 'cut':
@@ -185,6 +187,25 @@ export class XiaoChild extends JSWindowActorChild {
         delete page[name];
       } catch {}
     }
+  }
+
+  // Firefox's about:pdf opens PDFs in its viewer; a button under its drop
+  // zone opens Xiao's about:pdf-tools. The page itself can't reach Xiao: the
+  // click is heard here, and the parent checks it came from about:pdf.
+  pdfToolsLink() {
+    const doc = this.document;
+    const zone = doc.getElementById('dropzone');
+    if (!zone || doc.getElementById('xiao-pdf-tools')) return;
+    const row = doc.createElement('p');
+    row.id = 'xiao-pdf-tools';
+    row.style.textAlign = 'center';
+    row.style.marginBlock = '16px 0';
+    const button = doc.createElement('moz-button');
+    button.setAttribute('label', 'More PDF tools in Xiao: booklets, page numbers, passwords…');
+    button.setAttribute('type', 'ghost');
+    button.addEventListener('click', () => this.sendAsyncMessage('pdf-tools'));
+    row.append(button);
+    zone.after(row);
   }
 
   exposeApi() {
