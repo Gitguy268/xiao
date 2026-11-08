@@ -244,7 +244,7 @@ general:
   enable_metrics: false
 search:
   autocomplete: ""
-  formats: [html]
+  formats: [html, json] # json: Instant links (!top) read results on this computer
 server:
   bind_address: "127.0.0.1"
   port: $SEARCH_PORT

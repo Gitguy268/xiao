@@ -340,6 +340,12 @@ export class Toolbar {
     if (this.xiao.features.reader) action('Reader', () => openPage('resource://xiao/reader/index.html'));
     if (this.xiao.features.clipboard) action('Clipboard history', () => openPage('resource://xiao/clipboard/index.html'));
     if (this.xiao.features.sendDevice) action('Send to a device', () => this.xiao.send.open(win));
+    const meeting = this.xiao.calendar.next().events[0];
+    if (meeting) {
+      action(`${meeting.title}, ${meeting.when}${meeting.join ? ' · Join' : ''}`, () => {
+        if (meeting.join) win.gBrowser.selectedTab = win.gBrowser.addTab(meeting.join, { triggeringPrincipal: Services.scriptSecurityManager.createContentPrincipal(Services.io.newURI(meeting.join), {}) });
+      });
+    }
     action('Notes', () => this.xiao.notes.openFrom(win));
     if (!browser.browsingContext.usePrivateBrowsing) action('All tabs', () => this.xiao.tabCommands.open(win));
     // Firefox's about:pdf (Zen 1.24), which links to Xiao's PDF tools; on a PDF, those tools.

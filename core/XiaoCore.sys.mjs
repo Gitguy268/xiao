@@ -8,7 +8,9 @@
 // start page and the toolbar panel all live here.
 import { AboutPdf } from './AboutPdf.mjs';
 import { Archive, CHOICES as ARCHIVE_HOURS } from './Archive.mjs';
+import { InstantLinks } from './InstantLinks.mjs';
 import { Bangs } from './Bangs.mjs';
+import { Calendar, checkSource } from './Calendar.mjs';
 import { Clipboard, CLIPBOARD_URL } from './Clipboard.mjs';
 import { Send } from './Send.mjs';
 import { Assist, ASSIST_URL, HOST_URL as ASSIST_HOST_URL } from './Assist.mjs';
@@ -113,6 +115,8 @@ export const Xiao = {
     this.aboutPdf = new AboutPdf(this);
     this.siteMute = new SiteMute(this);
     this.tabCommands = new TabCommands(this);
+    this.instantLinks = new InstantLinks(this);
+    this.calendar = new Calendar(this);
     this.searchUrl = Services.prefs.getStringPref('xiao.search.url', '');
     setDefaults();
     this.tor.start();
@@ -169,6 +173,7 @@ export const Xiao = {
       this.sleepTabs(this.features.tabSleep);
       this.archive.start(this.features.autoArchive);
       this.quickWindow.set(this.features.quickWindow);
+      this.calendar.start();
       // The download hook loads Firefox's download list: not while Xiao is still starting.
       this.packsReady.then(async () => {
         await this.servePacks();
@@ -182,7 +187,7 @@ export const Xiao = {
   // noise, which costs nothing, needs nothing downloaded and has a per-site switch.
   get features() {
     // libraryDownloads only matters while the Library is on; it starts on with it.
-    return { updates: true, shield: true, fakeCamera: false, sendDevice: false, noteWriting: false, clipboard: false, reader: false, sticky: false, perSite: false, tabSleep: 0, newTabCleanup: 0, libraryDownloads: true, autoArchive: 0, bangs: true, assist: false, boards: false, quickWindow: false, ...this.store.features, silent: this.silent.on };
+    return { updates: true, shield: true, fakeCamera: false, sendDevice: false, noteWriting: false, clipboard: false, reader: false, sticky: false, perSite: false, tabSleep: 0, newTabCleanup: 0, libraryDownloads: true, autoArchive: 0, bangs: true, assist: false, boards: false, quickWindow: false, calendar: '', assistChats: false, ...this.store.features, silent: this.silent.on };
   },
 
   async featureState() {
@@ -244,6 +249,9 @@ export const Xiao = {
       await this.servePacks();
     } else if (id === 'bangs') {
       this.store.features = { ...this.store.features, bangs: !!on };
+    } else if (id === 'calendar') {
+      this.store.features = { ...this.store.features, calendar: checkSource(value) };
+      this.calendar.start();
     } else if (id === 'newTabCleanup') {
       const minutes = [0, 5, 15, 60].includes(value) ? value : 0;
       this.store.features = { ...this.store.features, newTabCleanup: minutes };
@@ -376,6 +384,10 @@ export const Xiao = {
     if (name === 'notes.save') return this.notes.save(data ?? {});
     if (from !== 'start') throw new Error(`unknown call ${name}`);
     if (name === 'features') return this.featureState();
+    if (name === 'calendar.next') {
+      if (data?.refresh) await this.calendar.refresh();
+      return this.calendar.next();
+    }
     if (name === 'shortcuts') return void this.openShortcuts(browsingContext.topChromeWindow);
     if (name === 'export') return this.portable.export(browsingContext.topChromeWindow);
     if (name === 'import.pick') return this.portable.pick(browsingContext.topChromeWindow);
@@ -392,7 +404,7 @@ export const Xiao = {
       return this.featureState();
     }
     if (name === 'bang') return this.bangs.resolve(data?.text);
-    if (name === 'bang.run') return void await this.bangs.run(data?.action, browsingContext.topChromeWindow);
+    if (name === 'bang.run') return void await this.bangs.run(data?.action, browsingContext.topChromeWindow, String(data?.query ?? ''));
     if (name === 'drm.install') return this.silent.installDrm();
     if (name === 'updates.check') return this.updater.check();
     if (name === 'filters.update') return { changed: await this.blocker.update({ asked: true }) };

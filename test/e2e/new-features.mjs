@@ -6,7 +6,7 @@
 // the blank camera, bangs, start page styles, download problems and updates.
 //
 //   npm run build && npm run e2e:new
-//   ONLY=updates,bangs npm run e2e:new  some sections (shield, bangs, styles, packs, pdf, extras, silent, drm, updates)
+//   ONLY=updates,bangs npm run e2e:new  some sections (shield, bangs, styles, packs, pdf, more, extras, silent, drm, updates)
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash, generateKeyPairSync, sign } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -64,6 +64,15 @@ const server = http.createServer((req, res) => {
     return res.writeHead(200).end(readFileSync(file));
   }
   if (name === 'french') return res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end('<!doctype html><html lang="fr"><title>Bonjour</title><p>Bonjour le monde. Ceci est une page en français pour tester la traduction du navigateur, avec assez de mots.</p>');
+  if (name === 'search') { // Xiao Search's JSON, for instant links
+    return res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ results: [
+      { url: `http://127.0.0.1:${port}/article?r1`, title: 'R1' }, { url: `http://127.0.0.1:${port}/article?r2`, title: 'R2' }, { url: 'javascript:alert(1)', title: 'bad' }] }));
+  }
+  if (name === 'article') {
+    const topic = new URL(req.url, 'http://x').search.slice(1) || 'plain';
+    return res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(`<!doctype html><title>Article ${topic}</title><h1>Article ${topic}</h1>
+      ${topic === 'ferry' ? '<p>Ferries leave the harbour every hour in summer.</p>' : '<p>The lighthouse on the island was built in 1874 and painted red.</p>'}<p>Topic ${topic} is discussed here at length.</p>`);
+  }
   if (name.startsWith('own')) return res.writeHead(200, { 'content-type': 'text/html' }).end('<!doctype html><title>own bang</title>');
   res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(PROBE);
 });
@@ -489,6 +498,144 @@ try {
     const bang = await xiao((Xiao) => Xiao.bangs.resolve('!pdf'));
     check('!pdf opens about:pdf', bang?.action === 'pdf', JSON.stringify(bang));
     await m.chrome(() => Services.prefs.clearUserPref('xiao.packs.mirror'));
+  }
+
+  if (want('more')) {
+    const url = (q) => `http://127.0.0.1:${port}/article?${q}`;
+    const browserIdOf = (h) => m.chrome((h) => {
+      const { NavigableManager } = mod('remote/shared/NavigableManager.sys.mjs');
+      return NavigableManager.getBrowserById(h)?.browserId;
+    }, h);
+    // Copy as Markdown
+    let h = await open(url('md'));
+    const md = await xiao((Xiao) => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const browser = w.gBrowser.selectedBrowser;
+      return {
+        item: !!w.document.getElementById('xiao-markdown'),
+        page: Xiao.toolbar.markdownFor({ browser }),
+        quote: Xiao.toolbar.markdownFor({ browser, isTextSelected: true, selectionInfo: { fullText: 'painted red' } }),
+        link: Xiao.toolbar.markdownFor({ browser, onLink: true, linkURL: 'https://user:pw@example.org/a_(b)', linkTextStr: 'A [b]' }),
+      };
+    });
+    check('Copy as Markdown: the page, a quote linking to its words, and a link without its login', md.item && md.page === `[Article md](${url('md')})`
+      && md.quote.endsWith(`— [Article md](${url('md')}#:~:text=painted%20red)`) && md.link === '[A \\[b\\]](https://example.org/a_%28b%29)', JSON.stringify(md));
+    // site mute
+    const muted = await xiao(async (Xiao, second) => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const first = w.gBrowser.selectedTab;
+      Xiao.siteMute.set(first.linkedBrowser.currentURI, true);
+      const a = first.muted;
+      const t = w.gBrowser.addTab(second, { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
+      await new Promise((r) => setTimeout(r, 2500));
+      const b = t.muted;
+      Xiao.siteMute.set(first.linkedBrowser.currentURI, false);
+      const after = [first.muted, t.muted];
+      w.gBrowser.removeTab(t);
+      return { a, b, after, saved: [...Xiao.store.muted] };
+    }, url('again'));
+    check('"Always mute this site" mutes its tabs, new ones too, and unmutes only what it muted', muted.a && muted.b && !muted.after[0] && !muted.after[1] && muted.saved.length === 0, JSON.stringify(muted));
+    await closeTab();
+    // empty new tabs
+    const cleanup = await xiao(async (Xiao, start, page) => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      await Xiao.setFeature({ id: 'newTabCleanup', value: 5 });
+      const empty = w.gBrowser.addTab(start, { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
+      const used = w.gBrowser.addTab(page, { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
+      await new Promise((r) => setTimeout(r, 2000));
+      for (const t of [empty, used]) t.updateLastAccessed(Date.now() - 10 * 60_000);
+      const closed = Xiao.closeEmptyTabs(5);
+      const out = { closed, emptyGone: !empty.isConnected, usedKept: used.isConnected };
+      if (used.isConnected) w.gBrowser.removeTab(used);
+      await Xiao.setFeature({ id: 'newTabCleanup', value: 0 });
+      return out;
+    }, START, url('used'));
+    check('new tabs left empty close after the chosen time; a tab with a page stays', cleanup.emptyGone && cleanup.usedKept && cleanup.closed >= 1, JSON.stringify(cleanup));
+    // All tabs: a command becomes a plan, and only the confirmed plan acts
+    for (const q of ['yt1', 'yt2', 'keep']) await tab(url(q));
+    await sleep(2500);
+    h = await open('resource://xiao/tabs/index.html');
+    const planned = await m.content(h, async () => {
+      const p = await window.xiao.call('tabs.plan', { text: 'close tabs about yt' });
+      return { n: p.ids?.length, titles: (p.tabs ?? []).map((t) => t.title).sort(), error: p.error };
+    });
+    check('"close tabs about yt" plans the two matching tabs, and nothing closes yet', planned.n === 2 && planned.titles.join() === 'Article yt1,Article yt2', JSON.stringify(planned));
+    const ran = await m.content(h, async () => {
+      document.getElementById('command').value = 'close tabs about yt';
+      document.getElementById('command-form').requestSubmit();
+      for (let i = 0; i < 20 && document.getElementById('plan').hidden; i++) await new Promise((r) => setTimeout(r, 200));
+      const text = document.getElementById('plan-text').textContent;
+      document.getElementById('plan-go').click();
+      for (let i = 0; i < 20 && !/Done/.test(document.getElementById('status').textContent); i++) await new Promise((r) => setTimeout(r, 200));
+      return { text, status: document.getElementById('status').textContent, left: (await window.xiao.call('tabs.list')).tabs.map((t) => t.title) };
+    });
+    check('confirming the plan closes exactly those tabs', /Close 2 tabs/.test(ran.text) && /Done: 2/.test(ran.status) && !ran.left.some((t) => /yt/.test(t)) && ran.left.includes('Article keep'), JSON.stringify(ran));
+    const moved = await xiao(async (Xiao) => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const space = await w.gZenWorkspaces.createAndSaveWorkspace('Work', undefined, true);
+      const plan = Xiao.tabCommands.plan('move tabs about keep to work');
+      const r = await Xiao.tabCommands.run(plan);
+      const tab = [...w.gZenWorkspaces.allStoredTabs].find((t) => t.label === 'Article keep');
+      return { done: r.done, inWork: tab?.getAttribute('zen-workspace-id') === space.uuid, nope: Xiao.tabCommands.plan('move tabs about keep to nowhere').error };
+    });
+    check('"move … to Work" moves the tab to that space; an unknown space is named in the error', moved.done === 1 && moved.inWork && /nowhere/.test(moved.nope), JSON.stringify(moved));
+    await closeTab();
+    // Assist: another tab mentioned, a skill, the reader's style
+    const ha = await open(url('lighthouse'));
+    const hb = await open(url('ferry'));
+    const [a, b] = [await browserIdOf(ha), await browserIdOf(hb)];
+    const across = await xiao(async (Xiao, a, b) => {
+      await Xiao.setFeature({ id: 'assist', on: true }).catch(() => {});
+      const mentions = Xiao.assist.mentionable(a);
+      const ev = await Xiao.assist.evidence(a, 'when do ferries leave the harbour', [b]);
+      const skill = await Xiao.assist.newSkill('Kids', 'Explain it to a ten-year-old.');
+      const skills = await Xiao.assist.skills();
+      const dup = await Xiao.assist.newSkill('Kids', 'again').catch((e) => e.message);
+      await Xiao.setFeature({ id: 'assist', on: false });
+      return { mentioned: mentions.tabs.some((t) => t.id === b), titles: ev.titles, top: ev.evidence[0], skill, skills: skills.map((s) => s.name), dup };
+    }, a, b);
+    check('Assist reads a mentioned tab too, and each passage keeps its page', across.mentioned && across.titles.length === 2 && across.top?.source === 1 && /Ferries/.test(across.top.text), JSON.stringify(across));
+    check('a skill is saved as a note "Skill Kids.md" and runs as /kids; a second with the same name is refused', across.skill === 'kids' && across.skills.includes('kids') && /already/.test(across.dup), JSON.stringify(across));
+    await closeTab();
+    await closeTab();
+    // Instant links, from Xiao Search's JSON only
+    const instant = await xiao(async (Xiao, base) => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const saved = Xiao.searchUrl;
+      Xiao.searchUrl = '';
+      const without = await Xiao.instantLinks.open(w, 'lighthouse').catch((e) => e.message);
+      Xiao.searchUrl = base;
+      const { opened, folder, tabs } = await Xiao.instantLinks.open(w, 'lighthouse');
+      const urls = tabs.map((t) => t.linkedBrowser.currentURI.spec);
+      Xiao.searchUrl = saved;
+      for (const t of tabs) {
+        w.gBrowser.unpinTab(t);
+        w.gBrowser.removeTab(t);
+      }
+      return { without, opened, folder, urls };
+    }, `http://127.0.0.1:${port}`);
+    check('!top opens the top results in a folder named after the search, and without Xiao Search it says what it needs', instant.opened === 2 && instant.folder === 'lighthouse' && /Xiao Search/.test(instant.without), JSON.stringify(instant));
+    // calendar preview from an .ics file
+    const ics = join(home, 'work.ics');
+    const soon = new Date(Date.now() + 12 * 60_000);
+    const stamp = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
+    writeFileSync(ics, ['BEGIN:VCALENDAR', 'BEGIN:VEVENT', 'SUMMARY:Standup', `DTSTART:${stamp(soon)}`, `DTEND:${stamp(new Date(soon.getTime() + 900_000))}`, 'LOCATION:https://meet.google.com/abc-defg-hij', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n'));
+    const cal = await xiao(async (Xiao, ics) => {
+      const bad = await Xiao.setFeature({ id: 'calendar', value: 'http://insecure.example/c.ics' }).catch((e) => e.message);
+      await Xiao.setFeature({ id: 'calendar', value: ics });
+      await Xiao.calendar.refresh();
+      const next = Xiao.calendar.next();
+      await Xiao.setFeature({ id: 'calendar', value: '' });
+      return { bad, next, off: Xiao.calendar.next().on };
+    }, ics);
+    const e0 = cal.next.events[0];
+    check('the calendar preview shows the next meeting with a countdown and its Join link; http addresses are refused', e0?.title === 'Standup' && /^in 1[12] min$/.test(e0.when) && e0.join === 'https://meet.google.com/abc-defg-hij' && /https/.test(cal.bad) && cal.off === false, JSON.stringify(cal));
+    // Zen's importer, from the start page
+    const importer = await m.chrome(() => ({
+      keys: mod('browser/components/migration/MigrationUtils.sys.mjs').MigrationUtils.availableMigratorKeys,
+      wizard: typeof mod('browser/components/migration/MigrationUtils.sys.mjs').MigrationUtils.showMigrationWizard,
+    }));
+    check('Zen\'s Arc and Dia importers are there for the start page\'s "From Arc, Dia or another browser…"', importer.keys.includes('arc') && importer.keys.includes('dia') && importer.wizard === 'function', JSON.stringify(importer));
   }
 
   if (want('extras')) {

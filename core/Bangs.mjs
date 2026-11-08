@@ -32,7 +32,8 @@ export class Bangs {
     return resolveBang(text, this.table, this.xiao.settings().bangs);
   }
 
-  run(action, win) {
+  run(action, win, query = '') {
+    if (action === 'top') return this.xiao.instantLinks.open(win, query).catch((e) => Services.prompt.alert(win, 'Instant links', e.message));
     if (action === 'library') return this.xiao.openLibrary(win);
     if (action === 'pdf') return this.xiao.aboutPdf.hub(win);
     if (action === 'tabs') return this.xiao.tabCommands.open(win);
@@ -45,7 +46,7 @@ export class Bangs {
       const { UrlbarProvider } = ChromeUtils.importESModule('moz-src:///browser/components/urlbar/UrlbarUtils.sys.mjs');
       const { UrlbarShared } = ChromeUtils.importESModule('chrome://browser/content/urlbar/UrlbarShared.mjs');
       const { UrlbarResult } = ChromeUtils.importESModule('chrome://browser/content/urlbar/UrlbarResult.mjs');
-      const LABEL = { notes: 'Open your notes', library: 'Open the Library', pdf: 'Open about:pdf', tabs: 'Open all tabs' };
+      const LABEL = { notes: 'Open your notes', library: 'Open the Library', pdf: 'Open about:pdf', tabs: 'Open all tabs', top: 'Open the top results in a folder' };
 
       class XiaoBangsProvider extends UrlbarProvider {
         get name() {
@@ -78,7 +79,7 @@ export class Bangs {
               type: UrlbarShared.RESULT_TYPE.DYNAMIC,
               source: UrlbarShared.RESULT_SOURCE.OTHER_LOCAL,
               heuristic: true,
-              payload: { dynamicType: ACTION, action: found.action, label: LABEL[found.action] },
+              payload: { dynamicType: ACTION, action: found.action, query: found.query ?? '', label: found.action === 'top' && found.query ? `Open the top results for "${found.query}" in a folder` : LABEL[found.action] },
             }));
         }
 
@@ -94,7 +95,7 @@ export class Bangs {
         }
 
         onEngagement(_context, _controller, details) {
-          if (details.result.payload.action) bangs.run(details.result.payload.action, details.element.documentGlobal);
+          if (details.result.payload.action) bangs.run(details.result.payload.action, details.element.documentGlobal, details.result.payload.query);
         }
       }
 

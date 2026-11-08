@@ -31,6 +31,7 @@
       <input id="q" name="q" type="text" autocomplete="off" spellcheck="false" autofocus placeholder="Search or enter an address">
       <button id="retro-go">Search</button>
     </form>
+    <p id="calendar-next" class="calendar-next" hidden></p>
     <nav id="links" aria-label="Your sites"></nav>
     </div>
   </main>
@@ -226,6 +227,13 @@
     <div class="feature">
       <label class="switch"><input type="checkbox" data-feature="bangs"> Bangs</label>
       <p>Type <code>!gh cats</code> or <code>cats !gh</code> in the address bar or here to go straight to that site's search. Thousands of sites work, from a list kept on this computer, so no search engine sees it. <code>!note</code> opens your notes and <code>!lib</code> the Library. Add your own in Edit start page.</p>
+    </div>
+    <div class="feature">
+      <label>Calendar preview
+        <input type="text" data-feature="calendar" data-text placeholder="https:// or webcal:// address, or an .ics file" spellcheck="false" autocomplete="off">
+      </label>
+      <p>Your next meetings on this page and in Xiao's panel, with a countdown and a Join button. Use the secret calendar address your calendar gives out (iCal or .ics). Xiao fetches it every 15 minutes without cookies, never in silent mode. Leave empty for off.</p>
+      <p class="progress" data-progress="calendar" role="status"></p>
     </div>
     <div class="feature">
       <label>Close new tabs left empty for

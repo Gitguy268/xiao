@@ -84,7 +84,7 @@ async function refreshStatus() {
 
 async function go(q) {
   const bang = parseBang(q) ? await ask('bang', { text: q }).catch(() => null) : null;
-  if (bang?.action) return void ask('bang.run', { action: bang.action });
+  if (bang?.action) return void ask('bang.run', { action: bang.action, query: bang.query });
   location.href = bang?.url ?? toUrl(q, searchTemplate(state.settings, state));
 }
 
@@ -96,7 +96,7 @@ async function command(line) {
   $('q').value = '';
   log.textContent += `xiao ~ $ ${line}\n${(r.print ?? []).map((l) => `${l}\n`).join('')}`;
   if (r.clear) log.textContent = '';
-  if (r.action) await ask('bang.run', { action: r.action });
+  if (r.action) await ask('bang.run', { action: r.action, query: r.query });
   if (r.open === 'features') await openFeatures();
   if (r.open === 'settings') openSettings();
   if (r.go) location.href = toUrl(r.go, searchTemplate(state.settings, state));
@@ -121,6 +121,23 @@ function openSettings() {
   $('settings').showModal();
 }
 
+// The next meeting from the calendar preview (start page → Features), if set.
+async function showCalendar(refresh = false) {
+  const line = $('calendar-next');
+  const c = await ask('calendar.next', { refresh }).catch(() => null);
+  const e = c?.events?.[0];
+  line.hidden = !c?.on || (!e && !c.error);
+  if (line.hidden) return;
+  line.replaceChildren(c.error && !e ? `Calendar: ${c.error}` : `${e.title}, ${e.when}`);
+  if (e?.join) {
+    const a = document.createElement('a');
+    a.href = e.join;
+    a.textContent = 'Join';
+    a.className = 'join';
+    line.append(' ', a);
+  }
+}
+
 async function init() {
   state = await ask('get');
   $('xiao-search').hidden = !state.local;
@@ -131,6 +148,8 @@ async function init() {
   $('status').innerHTML = sentence(state.status);
   clock();
   document.addEventListener('visibilitychange', clock);
+  showCalendar();
+  document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && showCalendar());
   // Tor takes a few seconds to connect after Xiao starts.
   if (state.inTor && !state.status.tor.isTor && state.status.tor.installed) setTimeout(refreshStatus, 6_000);
 
@@ -293,7 +312,11 @@ function wireFeatures() {
     input.addEventListener('change', async () => {
       const id = input.dataset.feature;
       try {
-        renderFeatures(await ask('feature', input.type === 'checkbox' ? { id, on: input.checked } : { id, value: Number(input.value) }));
+        renderFeatures(await ask('feature', input.type === 'checkbox' ? { id, on: input.checked } : { id, value: 'text' in input.dataset ? input.value : Number(input.value) }));
+        if (id === 'calendar') {
+          $('features').querySelector('[data-progress="calendar"]').textContent = '';
+          showCalendar(true);
+        }
       } catch (e) {
         $('features').querySelector(`[data-progress="${id}"]`)?.replaceChildren(e.message);
       }

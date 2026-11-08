@@ -189,3 +189,6 @@ dialog label.switch input { width: 18px; height: 18px; margin: 0; accent-color: 
 :root[data-style="terminal"] #term-log, :root[data-style="terminal"] #term-prompt { display: revert; }
 :root[data-style="terminal"] #term-log { display: block; }
 header.bar, main, footer { position: relative; z-index: 1; }
+
+.calendar-next { margin: 0 auto 14px; text-align: center; font-size: var(--step--1); color: var(--ink-soft); }
+.calendar-next .join { margin-inline-start: 6px; font-weight: 600; color: var(--ink); }
