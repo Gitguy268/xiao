@@ -53,6 +53,7 @@ async function until(what, fn, timeoutMs) {
 
 // --- throwaway home + install ---
 const home = mkdtempSync(join(process.env.RUNNER_TEMP ?? tmpdir(), 'xiao-e2e-'));
+mkdirSync(join(home, 'Downloads'));
 const env = {
   ...process.env, MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1', HOME: home, APPDATA: join(home, 'AppData'), LOCALAPPDATA: join(home, 'LocalAppData'),
   MOZ_HEADLESS_WIDTH: '1440', MOZ_HEADLESS_HEIGHT: '900', XIAO_TOR_PORT: process.env.XIAO_TOR_PORT ?? '9170',
