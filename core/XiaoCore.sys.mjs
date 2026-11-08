@@ -292,12 +292,15 @@ export const Xiao = {
   // playing sound are never put to sleep; a sleeping tab reloads when opened.
   sleepTabs(minutes) {
     clearInterval(this.sleepTimer);
-    if (minutes || this.features.newTabCleanup) this.sleepTimer = setInterval(() => this.sweepTabs(minutes), 60_000);
+    if (minutes || this.features.newTabCleanup) {
+      this.sleepTimer = setInterval(() => {
+        this.closeEmptyTabs(this.features.newTabCleanup);
+        if (minutes) this.sweepTabs(minutes);
+      }, 60_000);
+    }
   },
 
   sweepTabs(minutes) {
-    this.closeEmptyTabs(this.features.newTabCleanup);
-    if (!minutes) return;
     const cutoff = Date.now() - minutes * 60_000;
     for (const win of Services.wm.getEnumerator('navigator:browser')) {
       for (const tab of everyTab(win)) {
