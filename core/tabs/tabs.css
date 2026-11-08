@@ -15,3 +15,6 @@
 .tabs button.title { border: 0; padding: 0; background: none; text-align: start; color: var(--ink); font: inherit; cursor: pointer; overflow-wrap: anywhere; }
 .tabs .meta { font-size: var(--step--1); color: var(--ink-soft); white-space: nowrap; }
 .tabs .site { display: block; font-size: var(--step--1); color: var(--ink-soft); }
+.bulk label { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
+.bulk input[type="checkbox"] { width: auto; margin: 0; }
+.bulk select { width: auto; flex: 0 1 auto; }

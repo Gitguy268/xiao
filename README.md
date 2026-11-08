@@ -61,6 +61,17 @@ A calm, private browser built on Zen: ad and tracker blocking built into the bro
 
 </details>
 
+<details>
+<summary>All tabs and PDF, in pictures</summary>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screens/all-tabs-dark.png"><img src="docs/screens/all-tabs-light.png" width="860" alt="All tabs: the command 'close tabs about yt' has become a plan, 'Close 2 tabs (listed below)?', with Do it and Cancel, above the two matching tabs."></picture>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screens/about-pdf-dark.png"><img src="docs/screens/about-pdf-light.png" width="860" alt="Firefox's about:pdf in Xiao: a drop zone for a PDF, and under it Xiao's button 'More PDF tools in Xiao: booklets, page numbers, passwords…'."></picture>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screens/pdf-tools-dark.png"><img src="docs/screens/pdf-tools-light.png" width="860" alt="Xiao's PDF tools with two.pdf loaded (2 pages): buttons for the viewer, then tools grouped as Pages, Layout and File."></picture>
+
+</details>
+
 ## Install
 
 Xiao comes as a **kit** that makes Xiao's own copy of the [Zen](https://zen-browser.app) you already have, with Xiao's code inside and a profile of its own. Your normal Zen and its profile aren't touched.
