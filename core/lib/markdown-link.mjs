@@ -4,7 +4,7 @@
 
 // "Copy as Markdown": a link, a page, or a quote with a link that scrolls to
 // the quoted words (a text fragment, #:~:text=). Pure, node-tested.
-const esc = (s) => String(s).replace(/([\\[\]])/g, '\\$1').replace(/\s+/g, ' ').trim();
+const esc = (s) => String(s).replace(/([\\[\]`<>*_])/g, '\\$1').replace(/\s+/g, ' ').trim();
 const escUrl = (u) => String(u).replace(/[()\s]/g, (c) => ({ '(': '%28', ')': '%29' })[c] ?? '%20');
 
 export function linkMarkdown(title, url) {

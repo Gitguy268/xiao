@@ -13,3 +13,7 @@ test('a quote links to its own words on the page', () => {
   assert.equal(long, 'https://x.org/p#:~:text=one%20two%20three%20four,seven%20eight%20nine%20ten');
   assert.equal(quoteMarkdown('line one\nline two', 'Page', 'https://x.org/p'), '> line one\n> line two\n\n— [Page](https://x.org/p#:~:text=line%20one%20line%20two)');
 });
+
+test('a page title can\'t add Markdown or HTML of its own', () => {
+  assert.equal(linkMarkdown('<img src=x> *bold* `code`', 'https://x.org/'), '[\\<img src=x\\> \\*bold\\* \\`code\\`](https://x.org/)');
+});

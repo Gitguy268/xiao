@@ -163,6 +163,12 @@ let failedToRun = null;
 try {
   await launch();
   await ready();
+  await m.chrome((dir) => { // again, now that Xiao is up
+    Services.prefs.setStringPref('browser.download.dir', dir);
+    Services.prefs.setIntPref('browser.download.folderList', 2);
+    Services.prefs.setBoolPref('browser.download.useDownloadDir', true);
+  }, join(home, 'Downloads'));
+  check('downloads go to the throwaway home', await m.chrome(() => Services.prefs.getStringPref('browser.download.dir', '')) === join(home, 'Downloads'));
 
   if (want('shield')) {
     const sites = await xiao((Xiao) => Xiao.features.shield);
@@ -432,6 +438,25 @@ try {
       return { origin: p.origin, system: p.isSystemPrincipal, content: p.isContentPrincipal };
     });
     check('before the download, Xiao\'s PDF page offers it, as an ordinary page', bare.uri === 'resource://xiao/pdf/index.html' && bare.title === 'PDF tools' && bare.get && bare.bridge === 'function' && bare.size !== 'a few hundred KB' && !plain.system && plain.content, JSON.stringify({ ...bare, ...plain }));
+    // a PDF dropped here opens in Firefox's viewer (its bytes cross the JSON-only bridge as base64)
+    const viewed = await m.content(h, async (b64) => {
+      await window.xiao.call('pdf.view', { name: 'dropped.pdf', base64: b64 });
+      return true;
+    }, await pdfOf(1)).catch((e) => e.message);
+    const droppedIn = await until('the viewer tab', () => m.chrome(() => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const b = w.gBrowser.selectedBrowser;
+      if (b.documentContentType !== 'application/pdf') return false;
+      const spec = b.currentURI.spec;
+      w.gBrowser.removeTab(w.gBrowser.selectedTab);
+      return spec;
+    }), 15_000).catch(() => '');
+    check('a dropped PDF opens in Firefox\'s viewer from a temporary copy', viewed === true && /^file:.*dropped\.pdf$/.test(droppedIn), `${viewed} ${droppedIn}`);
+    await m.chrome(() => {
+      const w = Services.wm.getMostRecentWindow('navigator:browser');
+      const t = [...w.gBrowser.tabs].find((x) => x.linkedBrowser.currentURI.spec === 'resource://xiao/pdf/index.html');
+      if (t) w.gBrowser.selectedTab = t;
+    });
     // the download from the page, then the page turns into the tools by itself
     await m.chrome((u) => Services.prefs.setStringPref('xiao.packs.mirror', u), `http://127.0.0.1:${port}/mirror/`);
     mirrorMode = 'ok';

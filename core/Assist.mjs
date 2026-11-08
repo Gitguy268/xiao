@@ -179,8 +179,9 @@ export class Assist {
     const tab = this.tabFor(browserId);
     const actor = tab.linkedBrowser.browsingContext.currentWindowGlobal?.getActor('Xiao');
     if (!actor) throw new Error('The page is not loaded.');
+    const url = tab.linkedBrowser.currentURI.spec; // read with the text, so both describe the same page
     const { title, text, selection } = await actor.sendQuery('extract');
-    return { title, selection, passages: passagesOf(text) };
+    return { title, url, selection, passages: passagesOf(text) };
   }
 
   // The passages that answer, at once and without the model: the page shows
@@ -188,11 +189,10 @@ export class Assist {
   // (browserIds, at most five), read the same way and numbered after this page.
   async evidence(browserId, question, extra = []) {
     const ids = [browserId, ...new Set(extra.filter((id) => Number.isSafeInteger(id) && id !== browserId))].slice(0, 6);
-    const pages = [];
-    for (const id of ids) {
-      const p = await this.passages(id);
-      pages.push({ title: p.title, url: this.tabFor(id).linkedBrowser.currentURI.spec, passages: p.passages, selection: p.selection });
-    }
+    // the page asked about must be readable; a mentioned tab that closed or moved is left out
+    const [first, ...rest] = await Promise.allSettled(ids.map((id) => this.passages(id)));
+    if (first.status === 'rejected') throw first.reason;
+    const pages = [first, ...rest].filter((r) => r.status === 'fulfilled').map((r) => r.value);
     const { asked, question: q } = applySkill(question, await this.skills());
     const wanted = asked ?? q;
     return {
@@ -332,19 +332,20 @@ export class Assist {
   }
 
   // Makes the suggested groups into Zen folders, once; undoTidy puts them back.
-  makeGroups(win, groups) {
-    this.groupsMade = [];
+  makeGroups(win, groups, { append = false } = {}) {
+    if (!append) this.groupsMade = [];
     for (const g of groups) {
       const pinned = g.tabs.filter((t) => !t.pinned);
       const folder = win.gZenFolders.createFolder(g.tabs, { label: g.label });
-      if (folder) this.groupsMade.push({ folder, pinned });
+      if (folder) this.groupsMade.push({ folder, pinned, win });
     }
-    return this.groupsMade.length;
+    return groups.length && this.groupsMade.filter((g) => g.win === win).length;
   }
 
-  async undoGroups(win) {
+  async undoGroups(fallback) {
     let undone = 0;
-    for (const { folder, pinned } of this.groupsMade.reverse()) {
+    for (const { folder, pinned, win: made } of this.groupsMade.reverse()) {
+      const win = made && !made.closed ? made : fallback;
       if (!folder.isConnected) continue;
       await folder.unpackTabs();
       for (const tab of pinned) if (tab.isConnected && tab.pinned) win.gBrowser.unpinTab(tab);

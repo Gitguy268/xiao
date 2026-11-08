@@ -57,6 +57,9 @@ export class SiteMute {
   }
 
   attach(win) {
+    if (win.xiaoSiteMute) return;
+    win.xiaoSiteMute = true;
+    for (const tab of win.gBrowser.tabs) this.apply(win, tab.linkedBrowser);
     win.gBrowser.addTabsProgressListener({
       onLocationChange: (browser, progress) => {
         if (progress.isTopLevel) this.apply(win, browser);

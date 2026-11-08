@@ -175,6 +175,12 @@ try {
       first: w.gBrowser.tabs.map((t) => t.linkedBrowser.currentURI.spec),
     };
   }), 60_000);
+  await m.chrome((dir) => { // again, now that Xiao is up
+    Services.prefs.setStringPref('browser.download.dir', dir);
+    Services.prefs.setIntPref('browser.download.folderList', 2);
+    Services.prefs.setBoolPref('browser.download.useDownloadDir', true);
+  }, join(home, 'Downloads'));
+  check('downloads go to the throwaway home', await m.chrome(() => Services.prefs.getStringPref('browser.download.dir', '')) === join(home, 'Downloads'));
   check('Xiao\'s built-in code is running, with no extension', state.addons.length === 0, `Zen ${state.zen}${state.addons.length ? `, add-ons: ${state.addons}` : ''}`);
   check('new tab is the Xiao start page', state.newtab === START, state.newtab);
   check('Xiao starts on the start page', state.first.includes(START), state.first.join(' '));

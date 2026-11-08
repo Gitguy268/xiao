@@ -69,9 +69,19 @@ async function load() {
 }
 
 async function run(action, extra = {}) {
-  const ids = [...ticked];
-  if (!ids.length && action !== 'group') return say('Tick some tabs first.');
-  const r = await ask('tabs.run', { action, ids, ...extra });
+  let ids = [...ticked];
+  // Group with nothing ticked groups every tab shown by site
+  if (!ids.length && action === 'group') {
+    ids = shown.filter((t) => !t.pinned && !t.essential).map((t) => t.id);
+    extra = { ...extra, bySite: true };
+  }
+  if (!ids.length) return say('Tick some tabs first.');
+  let r;
+  try {
+    r = await ask('tabs.run', { action, ids, ...extra });
+  } catch (e) {
+    return say(e.message);
+  }
   ticked.clear();
   say(`${r.done} ${r.done === 1 ? 'tab' : action === 'group' ? 'groups' : 'tabs'} ${{ close: 'closed', archive: 'archived (find them in the Library)', group: 'made', mute: 'muted', unmute: 'unmuted', move: 'moved' }[action]}.`);
   await load();
@@ -109,7 +119,13 @@ $('plan-go').addEventListener('click', async () => {
   const p = plan;
   cancel();
   ticked.clear();
-  const r = await ask('tabs.run', { action: p.action, ids: p.ids, space: p.space, bySite: p.bySite });
+  let r;
+  try {
+    r = await ask('tabs.run', { action: p.action, ids: p.ids, space: p.space, bySite: p.bySite });
+  } catch (e) {
+    await load();
+    return say(e.message);
+  }
   say(`Done: ${r.done}.${p.action === 'group' ? ' "Undo tab groups" in the address bar puts them back.' : p.action === 'archive' ? ' Find them in the Library\'s Archive.' : ''}`);
   $('command').value = '';
   await load();

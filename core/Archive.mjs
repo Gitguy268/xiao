@@ -33,9 +33,10 @@ export class Archive {
   }
 
   // Why a tab stays open, or null when it may be archived.
-  keeps(tab, win) {
+  // manual: archived by hand from the tab page, where the tab being selected is no reason to keep it
+  keeps(tab, win, { manual = false } = {}) {
     const b = tab.linkedBrowser;
-    if (tab.selected || tab.pinned || tab.hasAttribute('zen-essential') || tab.hasAttribute('zen-glance-tab') || tab.hasAttribute('zen-empty-tab')) return 'kept in place';
+    if ((tab.selected && !manual) || tab.pinned || tab.hasAttribute('zen-essential') || tab.hasAttribute('zen-glance-tab') || tab.hasAttribute('zen-empty-tab')) return 'kept in place';
     if (tab.soundPlaying || tab.hasAttribute('pictureinpicture') || tab.hasAttribute('sharing') || tab.hasAttribute('attention')) return 'busy';
     if (privateBrowsing().isWindowPrivate(win) || tab.userContextId === this.xiao.tor.torId) return 'not recorded';
     if (!/^https?:/.test(b?.currentURI?.spec ?? '')) return 'not a web page';
@@ -72,10 +73,7 @@ export class Archive {
   // when the tab must stay (the reasons in keeps(), but for the selected tab,
   // which a reader may archive by hand from the tab page).
   async archiveTab(tab, win, { checked = false } = {}) {
-    if (!checked) {
-      const why = this.keeps(tab, win);
-      if (why && !(why === 'kept in place' && tab.selected && !tab.pinned && !tab.hasAttribute('zen-essential'))) return false;
-    }
+    if (!checked && this.keeps(tab, win, { manual: true })) return false;
     const b = tab.linkedBrowser;
     await this.xiao.library.store.addArchive({
       url: b.currentURI.spec,

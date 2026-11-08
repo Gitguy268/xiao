@@ -71,12 +71,13 @@ export class AboutPdf {
     const uri = browser.currentURI;
     const name = decodeURIComponent(uri.filePath.split('/').pop() || 'document.pdf');
     const { PrivateBrowsingUtils } = mod('toolkit/modules/PrivateBrowsingUtils.sys.mjs');
+    if (PrivateBrowsingUtils.isWindowPrivate(win)) throw new Error('Xiao\'s PDF tools don\'t open in private windows. Save the PDF and open it in a normal window.');
     let bytes;
     if (uri.schemeIs('file')) {
       bytes = await IOUtils.read(uri.QueryInterface(Ci.nsIFileURL).file.path, { maxBytes: MAX });
     } else if (uri.schemeIs('https') || uri.schemeIs('http')) {
-      if (PrivateBrowsingUtils.isWindowPrivate(win) || tab.userContextId === this.xiao.tor.torId) {
-        throw new Error('Save the PDF first: Xiao does not fetch it again from a private window or a Tor tab.');
+      if (tab.userContextId === this.xiao.tor.torId) {
+        throw new Error('Save the PDF first: Xiao does not fetch it again from a Tor tab.');
       }
       bytes = await this.fetchAs(uri, browser.contentPrincipal);
     } else {
@@ -144,11 +145,13 @@ export class AboutPdf {
       const win = browsingContext.topChromeWindow;
       let path = (await this.recent()).find((f) => f.path === data?.path)?.path;
       if (!path) {
-        if (!ArrayBuffer.isView(data?.bytes) || data.bytes.byteLength > MAX) throw new Error('Choose a PDF first.');
+        // the page bridge carries JSON only, so the bytes come as base64
+        if (typeof data?.base64 !== 'string' || data.base64.length > MAX * 1.4) throw new Error('Choose a PDF first.');
+        const bytes = Uint8Array.fromBase64(data.base64);
         const safe = String(data.name ?? 'document.pdf').replace(/[^\w .()-]+/g, '_').slice(0, 100).replace(/(\.pdf)?$/i, '.pdf');
         await IOUtils.makeDirectory(TEMP(), { ignoreExisting: true });
         path = PathUtils.join(TEMP(), `${Date.now()}-${safe}`);
-        await IOUtils.write(path, data.bytes);
+        await IOUtils.write(path, bytes);
       }
       const tab = win.gBrowser.addTab(PathUtils.toFileURI(path), { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
       win.gBrowser.selectedTab = tab;

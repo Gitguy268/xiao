@@ -36,3 +36,12 @@ test('when an event is, in words', () => {
   assert.equal(whenLabel(local(2026, 10, 9, 14, 30), local(2026, 10, 9, 15, 0), now), 'at 14:30');
   assert.equal(whenLabel(local(2026, 10, 10, 9, 0), local(2026, 10, 10, 9, 30), now), 'tomorrow at 09:00');
 });
+
+test('a Join link is only a link to a meeting service itself', async () => {
+  const { meetingLink } = await import('../core/lib/ics.mjs');
+  assert.equal(meetingLink('Join: https://us02web.zoom.us/j/123?pwd=x.'), 'https://us02web.zoom.us/j/123?pwd=x');
+  assert.equal(meetingLink('https://attacker.example/?next=zoom.us'), null);
+  assert.equal(meetingLink('https://zoom.us.attacker.example/j/1'), null);
+  assert.equal(meetingLink('https://user:pw@meet.google.com/abc'), null);
+  assert.equal(meetingLink('see https://example.org then https://meet.google.com/abc-defg-hij'), 'https://meet.google.com/abc-defg-hij');
+});

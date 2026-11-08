@@ -32,7 +32,7 @@ $('get').addEventListener('click', async () => {
 
 async function view(f) {
   if (!f || !(f.type === 'application/pdf' || /\.pdf$/i.test(f.name))) return;
-  await call('pdf.view', { name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) }).catch((e) => say(e.message));
+  await call('pdf.view', { name: f.name, base64: new Uint8Array(await f.arrayBuffer()).toBase64() }).catch((e) => say(e.message));
 }
 $('file').addEventListener('change', (e) => view(e.target.files[0]));
 document.querySelector('.drop').addEventListener('dragover', (e) => e.preventDefault());

@@ -57,7 +57,7 @@ $('clear').addEventListener('click', clear);
 $('view').addEventListener('click', async () => {
   if (!current) return;
   try {
-    await call('pdf.view', current.path ? { path: current.path } : { name: current.name, bytes: current.bytes });
+    await call('pdf.view', current.path ? { path: current.path } : { name: current.name, base64: current.bytes.toBase64() }); // the bridge carries JSON
   } catch (e) {
     say(e.message, true);
   }

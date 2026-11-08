@@ -11,6 +11,9 @@
 // fetch. No account is signed in to; nothing is sent but that request.
 import { nextEvents, parseIcs, whenLabel } from './lib/ics.mjs';
 
+const TIMEOUT = 30_000;
+const MAX = 5_000_000;
+
 const EVERY = 15 * 60_000;
 
 export function checkSource(source) {
@@ -35,12 +38,13 @@ export class Calendar {
     return this.xiao.features.calendar || '';
   }
 
-  start() {
+  // asked: the reader just set the address, so one fetch is theirs even in silent mode
+  start({ asked = false } = {}) {
     clearInterval(this.timer);
     this.events = [];
     this.error = '';
     if (!this.source) return;
-    this.refresh().catch(() => {});
+    if (asked || !this.xiao.silent.on) this.refresh().catch(() => {});
     this.timer = setInterval(() => {
       if (!this.xiao.silent.on) this.refresh().catch(() => {});
     }, EVERY);
@@ -53,17 +57,28 @@ export class Calendar {
       let text;
       if (/^https:/i.test(source)) {
         const host = new URL(source).host;
-        const r = await this.xiao.silent.asking([host], () => fetch(source, { credentials: 'omit', cache: 'no-store' }));
-        if (!r.ok) throw new Error(`The calendar answered ${r.status}.`);
-        text = (await r.text()).slice(0, 5_000_000);
+        // AbortSignal.timeout() throws in system modules, so a controller and a timer
+        const stop = new AbortController();
+        const timer = setTimeout(() => stop.abort(), TIMEOUT);
+        try {
+          const r = await this.xiao.silent.asking([host], () => fetch(source, { credentials: 'omit', cache: 'no-store', signal: stop.signal }));
+          if (!r.ok) throw new Error(`The calendar answered ${r.status}.`);
+          if (Number(r.headers.get('content-length') ?? 0) > MAX) throw new Error('The calendar is larger than 5 MB.');
+          text = (await r.text()).slice(0, MAX);
+        } catch (e) {
+          throw stop.signal.aborted ? new Error('The calendar did not answer within 30 seconds.') : e;
+        } finally {
+          clearTimeout(timer);
+        }
       } else {
-        text = await IOUtils.readUTF8(source, { maxBytes: 5_000_000 });
+        text = await IOUtils.readUTF8(source, { maxBytes: MAX });
       }
+      if (this.source !== source) return; // the address changed meanwhile
       this.events = parseIcs(text);
       this.error = '';
       this.fetchedAt = Date.now();
     } catch (e) {
-      this.error = e.message;
+      if (this.source === source) this.error = e.message;
     }
   }
 

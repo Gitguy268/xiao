@@ -251,7 +251,7 @@ export const Xiao = {
       this.store.features = { ...this.store.features, bangs: !!on };
     } else if (id === 'calendar') {
       this.store.features = { ...this.store.features, calendar: checkSource(value) };
-      this.calendar.start();
+      this.calendar.start({ asked: true });
     } else if (id === 'newTabCleanup') {
       const minutes = [0, 5, 15, 60].includes(value) ? value : 0;
       this.store.features = { ...this.store.features, newTabCleanup: minutes };

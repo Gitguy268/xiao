@@ -50,7 +50,11 @@ export class XiaoParent extends JSWindowActorParent {
     if (name === 'copied') Xiao.clipboard.copied(this.browsingContext);
     // the button XiaoChild adds to Firefox's about:pdf, at the top of a tab
     if (name === 'pdf-tools' && (this.manager.documentURI?.spec ?? '').split(/[?#]/)[0] === 'about:pdf' && !this.browsingContext.parent) {
-      Xiao.aboutPdf.open(this.browsingContext.topChromeWindow);
+      // the tools page runs only in normal tabs: from a private window or a Tor tab it opens in a normal window
+      const bc = this.browsingContext;
+      const ordinary = !bc.usePrivateBrowsing && bc.originAttributes.userContextId !== Xiao.tor.torId;
+      const win = ordinary ? bc.topChromeWindow : Xiao.tabCommands.windows()[0];
+      if (win) Xiao.aboutPdf.open(win);
     }
     return undefined;
   }

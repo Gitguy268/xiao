@@ -172,8 +172,13 @@ async function init() {
   });
   $('import').addEventListener('click', showImport);
   // Zen imports Arc on macOS and Windows and Dia on macOS only; elsewhere it imports other browsers
-  if (/Linux/i.test(navigator.platform)) $('import-browser').textContent = 'From another browser…';
-  else if (/Win/i.test(navigator.platform)) $('import-browser').textContent = 'From Arc or another browser…';
+  if (/Linux/i.test(navigator.platform)) {
+    $('import-browser').textContent = 'From another browser…';
+    $('import-browser').title = 'Zen\'s importer: bookmarks and history from other browsers. Read from this computer only.';
+  } else if (/Win/i.test(navigator.platform)) {
+    $('import-browser').textContent = 'From Arc or another browser…';
+    $('import-browser').title = 'Zen\'s importer: spaces, pinned tabs and profiles from Arc, bookmarks and history from other browsers. Read from this computer only.';
+  }
   $('import-browser').addEventListener('click', () => ask('import.browser'));
   wireImport();
   $('settings-form').search.addEventListener('change', (e) => {

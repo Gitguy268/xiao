@@ -20,7 +20,17 @@ export function parseDate(value, params = '') {
   return { at: z ? Date.UTC(...parts) : new Date(...parts).getTime(), allDay: false };
 }
 
-const LINK = /https:\/\/[^\s<>"']*(?:meet\.google\.com|zoom\.us|teams\.microsoft\.com|teams\.live\.com|whereby\.com|meet\.jit\.si|webex\.com)[^\s<>"']*/i;
+const HOSTS = ['meet.google.com', 'zoom.us', 'teams.microsoft.com', 'teams.live.com', 'whereby.com', 'meet.jit.si', 'webex.com'];
+// The first https link in the text whose host is a meeting service (or its subdomain), never a link that only mentions one.
+export function meetingLink(text) {
+  for (const m of String(text ?? '').matchAll(/https:\/\/[^\s<>"']+/gi)) {
+    try {
+      const u = new URL(m[0].replace(/[).,;]+$/, ''));
+      if (!u.username && !u.password && HOSTS.some((h) => u.hostname === h || u.hostname.endsWith(`.${h}`))) return u.href;
+    } catch {}
+  }
+  return null;
+}
 
 export function parseIcs(text) {
   const events = [];
@@ -48,7 +58,7 @@ export function parseIcs(text) {
     }
   }
   return events.filter((e) => !e.cancelled).map((e) => {
-    const join = [e.url, e.location, e.description].map((s) => (s ?? '').match(LINK)?.[0]).find(Boolean) ?? null;
+    const join = [e.url, e.location, e.description].map(meetingLink).find(Boolean) ?? null;
     return {
       title: e.title || 'Untitled event',
       start: e.start.at,
