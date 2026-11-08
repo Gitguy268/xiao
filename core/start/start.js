@@ -171,6 +171,9 @@ async function init() {
     if (r) $('portable-note').textContent = `Saved ${r.saved}: ${r.spaces.length} spaces, ${r.urls.length} addresses, ${r.collections.length} collections.`;
   });
   $('import').addEventListener('click', showImport);
+  // Zen imports Arc on macOS and Windows and Dia on macOS only; elsewhere it imports other browsers
+  if (/Linux/i.test(navigator.platform)) $('import-browser').textContent = 'From another browser…';
+  else if (/Win/i.test(navigator.platform)) $('import-browser').textContent = 'From Arc or another browser…';
   $('import-browser').addEventListener('click', () => ask('import.browser'));
   wireImport();
   $('settings-form').search.addEventListener('change', (e) => {

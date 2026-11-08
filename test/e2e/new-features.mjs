@@ -650,7 +650,9 @@ try {
       keys: mod('browser/components/migration/MigrationUtils.sys.mjs').MigrationUtils.availableMigratorKeys,
       wizard: typeof mod('browser/components/migration/MigrationUtils.sys.mjs').MigrationUtils.showMigrationWizard,
     }));
-    check('Zen\'s Arc and Dia importers are there for the start page\'s "From Arc, Dia or another browser…"', importer.keys.includes('arc') && importer.keys.includes('dia') && importer.wizard === 'function', JSON.stringify(importer));
+    // Zen's Arc importer is for macOS and Windows, its Dia importer for macOS only
+    const wants = { darwin: ['arc', 'dia'], win32: ['arc'] }[process.platform] ?? [];
+    check(`Zen's importer is there for the start page's import button${wants.length ? `, with ${wants.join(' and ')}` : ''}`, wants.every((k) => importer.keys.includes(k)) && importer.wizard === 'function', JSON.stringify(importer));
   }
 
   if (want('extras')) {
