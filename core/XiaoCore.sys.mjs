@@ -174,6 +174,7 @@ export const Xiao = {
       this.archive.start(this.features.autoArchive);
       this.quickWindow.set(this.features.quickWindow);
       this.calendar.start();
+      this.siteMute.applyAll();
       // The download hook loads Firefox's download list: not while Xiao is still starting.
       this.packsReady.then(async () => {
         await this.servePacks();

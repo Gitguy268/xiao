@@ -54,7 +54,10 @@ export class XiaoParent extends JSWindowActorParent {
       const bc = this.browsingContext;
       const ordinary = !bc.usePrivateBrowsing && bc.originAttributes.userContextId !== Xiao.tor.torId;
       const win = ordinary ? bc.topChromeWindow : Xiao.tabCommands.windows()[0];
-      if (win) Xiao.aboutPdf.open(win);
+      if (win) {
+        Xiao.aboutPdf.open(win);
+        win.focus(); // another window when the button was in a private one
+      }
     }
     return undefined;
   }

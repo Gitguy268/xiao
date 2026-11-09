@@ -56,6 +56,13 @@ export class SiteMute {
     }
   }
 
+  // Once xiao.json is read: tabs restored before then saw an empty list.
+  applyAll() {
+    for (const win of Services.wm.getEnumerator('navigator:browser')) {
+      for (const tab of win.gBrowser.tabs) this.apply(win, tab.linkedBrowser);
+    }
+  }
+
   attach(win) {
     if (win.xiaoSiteMute) return;
     win.xiaoSiteMute = true;

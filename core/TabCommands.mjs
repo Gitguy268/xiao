@@ -90,12 +90,14 @@ export class TabCommands {
       const byWin = new Map();
       for (const e of entries) byWin.set(e.win, [...(byWin.get(e.win) ?? []), e.tab]);
       let made = 0;
+      const before = this.xiao.assist.groupsMade;
       this.xiao.assist.groupsMade = []; // one undo for every window grouped here
       for (const [win, tabs] of byWin) {
         const groups = bySite ? this.xiao.assist.groups(win).map((g) => ({ ...g, tabs: g.tabs.filter((t) => tabs.includes(t)) })).filter((g) => g.tabs.length > 1)
           : [{ label: 'Group', tabs }];
         made += this.xiao.assist.makeGroups(win, groups, { append: true });
       }
+      if (!this.xiao.assist.groupsMade.length) this.xiao.assist.groupsMade = before; // nothing made: the last undo stays
       return { done: made, undo: 'Undo tab groups' };
     }
     let done = 0;
