@@ -76,6 +76,15 @@ A calm, private browser built on Zen: ad and tracker blocking built into the bro
 
 Xiao comes as a **kit** that makes Xiao's own copy of the [Zen](https://zen-browser.app) you already have, with Xiao's code inside and a profile of its own. Your normal Zen and its profile aren't touched.
 
+On macOS, Homebrew does all of this (it installs Zen too):
+
+```sh
+brew trust gitguy268/tap
+brew install --cask gitguy268/tap/xiao
+```
+
+Or by hand:
+
 1. Download `xiao-kit.zip` from the [latest release](https://github.com/Gitguy268/xiao/releases/latest) and unzip it.
 2. Run the installer:
 
