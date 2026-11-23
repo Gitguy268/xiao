@@ -19,7 +19,7 @@
     "site:build": "npm run site:assets && astro build --root site"
   },
   "devDependencies": {
-    "@astrojs/sitemap": "^3.7.4",
+    "@astrojs/sitemap": "^3.7.6",
     "@cantoo/pdf-lib": "^2.11.1",
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "astro": "^7.3.6",
